@@ -1,0 +1,137 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  
+  --color-chart-1: hsl(var(--chart-1));
+  --color-chart-2: hsl(var(--chart-2));
+  --color-chart-3: hsl(var(--chart-3));
+  --color-chart-4: hsl(var(--chart-4));
+  --color-chart-5: hsl(var(--chart-5));
+
+  --font-sans: 'Noto Sans Arabic', sans-serif;
+  --font-heading: 'Noto Kufi Arabic', sans-serif;
+  
+  --radius: 0.75rem;
+}
+
+:root {
+  /* Serene Custodian Palette */
+  /* Deep Green (Omani Heritage/Islam) */
+  --primary: 146 50% 25%;
+  --primary-foreground: 45 30% 90%;
+
+  /* Warm Sand/Gold */
+  --secondary: 45 40% 60%;
+  --secondary-foreground: 146 50% 15%;
+
+  /* Soft Paper/Cream Background */
+  --background: 40 20% 97%;
+  --foreground: 146 30% 20%;
+
+  /* Card Surface - Slightly lighter than background or white */
+  --card: 0 0% 100%;
+  --card-foreground: 146 30% 20%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 146 30% 20%;
+
+  --muted: 40 15% 90%;
+  --muted-foreground: 146 20% 40%;
+
+  --accent: 45 50% 90%;
+  --accent-foreground: 146 50% 25%;
+
+  --destructive: 0 60% 50%;
+  --destructive-foreground: 0 0% 98%;
+
+  --border: 45 20% 85%;
+  --input: 45 20% 85%;
+  --ring: 146 50% 25%;
+
+  --chart-1: 146 50% 35%;
+  --chart-2: 45 50% 50%;
+  --chart-3: 146 30% 60%;
+  --chart-4: 40 40% 70%;
+  --chart-5: 0 0% 80%;
+
+  --radius: 0.75rem;
+}
+
+.dark {
+  /* Dark Mode - Night in the Desert */
+  --background: 146 40% 10%;
+  --foreground: 45 20% 90%;
+
+  --card: 146 40% 13%;
+  --card-foreground: 45 20% 90%;
+
+  --popover: 146 40% 13%;
+  --popover-foreground: 45 20% 90%;
+
+  --primary: 146 40% 40%;
+  --primary-foreground: 45 20% 95%;
+
+  --secondary: 45 30% 40%;
+  --secondary-foreground: 146 40% 95%;
+
+  --muted: 146 30% 20%;
+  --muted-foreground: 146 20% 60%;
+
+  --accent: 146 30% 20%;
+  --accent-foreground: 45 20% 90%;
+
+  --destructive: 0 62% 30%;
+  --destructive-foreground: 0 0% 98%;
+
+  --border: 146 30% 20%;
+  --input: 146 30% 20%;
+  --ring: 45 30% 50%;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+    font-feature-settings: "ss01", "ss02", "cv01", "cv02";
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading font-bold;
+  }
+}
