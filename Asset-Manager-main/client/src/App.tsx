@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import AuthGuard from "@/components/AuthGuard";
+import AdminGuard from "@/components/AdminGuard";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard";
 import Auth from "@/pages/auth";
@@ -13,7 +14,7 @@ import Expenses from "@/pages/expenses";
 import Members from "@/pages/members";
 import FamilySettings from "@/pages/settings";
 import PaymentList from "@/pages/payments";
-import Reports from "@/pages/reports";
+import Analytics from "@/pages/analytics";
 import AdminDashboard from "@/pages/admin-dashboard";
 import UserDashboard from "@/pages/user-dashboard";
 
@@ -22,6 +23,14 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
     <AuthGuard>
       <Component />
     </AuthGuard>
+  );
+}
+
+function AdminRoute({ component: Component }: { component: React.ComponentType<any> }) {
+  return (
+    <AdminGuard>
+      <Component />
+    </AdminGuard>
   );
 }
 
@@ -36,8 +45,9 @@ function Router() {
       <Route path="/members">{() => <ProtectedRoute component={Members} />}</Route>
       <Route path="/settings">{() => <ProtectedRoute component={FamilySettings} />}</Route>
       <Route path="/payments">{() => <ProtectedRoute component={PaymentList} />}</Route>
-      <Route path="/reports">{() => <ProtectedRoute component={Reports} />}</Route>
-      <Route path="/admin">{() => <ProtectedRoute component={AdminDashboard} />}</Route>
+      <Route path="/reports">{() => <ProtectedRoute component={Analytics} />}</Route>
+      <Route path="/analytics">{() => <ProtectedRoute component={Analytics} />}</Route>
+      <Route path="/admin">{() => <AdminRoute component={AdminDashboard} />}</Route>
       <Route path="/profile">{() => <ProtectedRoute component={UserDashboard} />}</Route>
       <Route component={NotFound} />
     </Switch>

@@ -15,7 +15,9 @@ export const members = pgTable("members", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const insertMemberSchema = createInsertSchema(members).omit({ id: true, createdAt: true });
+export const insertMemberSchema = createInsertSchema(members).omit({ id: true, createdAt: true }).extend({
+  role: z.enum(["guardian", "custodian", "member"]).default("member"),
+});
 export type InsertMember = z.infer<typeof insertMemberSchema>;
 export type Member = typeof members.$inferSelect;
 
@@ -31,7 +33,11 @@ export const contributions = pgTable("contributions", {
   approvedAt: timestamp("approved_at"),
 });
 
-export const insertContributionSchema = createInsertSchema(contributions).omit({ id: true, createdAt: true, approvedAt: true });
+export const insertContributionSchema = createInsertSchema(contributions).omit({ id: true, createdAt: true, approvedAt: true }).extend({
+  month: z.number().int().min(1).max(12),
+  year: z.number().int().min(2020).max(2100),
+  status: z.enum(["pending_approval", "approved"]).default("pending_approval"),
+});
 export type InsertContribution = z.infer<typeof insertContributionSchema>;
 export type Contribution = typeof contributions.$inferSelect;
 
@@ -48,7 +54,10 @@ export const loans = pgTable("loans", {
   approvedAt: timestamp("approved_at"),
 });
 
-export const insertLoanSchema = createInsertSchema(loans).omit({ id: true, createdAt: true, approvedAt: true });
+export const insertLoanSchema = createInsertSchema(loans).omit({ id: true, createdAt: true, approvedAt: true }).extend({
+  type: z.enum(["urgent", "standard", "emergency"]),
+  status: z.enum(["pending", "approved", "rejected"]).default("pending"),
+});
 export type InsertLoan = z.infer<typeof insertLoanSchema>;
 export type Loan = typeof loans.$inferSelect;
 
@@ -63,7 +72,9 @@ export const loanRepayments = pgTable("loan_repayments", {
   status: text("status").notNull().default("scheduled"), // 'scheduled' | 'paid' | 'overdue'
 });
 
-export const insertLoanRepaymentSchema = createInsertSchema(loanRepayments).omit({ id: true });
+export const insertLoanRepaymentSchema = createInsertSchema(loanRepayments).omit({ id: true }).extend({
+  status: z.enum(["scheduled", "paid", "overdue"]).default("scheduled"),
+});
 export type InsertLoanRepayment = z.infer<typeof insertLoanRepaymentSchema>;
 export type LoanRepayment = typeof loanRepayments.$inferSelect;
 
@@ -77,7 +88,9 @@ export const expenses = pgTable("expenses", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const insertExpenseSchema = createInsertSchema(expenses).omit({ id: true, createdAt: true });
+export const insertExpenseSchema = createInsertSchema(expenses).omit({ id: true, createdAt: true }).extend({
+  category: z.enum(["zakat", "charity", "general", "emergency"]),
+});
 export type InsertExpense = z.infer<typeof insertExpenseSchema>;
 export type Expense = typeof expenses.$inferSelect;
 
@@ -90,11 +103,34 @@ export const familySettings = pgTable("family_settings", {
   emergencyPercent: integer("emergency_percent").notNull().default(15),
   flexiblePercent: integer("flexible_percent").notNull().default(20),
   growthPercent: integer("growth_percent").notNull().default(20),
+  backupEnabled: boolean("backup_enabled").notNull().default(false),
+  backupKeepDays: integer("backup_keep_days").notNull().default(7),
+  backupKeepWeeksPerMonth: integer("backup_keep_weeks_per_month").notNull().default(4),
+  backupKeepMonths: integer("backup_keep_months").notNull().default(12),
+  backupLastRunAt: timestamp("backup_last_run_at"),
 });
 
 export const insertFamilySettingsSchema = createInsertSchema(familySettings).omit({ id: true });
 export type InsertFamilySettings = z.infer<typeof insertFamilySettingsSchema>;
 export type FamilySettings = typeof familySettings.$inferSelect;
+
+export const systemBackups = pgTable("system_backups", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  fileName: text("file_name").notNull(),
+  storagePath: text("storage_path").notNull(),
+  backupDate: timestamp("backup_date").notNull().defaultNow(),
+  backupLevel: text("backup_level").notNull().default("snapshot"),
+  year: integer("year").notNull(),
+  month: integer("month").notNull(),
+  weekOfMonth: integer("week_of_month"),
+  isMonthEndSnapshot: boolean("is_month_end_snapshot").notNull().default(false),
+  sizeBytes: integer("size_bytes"),
+  createdBy: varchar("created_by"),
+});
+
+export const insertSystemBackupSchema = createInsertSchema(systemBackups).omit({ id: true });
+export type InsertSystemBackup = z.infer<typeof insertSystemBackupSchema>;
+export type SystemBackup = typeof systemBackups.$inferSelect;
 
 // Fund Adjustments (admin direct deposits/withdrawals)
 export const fundAdjustments = pgTable("fund_adjustments", {
@@ -102,19 +138,21 @@ export const fundAdjustments = pgTable("fund_adjustments", {
   type: text("type").notNull(), // 'deposit' | 'withdrawal'
   amount: decimal("amount", { precision: 12, scale: 3 }).notNull(),
   description: text("description"),
-  memberId: varchar("member_id"),
+  memberId: varchar("member_id").references(() => members.id),
   createdAt: timestamp("created_at").defaultNow(),
   createdBy: varchar("created_by"),
 });
 
-export const insertFundAdjustmentSchema = createInsertSchema(fundAdjustments).omit({ id: true, createdAt: true });
+export const insertFundAdjustmentSchema = createInsertSchema(fundAdjustments).omit({ id: true, createdAt: true }).extend({
+  type: z.enum(["deposit", "withdrawal"]),
+});
 export type InsertFundAdjustment = z.infer<typeof insertFundAdjustmentSchema>;
 export type FundAdjustment = typeof fundAdjustments.$inferSelect;
 
 // Capital Allocations (yearly locked allocations)
 export const capitalAllocations = pgTable("capital_allocations", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  year: integer("year").notNull(),
+  year: integer("year").notNull().unique(),
   netAssets: decimal("net_assets", { precision: 12, scale: 3 }).notNull().default("0"),
   protectedAmount: decimal("protected_amount", { precision: 12, scale: 3 }).notNull().default("0"),
   emergencyAmount: decimal("emergency_amount", { precision: 12, scale: 3 }).notNull().default("0"),

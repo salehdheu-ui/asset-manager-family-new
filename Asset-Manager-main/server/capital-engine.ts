@@ -44,12 +44,12 @@ async function computeTotalNetAssets(): Promise<number> {
   const totalDeposits = allAdjustments.filter(a => a.type === 'deposit').reduce((sum, a) => sum + Number(a.amount), 0);
   const totalWithdrawals = allAdjustments.filter(a => a.type === 'withdrawal').reduce((sum, a) => sum + Number(a.amount), 0);
 
-  let totalRepayments = 0;
-  for (const loan of allLoans) {
-    const reps = await db.select().from(loanRepayments)
-      .where(and(eq(loanRepayments.loanId, loan.id), eq(loanRepayments.status, "paid")));
-    totalRepayments += reps.reduce((sum, r) => sum + Number(r.amount), 0);
-  }
+  const allRepayments = await db.select().from(loanRepayments)
+    .where(eq(loanRepayments.status, "paid"));
+  const approvedLoanIds = new Set(allLoans.map(l => l.id));
+  const totalRepayments = allRepayments
+    .filter(r => approvedLoanIds.has(r.loanId))
+    .reduce((sum, r) => sum + Number(r.amount), 0);
 
   return Math.max(0, totalContribs + totalDeposits - totalWithdrawals - totalLoans + totalRepayments - totalExpenses);
 }
@@ -75,15 +75,12 @@ async function computeUsedAmounts(year: number) {
   const emergencyExpenses = yearExpenses.filter(e => e.category === 'emergency').reduce((sum, e) => sum + Number(e.amount), 0);
   const generalExpenses = yearExpenses.filter(e => e.category !== 'emergency').reduce((sum, e) => sum + Number(e.amount), 0);
 
-  let totalRepayments = 0;
-  for (const loan of yearLoans) {
-    const reps = await db.select().from(loanRepayments)
-      .where(and(eq(loanRepayments.loanId, loan.id), eq(loanRepayments.status, "paid")));
-    totalRepayments += reps.filter(r => {
-      const d = r.paidAt;
-      return d && d >= yearStart && d <= yearEnd;
-    }).reduce((sum, r) => sum + Number(r.amount), 0);
-  }
+  const allPaidRepayments = await db.select().from(loanRepayments)
+    .where(eq(loanRepayments.status, "paid"));
+  const yearLoanIds = new Set(yearLoans.map(l => l.id));
+  const totalRepayments = allPaidRepayments
+    .filter(r => yearLoanIds.has(r.loanId) && r.paidAt && r.paidAt >= yearStart && r.paidAt <= yearEnd)
+    .reduce((sum, r) => sum + Number(r.amount), 0);
 
   return {
     flexibleUsed: Math.max(0, loansTotal - totalRepayments + generalExpenses),

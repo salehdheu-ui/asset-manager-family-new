@@ -13,7 +13,7 @@ import {
   ChevronLeft,
   ShieldCheck,
   LogOut,
-  FileText,
+  BarChart3,
   Info,
   User,
   Shield
@@ -43,7 +43,7 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
     ...(isAdmin ? [{ href: "/expenses", icon: Wallet, label: "الإنفاق", desc: "الزكاة والمصروفات" }] : []),
     { href: "/loans", icon: HandCoins, label: "السلف", desc: "طلبات القروض العائلية" },
     ...(isAdmin ? [{ href: "/members", icon: Users, label: "الأعضاء", desc: "إدارة أفراد العائلة" }] : []),
-    { href: "/reports", icon: FileText, label: "التقارير", desc: "الكشوفات والبيانات المالية" },
+    { href: "/analytics", icon: BarChart3, label: "التقارير", desc: "التقارير والتحليلات المالية" },
     { href: "/profile", icon: User, label: "حسابي", desc: "إعدادات الحساب الشخصي" },
     ...(isAdmin ? [{ href: "/admin", icon: Shield, label: "الإدارة", desc: "إدارة المستخدمين والصلاحيات" }] : []),
     { href: "/governance", icon: ShieldCheck, label: "الحوكمة", desc: "قوانين الصندوق والقرارات" },
@@ -51,9 +51,12 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
   ];
 
   const bottomNavItems = navItems.slice(0, 5);
+  const activeItem = navItems.find((item) => item.href === location);
+  const activeLabel = title || activeItem?.label || familyName;
+  const activeDesc = activeItem?.desc || "واجهة متابعة مبسطة ومهيأة للجوال";
 
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden flex flex-col mx-auto max-w-md shadow-2xl">
+    <div className="min-h-screen bg-background relative overflow-hidden flex flex-col mx-auto max-w-md shadow-[0_20px_60px_rgba(16,24,40,0.08)]">
       {/* Background Texture */}
       <div 
         className="absolute inset-0 opacity-[0.03] pointer-events-none z-0"
@@ -63,14 +66,15 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
       {/* Header */}
       <header className="relative z-10 px-5 pt-8 pb-4 bg-gradient-to-b from-background via-background/95 to-transparent shrink-0">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-             <div className="w-9 h-9 rounded-full bg-primary/10 p-1.5 flex items-center justify-center border border-primary/20">
-                <img src={logo} alt="Logo" className="w-full h-full object-contain opacity-80" />
+          <div className="flex items-center gap-3">
+             <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-primary/15 bg-card/80 p-1.5 shadow-sm">
+                <img src={logo} alt="Logo" className="w-full h-full object-contain opacity-85" />
              </div>
              <div>
-               <h1 className="text-lg font-bold font-heading text-primary leading-tight">{title || familyName}</h1>
-               <div className="flex items-center gap-1">
-                 <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse"></span>
+               <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-primary/65">صندوق العائلة</p>
+               <h1 className="text-lg font-bold font-heading text-primary leading-tight">{activeLabel}</h1>
+               <div className="mt-0.5 flex items-center gap-1.5">
+                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                  <p className="text-[9px] text-muted-foreground font-sans uppercase tracking-wider">
                    {user?.role === 'admin' ? 'مشرف النظام' : 'عضو الصندوق'}
                  </p>
@@ -79,11 +83,28 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
           </div>
           <button 
             onClick={() => setIsMenuOpen(true)}
-            className="p-2 hover:bg-primary/5 rounded-xl transition-all border border-transparent active:border-primary/10 relative"
+            className="relative rounded-2xl border border-border/60 bg-card/80 p-2.5 shadow-sm transition-all hover:bg-primary/5 active:border-primary/10"
           >
             <Menu className="w-5 h-5 text-primary" />
-            <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-red-500 rounded-full border border-background"></span>
+            <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-emerald-500 border border-background"></span>
           </button>
+        </div>
+        <div className="mt-4 rounded-[1.6rem] border border-primary/10 bg-card/80 px-4 py-3 shadow-sm backdrop-blur-sm">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <Info className="w-4 h-4" />
+              </div>
+              <div className="text-right">
+                <p className="text-[10px] font-bold text-muted-foreground">القسم الحالي</p>
+                <p className="text-sm font-bold text-primary">{activeLabel}</p>
+                <p className="mt-1 text-[11px] leading-5 text-muted-foreground">{activeDesc}</p>
+              </div>
+            </div>
+            <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-700 border border-emerald-100">
+              {user?.role === "admin" ? "وضع الإدارة" : "وضع العضو"}
+            </span>
+          </div>
         </div>
       </header>
 
@@ -143,7 +164,10 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
                       <div className="font-bold text-sm">{item.label}</div>
                       <div className="text-[10px] opacity-70">{item.desc}</div>
                     </div>
-                    <ChevronLeft className="w-4 h-4 mr-auto opacity-30" />
+                    <div className="mr-auto flex items-center gap-2">
+                      {location === item.href && <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[9px] font-bold text-primary">نشط</span>}
+                      <ChevronLeft className="w-4 h-4 opacity-30" />
+                    </div>
                   </Link>
                 ))}
               </div>
@@ -191,12 +215,12 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
       </AnimatePresence>
 
       {/* Main Content */}
-      <main className="relative z-10 flex-1 px-5 pb-20 overflow-y-auto scrollbar-hide">
+      <main className="relative z-10 flex-1 px-5 pb-24 overflow-y-auto scrollbar-hide">
         {children}
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-card/90 backdrop-blur-xl border-t border-border/40 z-50 pb-5 pt-2 px-5 shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 mx-auto max-w-md border-t border-border/40 bg-card/90 px-5 pb-5 pt-2 backdrop-blur-xl shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
         <ul className="flex justify-between items-center">
           {bottomNavItems.map((item) => {
             const isActive = location === item.href;
@@ -205,18 +229,18 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
                 <Link
                   href={item.href}
                   className={cn(
-                    "flex flex-col items-center gap-1 py-1 rounded-xl transition-all duration-300 relative group",
+                    "relative flex flex-col items-center gap-1 rounded-xl py-1 transition-all duration-300 group",
                     isActive ? "text-primary" : "text-muted-foreground hover:text-primary/70"
                   )}
                 >
                     {isActive && (
                       <motion.div 
                         layoutId="nav-active"
-                        className="absolute -top-2 w-6 h-0.5 bg-primary rounded-full"
+                        className="absolute -top-2 h-8 w-14 rounded-2xl bg-primary/8"
                       />
                     )}
-                    <item.icon className={cn("w-4.5 h-4.5 transition-transform group-active:scale-90", isActive && "fill-current")} strokeWidth={isActive ? 2.5 : 2} />
-                    <span className="text-[8px] font-bold tracking-tight">{item.label}</span>
+                    <item.icon className={cn("relative z-10 h-[18px] w-[18px] transition-transform group-active:scale-90", isActive && "fill-current")} strokeWidth={isActive ? 2.5 : 2} />
+                    <span className="relative z-10 text-[9px] font-bold tracking-tight">{item.label}</span>
                 </Link>
               </li>
             );

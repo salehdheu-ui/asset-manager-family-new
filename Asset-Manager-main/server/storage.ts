@@ -8,7 +8,7 @@ import {
   type FundAdjustment, type InsertFundAdjustment, fundAdjustments
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, gte, lte, sql as dsql } from "drizzle-orm";
 
 export interface IStorage {
   // Members
@@ -22,6 +22,8 @@ export interface IStorage {
   getContributions(): Promise<Contribution[]>;
   getContributionsByMember(memberId: string): Promise<Contribution[]>;
   getContributionsByYear(year: number): Promise<Contribution[]>;
+  getApprovedContributionsByYear(year: number): Promise<Contribution[]>;
+  getContributionsByYearAndMonth(year: number, month: number): Promise<Contribution[]>;
   createContribution(contribution: InsertContribution): Promise<Contribution>;
   approveContribution(id: string): Promise<Contribution | undefined>;
   deleteContribution(id: string): Promise<void>;
@@ -29,17 +31,20 @@ export interface IStorage {
   // Loans
   getLoans(): Promise<Loan[]>;
   getLoansByMember(memberId: string): Promise<Loan[]>;
+  getLoansByYear(year: number): Promise<Loan[]>;
   createLoan(loan: InsertLoan): Promise<Loan>;
   updateLoanStatus(id: string, status: string): Promise<Loan | undefined>;
   deleteLoan(id: string): Promise<void>;
 
   // Loan Repayments
   getLoanRepayments(loanId: string): Promise<LoanRepayment[]>;
+  getAllLoanRepayments(): Promise<LoanRepayment[]>;
   createLoanRepayments(repayments: InsertLoanRepayment[]): Promise<LoanRepayment[]>;
   markRepaymentPaid(id: string): Promise<LoanRepayment | undefined>;
 
   // Expenses
   getExpenses(): Promise<Expense[]>;
+  getExpensesByYear(year: number): Promise<Expense[]>;
   createExpense(expense: InsertExpense): Promise<Expense>;
   deleteExpense(id: string): Promise<void>;
 
@@ -99,6 +104,18 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(contributions).where(eq(contributions.year, year));
   }
 
+  async getApprovedContributionsByYear(year: number): Promise<Contribution[]> {
+    return await db.select().from(contributions).where(
+      and(eq(contributions.year, year), eq(contributions.status, "approved"))
+    );
+  }
+
+  async getContributionsByYearAndMonth(year: number, month: number): Promise<Contribution[]> {
+    return await db.select().from(contributions).where(
+      and(eq(contributions.year, year), eq(contributions.month, month))
+    );
+  }
+
   async createContribution(contribution: InsertContribution): Promise<Contribution> {
     const [created] = await db.insert(contributions).values(contribution).returning();
     return created;
@@ -125,6 +142,14 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(loans).where(eq(loans.memberId, memberId));
   }
 
+  async getLoansByYear(year: number): Promise<Loan[]> {
+    const startDate = new Date(year, 0, 1);
+    const endDate = new Date(year + 1, 0, 1);
+    return await db.select().from(loans).where(
+      and(gte(loans.createdAt, startDate), lte(loans.createdAt, endDate))
+    );
+  }
+
   async createLoan(loan: InsertLoan): Promise<Loan> {
     const [created] = await db.insert(loans).values(loan).returning();
     return created;
@@ -149,6 +174,10 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(loanRepayments).where(eq(loanRepayments.loanId, loanId)).orderBy(loanRepayments.installmentNumber);
   }
 
+  async getAllLoanRepayments(): Promise<LoanRepayment[]> {
+    return await db.select().from(loanRepayments);
+  }
+
   async createLoanRepayments(repayments: InsertLoanRepayment[]): Promise<LoanRepayment[]> {
     if (repayments.length === 0) return [];
     return await db.insert(loanRepayments).values(repayments).returning();
@@ -165,6 +194,14 @@ export class DatabaseStorage implements IStorage {
   // Expenses
   async getExpenses(): Promise<Expense[]> {
     return await db.select().from(expenses).orderBy(desc(expenses.createdAt));
+  }
+
+  async getExpensesByYear(year: number): Promise<Expense[]> {
+    const startDate = new Date(year, 0, 1);
+    const endDate = new Date(year + 1, 0, 1);
+    return await db.select().from(expenses).where(
+      and(gte(expenses.createdAt, startDate), lte(expenses.createdAt, endDate))
+    );
   }
 
   async createExpense(expense: InsertExpense): Promise<Expense> {

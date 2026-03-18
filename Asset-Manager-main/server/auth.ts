@@ -1,3 +1,4 @@
+import "./env";
 import bcrypt from "bcryptjs";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
@@ -66,9 +67,8 @@ export async function setupAuth(app: Express) {
         return res.status(401).json({ message: "اسم المستخدم أو كلمة المرور غير صحيحة" });
       }
 
-      req.session.userId = user.id;
-      
-      res.json({
+      // Regenerate session to prevent session fixation
+      const userData = {
         id: user.id,
         username: user.username,
         firstName: user.firstName,
@@ -77,6 +77,21 @@ export async function setupAuth(app: Express) {
         role: user.role,
         memberId: user.memberId,
         profileImageUrl: user.profileImageUrl,
+      };
+
+      req.session.regenerate((err) => {
+        if (err) {
+          console.error("Session regeneration error:", err);
+          return res.status(500).json({ message: "حدث خطأ أثناء تسجيل الدخول" });
+        }
+        req.session.userId = user.id;
+        req.session.save((saveErr) => {
+          if (saveErr) {
+            console.error("Session save error:", saveErr);
+            return res.status(500).json({ message: "حدث خطأ أثناء تسجيل الدخول" });
+          }
+          res.json(userData);
+        });
       });
     } catch (error) {
       console.error("Login error:", error);
@@ -178,7 +193,7 @@ export async function setupAuth(app: Express) {
 
       const hashedPassword = await bcrypt.hash(password, 10);
 
-      await db.update(users).set({ password: hashedPassword, updatedAt: new Date() }).where(eq(users.id, id));
+      await db.update(users).set({ password: hashedPassword, updatedAt: new Date() }).where(eq(users.id, id as string));
 
       res.json({ message: "تم تحديث كلمة المرور بنجاح" });
     } catch (error) {
@@ -201,7 +216,7 @@ export async function setupAuth(app: Express) {
       if (role) updateData.role = role;
       if (memberId !== undefined) updateData.memberId = memberId;
 
-      const [updatedUser] = await db.update(users).set(updateData).where(eq(users.id, id)).returning();
+      const [updatedUser] = await db.update(users).set(updateData).where(eq(users.id, id as string)).returning();
 
       res.json({
         id: updatedUser.id,
@@ -219,15 +234,8 @@ export async function setupAuth(app: Express) {
   });
 
   // Admin: Delete user
-  app.delete("/api/admin/users/:id", isAdmin, async (req, res) => {
-    try {
-      const { id } = req.params;
-      await db.delete(users).where(eq(users.id, id));
-      res.json({ message: "تم حذف المستخدم بنجاح" });
-    } catch (error) {
-      console.error("Delete user error:", error);
-      res.status(500).json({ message: "حدث خطأ أثناء حذف المستخدم" });
-    }
+  app.delete("/api/admin/users/:id", isAdmin, async (_req, res) => {
+    return res.status(403).json({ message: "تم تعطيل الحذف النهائي حفاظاً على البيانات" });
   });
 
   // Admin: Get all users
@@ -286,11 +294,22 @@ export const isAdmin: RequestHandler = async (req, res, next) => {
 };
 
 // Create default admin user if not exists
+// Controlled via SEED_ADMIN=true and ADMIN_PASSWORD env variables
 export async function createDefaultAdmin() {
   try {
+    if (process.env.SEED_ADMIN !== "true") {
+      return;
+    }
+
+    const adminPassword = process.env.ADMIN_PASSWORD;
+    if (!adminPassword || adminPassword.length < 8) {
+      console.warn("⚠️  SEED_ADMIN=true لكن ADMIN_PASSWORD غير موجودة أو أقل من 8 أحرف — تخطي إنشاء المدير.");
+      return;
+    }
+
     const existingAdmin = await db.select().from(users).where(eq(users.username, "admin"));
     if (existingAdmin.length === 0) {
-      const hashedPassword = await bcrypt.hash("admin123", 10);
+      const hashedPassword = await bcrypt.hash(adminPassword, 10);
       await db.insert(users).values({
         username: "admin",
         password: hashedPassword,
@@ -298,7 +317,16 @@ export async function createDefaultAdmin() {
         lastName: "العام",
         role: "admin",
       });
-      console.log("Default admin user created: admin / admin123");
+      console.warn("⚠️  تم إنشاء حساب مدير افتراضي. يُرجى تغيير كلمة المرور من لوحة الإدارة!");
+    } else {
+      const admin = existingAdmin[0];
+      if (admin.role !== "admin") {
+        await db
+          .update(users)
+          .set({ role: "admin", updatedAt: new Date() })
+          .where(eq(users.id, admin.id));
+        console.warn("⚠️  تمت استعادة صلاحية المشرف لحساب admin تلقائياً.");
+      }
     }
   } catch (error) {
     console.error("Error creating default admin:", error);

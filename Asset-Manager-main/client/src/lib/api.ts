@@ -1,5 +1,5 @@
 import { apiRequest } from "./queryClient";
-import type { Member, Contribution, Loan, LoanRepayment, Expense, FamilySettings, User, FundAdjustment } from "@shared/schema";
+import type { Member, Contribution, Loan, LoanRepayment, Expense, FamilySettings, User, FundAdjustment, SystemBackup } from "@shared/schema";
 
 // Members
 export async function getMembers(): Promise<Member[]> {
@@ -104,6 +104,22 @@ export async function updateSettings(data: Partial<FamilySettings>): Promise<Fam
   return res.json();
 }
 
+export async function getBackups(): Promise<SystemBackup[]> {
+  const res = await fetch("/api/backups", { credentials: "include" });
+  if (!res.ok) throw new Error("Failed to fetch backups");
+  return res.json();
+}
+
+export async function createBackup(): Promise<SystemBackup> {
+  const res = await apiRequest("POST", "/api/backups/create", {});
+  return res.json();
+}
+
+export async function applyBackupRetention(): Promise<{ kept: number; deleted: number }> {
+  const res = await apiRequest("POST", "/api/backups/apply-retention", {});
+  return res.json();
+}
+
 // Dashboard
 export interface DashboardSummary {
   totalContributions: number;
@@ -114,6 +130,7 @@ export interface DashboardSummary {
   layers: Array<{
     id: string;
     name: string;
+    arabicName?: string;
     percentage: number;
     amount: number;
     locked: boolean;
@@ -220,4 +237,136 @@ export async function resetYearAllocation(year: number): Promise<any> {
 // System Reset
 export async function resetSystem(): Promise<void> {
   await apiRequest("POST", "/api/system/reset");
+}
+
+// Reports & Analytics
+export interface MonthlyReport {
+  year: number;
+  month: number;
+  totalContributions: number;
+  totalLoans: number;
+  totalExpenses: number;
+  activeMembers: number;
+  netFlow: number;
+  contributionCount: number;
+  loanCount: number;
+  expenseCount: number;
+}
+
+export async function getMonthlyReport(year?: number, month?: number): Promise<MonthlyReport> {
+  const url = new URL("/api/reports/monthly", window.location.origin);
+  if (year) url.searchParams.append("year", year.toString());
+  if (month) url.searchParams.append("month", month.toString());
+  const res = await fetch(url.toString(), { credentials: "include" });
+  if (!res.ok) throw new Error("Failed to fetch monthly report");
+  return res.json();
+}
+
+export interface YearlyReport {
+  year: number;
+  summary: {
+    totalContributions: number;
+    totalLoans: number;
+    totalExpenses: number;
+    contributionCount: number;
+    loanCount: number;
+    expenseCount: number;
+  };
+  monthlyData: Array<{
+    month: number;
+    monthName: string;
+    contributions: number;
+    loans: number;
+    expenses: number;
+    contributionCount: number;
+    loanCount: number;
+    expenseCount: number;
+  }>;
+}
+
+export async function getYearlyReport(year?: number): Promise<YearlyReport> {
+  const url = new URL("/api/reports/yearly", window.location.origin);
+  if (year) url.searchParams.append("year", year.toString());
+  const res = await fetch(url.toString(), { credentials: "include" });
+  if (!res.ok) throw new Error("Failed to fetch yearly report");
+  return res.json();
+}
+
+export interface MemberPerformance {
+  memberId: string;
+  name: string;
+  role: string;
+  totalContributions: number;
+  totalLoans: number;
+  contributionCount: number;
+  loanCount: number;
+  contributionMonths: number;
+  attendanceRate: number;
+  netBalance: number;
+}
+
+export interface MembersPerformanceReport {
+  year: number;
+  members: MemberPerformance[];
+  totals: {
+    contributions: number;
+    loans: number;
+    activeMembers: number;
+  };
+}
+
+export async function getMembersPerformance(year?: number): Promise<MembersPerformanceReport> {
+  const url = new URL("/api/reports/members-performance", window.location.origin);
+  if (year) url.searchParams.append("year", year.toString());
+  const res = await fetch(url.toString(), { credentials: "include" });
+  if (!res.ok) throw new Error("Failed to fetch members performance");
+  return res.json();
+}
+
+export interface LoansAnalysis {
+  year: number;
+  summary: {
+    totalLoans: number;
+    totalAmount: number;
+    avgLoanAmount: number;
+    repaymentRate: number;
+    totalPaid: number;
+    totalRemaining: number;
+  };
+  byType: {
+    urgent: { count: number; total: number; avgAmount: number };
+    standard: { count: number; total: number; avgAmount: number };
+    emergency: { count: number; total: number; avgAmount: number };
+  };
+  recentLoans: Array<{
+    id: string;
+    memberName: string;
+    type: string;
+    amount: number;
+    createdAt: Date;
+    status: string;
+  }>;
+}
+
+export async function getLoansAnalysis(year?: number): Promise<LoansAnalysis> {
+  const url = new URL("/api/reports/loans-analysis", window.location.origin);
+  if (year) url.searchParams.append("year", year.toString());
+  const res = await fetch(url.toString(), { credentials: "include" });
+  if (!res.ok) throw new Error("Failed to fetch loans analysis");
+  return res.json();
+}
+
+export interface ChartDataResponse {
+  type: string;
+  period: string;
+  data: any;
+}
+
+export async function getChartData(type: string, period?: string): Promise<ChartDataResponse> {
+  const url = new URL("/api/reports/chart-data", window.location.origin);
+  url.searchParams.append("type", type);
+  if (period) url.searchParams.append("period", period);
+  const res = await fetch(url.toString(), { credentials: "include" });
+  if (!res.ok) throw new Error("Failed to fetch chart data");
+  return res.json();
 }

@@ -69,7 +69,9 @@ export function useAuth() {
     mutationFn: logout,
     onSuccess: () => {
       queryClient.setQueryData(["/api/auth/user"], null);
-      queryClient.clear();
+      queryClient.removeQueries({ queryKey: ["user-profile"] });
+      queryClient.removeQueries({ queryKey: ["admin-users"] });
+      queryClient.removeQueries({ queryKey: ["fund-adjustments"] });
     },
   });
 

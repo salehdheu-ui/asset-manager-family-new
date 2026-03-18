@@ -23,7 +23,7 @@ export const users = pgTable("users", {
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
   role: varchar("role").notNull().default("user"), // 'admin' | 'user'
-  memberId: varchar("member_id"), // Link to family member
+  memberId: varchar("member_id"), // Link to family member — FK enforced at application level (circular dep with schema.ts)
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

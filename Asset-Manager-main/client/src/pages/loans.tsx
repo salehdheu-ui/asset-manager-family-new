@@ -18,11 +18,16 @@ import { useToast } from "@/hooks/use-toast";
 
 function extractErrorMessage(error: unknown): string {
   if (error instanceof Error) {
+    if (error.message === "Failed to fetch") {
+      return "تعذر الاتصال بالخادم. حاول تحديث الصفحة ثم أعد المحاولة.";
+    }
     try {
       const match = error.message.match(/^\d+:\s*([\s\S]+)$/);
       if (match) {
         const parsed = JSON.parse(match[1]);
-        if (parsed.error) return parsed.error;
+        if (typeof parsed.error === "string") return parsed.error;
+        if (Array.isArray(parsed.error) && parsed.error[0]?.message) return parsed.error[0].message;
+        if (typeof parsed.message === "string") return parsed.message;
       }
     } catch {}
     return error.message;
@@ -39,6 +44,9 @@ export default function Loans() {
   const [expandedLoan, setExpandedLoan] = useState<string | null>(null);
   const [repayments, setRepayments] = useState<Record<string, any[]>>({});
   const [openDialog, setOpenDialog] = useState<string | null>(null);
+  const [loanAmounts, setLoanAmounts] = useState<Record<string, string>>({});
+  const [loanMonths, setLoanMonths] = useState<Record<string, string>>({});
+  const [loanMembers, setLoanMembers] = useState<Record<string, string>>({});
   
   const { data: allLoans = [], isLoading: loansLoading } = useQuery({
     queryKey: ["loans"],
@@ -64,6 +72,9 @@ export default function Loans() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["loans"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] });
+      setLoanAmounts({});
+      setLoanMonths({});
+      setLoanMembers({});
       setOpenDialog(null);
       toast({ 
         title: "تم تقديم طلب السلفة",
@@ -258,7 +269,8 @@ export default function Loans() {
                             id={`loan-member-${loan.id}`}
                             data-testid={`select-member-${loan.id}`}
                             className="w-full p-4 border-2 border-primary/10 rounded-2xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all"
-                            defaultValue={members[0]?.id}
+                            value={loanMembers[loan.id] ?? (isGuardian ? members[0]?.id ?? "" : userMemberId ?? "")}
+                            onChange={(e) => setLoanMembers((prev) => ({ ...prev, [loan.id]: e.target.value }))}
                           >
                             {members.map(m => (
                               <option key={m.id} value={m.id}>{m.name}</option>
@@ -274,6 +286,8 @@ export default function Loans() {
                               data-testid={`input-amount-${loan.id}`}
                               className="w-full text-4xl font-mono p-6 border-2 border-primary/10 rounded-3xl text-center focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all" 
                               placeholder="000"
+                              value={loanAmounts[loan.id] ?? ""}
+                              onChange={(e) => setLoanAmounts((prev) => ({ ...prev, [loan.id]: e.target.value }))}
                             />
                             <div className="absolute left-6 top-1/2 -translate-y-1/2 text-primary font-bold text-lg">ر.ع</div>
                           </div>
@@ -287,7 +301,8 @@ export default function Loans() {
                             id={`loan-months-${loan.id}`}
                             data-testid={`select-months-${loan.id}`}
                             className="w-full p-4 border-2 border-primary/10 rounded-2xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all"
-                            defaultValue="12"
+                            value={loanMonths[loan.id] ?? "12"}
+                            onChange={(e) => setLoanMonths((prev) => ({ ...prev, [loan.id]: e.target.value }))}
                           >
                             <option value="6">6 أشهر</option>
                             <option value="12">12 شهر</option>
@@ -303,11 +318,21 @@ export default function Loans() {
                       <button 
                         data-testid={`button-submit-loan-${loan.id}`}
                         onClick={() => {
-                          const memberId = (document.getElementById(`loan-member-${loan.id}`) as HTMLSelectElement).value;
-                          const amount = (document.getElementById(`loan-amount-${loan.id}`) as HTMLInputElement).value;
-                          const months = (document.getElementById(`loan-months-${loan.id}`) as HTMLSelectElement).value;
+                          const memberId = isGuardian
+                            ? (loanMembers[loan.id] ?? members[0]?.id ?? "")
+                            : (userMemberId ?? loanMembers[loan.id] ?? "");
+                          const amount = loanAmounts[loan.id] ?? "";
+                          const months = loanMonths[loan.id] ?? "12";
                           if (!amount || Number(amount) <= 0) {
                             toast({ title: "يرجى إدخال مبلغ صحيح", variant: "destructive" });
+                            return;
+                          }
+                          if (!memberId) {
+                            toast({
+                              title: "تعذر تقديم الطلب",
+                              description: "حسابك غير مرتبط بعضو في الصندوق. تواصل مع المشرف لربط الحساب.",
+                              variant: "destructive",
+                            });
                             return;
                           }
                           if (memberId) {

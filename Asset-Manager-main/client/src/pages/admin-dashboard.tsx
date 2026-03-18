@@ -236,6 +236,25 @@ export default function AdminDashboard() {
           <div className="absolute right-[-20px] top-[-20px] w-40 h-40 bg-white/10 rounded-full blur-3xl" />
         </div>
 
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <div className="rounded-[1.5rem] border border-amber-200 bg-amber-50/80 p-4">
+            <div className="mb-2 flex items-center gap-2 text-amber-700">
+              <AlertTriangle className="h-4 w-4" />
+              <span className="text-xs font-bold">تنبيه أمني</span>
+            </div>
+            <p className="text-sm font-bold text-amber-900">تأكد من تغيير كلمة مرور المدير الافتراضية قبل اعتماد النظام.</p>
+            <p className="mt-1 text-xs leading-6 text-amber-700">يوصى بإعداد كلمة مرور قوية ومراجعة الحسابات الإدارية قبل التشغيل الفعلي.</p>
+          </div>
+          <div className="rounded-[1.5rem] border border-blue-200 bg-blue-50/80 p-4">
+            <div className="mb-2 flex items-center gap-2 text-blue-700">
+              <Lock className="h-4 w-4" />
+              <span className="text-xs font-bold">إجراءات حساسة</span>
+            </div>
+            <p className="text-sm font-bold text-blue-900">الحذف، التصفير، وتعديل الصلاحيات تؤثر مباشرة على النظام.</p>
+            <p className="mt-1 text-xs leading-6 text-blue-700">نفّذ العمليات الحساسة بعد مراجعة مزدوجة وتأكيد واضح قبل الإرسال.</p>
+          </div>
+        </div>
+
         {/* Add User Button */}
         <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
           <DialogTrigger asChild>

@@ -64,6 +64,8 @@ export default function YearlyPaymentMatrix() {
 
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [openDialogKey, setOpenDialogKey] = useState<string | null>(null);
+  const [bulkAmounts, setBulkAmounts] = useState<Record<string, string>>({});
+  const [selectedBulkMonths, setSelectedBulkMonths] = useState<Record<string, number[]>>({});
 
   const approveMutation = useMutation({
     mutationFn: approveContribution,
@@ -89,6 +91,39 @@ export default function YearlyPaymentMatrix() {
     },
     onError: (error) => {
       toast({ title: "حدث خطأ", description: (error as any)?.message || "تعذر حذف المساهمة", variant: "destructive" });
+    },
+  });
+
+  const bulkCreateMutation = useMutation({
+    mutationFn: async ({ memberId, months, amount }: { memberId: string; months: number[]; amount: string }) => {
+      return Promise.all(
+        months.map((month) =>
+          createContribution({
+            memberId,
+            year: selectedYear,
+            month,
+            amount,
+            status: "pending_approval",
+          }),
+        ),
+      );
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["contributions"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] });
+      setBulkAmounts((prev) => ({ ...prev, [variables.memberId]: "" }));
+      setOpenDialogKey(null);
+      toast({
+        title: "تم تقديم طلبات الدفع",
+        description: `تم إرسال ${variables.months.length} مساهمة بالمبلغ نفسه لاعتماد الوصي.`,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "حدث خطأ",
+        description: (error as any)?.message || "تعذر تقديم طلبات الأشهر المحددة",
+        variant: "destructive",
+      });
     },
   });
 
@@ -208,6 +243,9 @@ export default function YearlyPaymentMatrix() {
               const memberPending = contributions.filter(c => c.memberId === member.id && c.status === 'pending_approval');
               const totalApproved = memberContributions.reduce((sum, c) => sum + Number(c.amount), 0);
               const paidMonths = memberContributions.length;
+              const availableMonths = months.filter((month) => !getContribution(member.id, month.id));
+              const bulkDialogKey = `bulk-${member.id}`;
+              const chosenMonths = selectedBulkMonths[member.id] ?? availableMonths.map((month) => month.id);
 
               return (
                 <motion.div 
@@ -236,12 +274,141 @@ export default function YearlyPaymentMatrix() {
                         </div>
                       </div>
                     </div>
-                    {memberPending.length > 0 && (
-                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200/60">
-                        <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse" />
-                        <span className="text-[9px] font-bold text-amber-600">{memberPending.length} معلق</span>
-                      </div>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {availableMonths.length > 0 && (
+                        <Dialog open={openDialogKey === bulkDialogKey} onOpenChange={(open) => {
+                          setOpenDialogKey(open ? bulkDialogKey : null);
+                          if (!open) setConfirmDeleteId(null);
+                          if (open) {
+                            setSelectedBulkMonths((prev) => ({
+                              ...prev,
+                              [member.id]: prev[member.id] ?? availableMonths.map((month) => month.id),
+                            }));
+                          }
+                        }}>
+                          <DialogTrigger asChild>
+                            <button
+                              className="px-3 py-2 rounded-xl bg-primary/8 text-primary border border-primary/15 text-[11px] font-bold hover:bg-primary/12 transition-all active:scale-95"
+                              data-testid={`button-bulk-months-${member.id}`}
+                            >
+                              تحديد كل الأشهر
+                            </button>
+                          </DialogTrigger>
+                          <DialogContent className="w-[calc(100vw-1.5rem)] max-w-sm sm:max-w-sm font-sans" dir="rtl">
+                            <DialogHeader>
+                              <DialogTitle className="font-heading text-lg font-bold">تحديد الأشهر</DialogTitle>
+                              <DialogDescription className="font-medium text-sm">
+                                العضو: {member.name} - السنة: {selectedYear}
+                              </DialogDescription>
+                            </DialogHeader>
+                            <div className="py-3 space-y-4">
+                              <div className="bg-primary/5 p-3 rounded-xl border border-primary/10 space-y-1.5">
+                                <p className="text-xs font-bold text-primary">يمكنك تحديد كل الأشهر أو اختيار أشهر معيّنة</p>
+                                <p className="text-xs text-muted-foreground leading-relaxed">
+                                  المتاح حاليًا: {availableMonths.map((month) => month.name).join("، ")}
+                                </p>
+                              </div>
+                              <div className="space-y-2.5">
+                                <div className="flex items-center justify-between gap-2 flex-wrap">
+                                  <label className="text-xs font-bold block text-muted-foreground mr-1">اختيار الأشهر</label>
+                                  <div className="flex items-center gap-1.5">
+                                    <button
+                                      type="button"
+                                      onClick={() => setSelectedBulkMonths((prev) => ({ ...prev, [member.id]: availableMonths.map((month) => month.id) }))}
+                                      className="px-2.5 py-1 rounded-md bg-primary/8 text-primary border border-primary/15 text-[10px] font-bold hover:bg-primary/12 transition-all"
+                                    >
+                                      تحديد الكل
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setSelectedBulkMonths((prev) => ({ ...prev, [member.id]: [] }))}
+                                      className="px-2.5 py-1 rounded-md bg-muted text-muted-foreground border border-border text-[10px] font-bold hover:bg-muted/80 transition-all"
+                                    >
+                                      إلغاء الكل
+                                    </button>
+                                  </div>
+                                </div>
+                                <div className="grid grid-cols-3 gap-1.5">
+                                  {availableMonths.map((month) => {
+                                    const isSelected = chosenMonths.includes(month.id);
+                                    return (
+                                      <button
+                                        key={month.id}
+                                        type="button"
+                                        onClick={() => {
+                                          setSelectedBulkMonths((prev) => {
+                                            const current = prev[member.id] ?? availableMonths.map((item) => item.id);
+                                            const next = current.includes(month.id)
+                                              ? current.filter((id) => id !== month.id)
+                                              : [...current, month.id];
+                                            return { ...prev, [member.id]: next };
+                                          });
+                                        }}
+                                        className={cn(
+                                          "min-h-10 px-2 py-2 rounded-lg border text-[11px] font-bold transition-all active:scale-95 leading-tight",
+                                          isSelected
+                                            ? "bg-primary text-primary-foreground border-primary"
+                                            : "bg-muted/30 text-muted-foreground border-border hover:bg-muted/50"
+                                        )}
+                                        data-testid={`button-select-bulk-month-${member.id}-${month.id}`}
+                                      >
+                                        {month.name}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                                <p className="text-[11px] text-muted-foreground">
+                                  تم اختيار {chosenMonths.length} من أصل {availableMonths.length} شهر
+                                </p>
+                              </div>
+                              <div className="space-y-2">
+                                <label className="text-xs font-bold block text-muted-foreground mr-1">المبلغ الموحد لكل شهر</label>
+                                <div className="relative">
+                                  <input
+                                    type="number"
+                                    value={bulkAmounts[member.id] ?? "100"}
+                                    onChange={(e) => setBulkAmounts((prev) => ({ ...prev, [member.id]: e.target.value }))}
+                                    className="w-full h-16 text-2xl font-mono px-4 border-2 border-primary/10 rounded-2xl text-center focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all"
+                                    placeholder="0"
+                                    data-testid={`input-bulk-amount-${member.id}`}
+                                  />
+                                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-primary font-bold text-sm">ر.ع</div>
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => {
+                                  const amount = bulkAmounts[member.id] ?? "100";
+                                  if (!amount || Number(amount) <= 0) {
+                                    toast({ title: "يرجى إدخال مبلغ صحيح", variant: "destructive" });
+                                    return;
+                                  }
+                                  if (chosenMonths.length === 0) {
+                                    toast({ title: "يرجى اختيار شهر واحد على الأقل", variant: "destructive" });
+                                    return;
+                                  }
+                                  bulkCreateMutation.mutate({
+                                    memberId: member.id,
+                                    months: chosenMonths,
+                                    amount,
+                                  });
+                                }}
+                                disabled={bulkCreateMutation.isPending}
+                                className="w-full bg-primary text-primary-foreground py-3.5 rounded-xl font-bold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 text-sm active:scale-95 disabled:opacity-50"
+                                data-testid={`button-submit-bulk-${member.id}`}
+                              >
+                                {bulkCreateMutation.isPending ? "جاري الإرسال..." : "تقديم للأشهر المحددة"}
+                              </button>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      )}
+                      {memberPending.length > 0 && (
+                        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200/60">
+                          <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse" />
+                          <span className="text-[9px] font-bold text-amber-600">{memberPending.length} معلق</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Progress Bar */}

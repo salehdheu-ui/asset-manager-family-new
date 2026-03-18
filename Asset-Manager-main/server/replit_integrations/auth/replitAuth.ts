@@ -1,3 +1,4 @@
+import "../../env";
 import * as client from "openid-client";
 import { Strategy, type VerifyFunction } from "openid-client/passport";
 
@@ -53,6 +54,8 @@ function updateUserSession(
 async function upsertUser(claims: any) {
   await authStorage.upsertUser({
     id: claims["sub"],
+    username: claims["email"] ?? claims["sub"],
+    password: "replit-auth-managed",
     email: claims["email"],
     firstName: claims["first_name"],
     lastName: claims["last_name"],

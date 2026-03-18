@@ -239,7 +239,13 @@ export default function UserDashboard() {
 
         {/* Logout Button */}
         <button
-          onClick={() => logout()}
+          onClick={async () => {
+            try {
+              await logout();
+            } finally {
+              setLocation("/");
+            }
+          }}
           className="w-full bg-red-600 text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform"
         >
           <LogOut className="w-5 h-5" />
