@@ -1,0 +1,308 @@
+You are an autonomous system designer, product architect, and governance engineer
+with more than 20 years of experience in:
+
+- Family funds
+- Long-term wealth preservation
+- Governance systems
+- Secure mobile applications
+- Omani cultural and social context
+
+Your task is to DESIGN and GENERATE a COMPLETE mobile-only application
+(Android + iOS ready) for ONE OMANI FAMILY FUND established in 2020.
+
+This system is NOT a finance app.
+It is a FAMILY FUND OPERATING SYSTEM (Family Fund OS).
+
+================================================
+CORE PHILOSOPHY
+================================================
+The system exists to:
+- Preserve wealth before growing it
+- Protect family harmony over financial return
+- Prevent impulsive behavior
+- Operate across generations
+- Respect Omani values: discretion, trust, responsibility
+
+Money is a TOOL, not a goal.
+
+================================================
+FAMILY CONTEXT
+================================================
+- One family only
+- 5 members
+- Arabic-first (RTL)
+- Simple, human language (no banking terms)
+- Mobile application ONLY
+- Offline-friendly where possible
+- Internal misuse prevention is more important than external hacking
+
+================================================
+CAPITAL STRUCTURE (NON-NEGOTIABLE)
+================================================
+Total fund capital is divided into fixed layers:
+
+- 50% Protected Capital (untouchable)
+- 20% Emergency Reserve
+- 20% Flexible Capital
+- 10% Growth Capital (locked until Safety Line reached)
+
+Rules:
+- No loans, charity, or spending from Protected Capital
+- Growth Capital cannot be used until Safety Line is achieved
+- Any violation must be blocked by the system
+
+================================================
+ROLE & PERMISSION MODEL (DYNAMIC)
+================================================
+Roles are NOT fixed.
+
+Any family member may activate:
+- Guardian Mode (Self-Appointment)
+
+Guardian Mode requires:
+- Reason selection (predefined list only)
+- Duration (system recommends; unlimited allowed with warning)
+- Automatic immutable logging
+
+Guardian powers:
+- Appoint or remove Fund Custodian (Amin Al-Sندوق)
+- Define spending limits
+- Activate Emergency Mode
+- Override rules temporarily (with warnings and delay)
+
+Rules:
+- Guardian and Custodian can be the same person ONLY
+  after explicit confirmation and cooling-off period
+- High-risk actions require 24–72 hour delay
+
+================================================
+ACCESS SECURITY (ENTRY & EXIT SAFETY) 🔐
+================================================
+
+--- USER ENTRY (LOGIN) RULES ---
+
+The system must enforce multi-layered secure entry:
+
+1. Primary Authentication
+- Device-bound login
+- Strong PIN (minimum length enforced)
+- Biometric authentication (Face ID / Fingerprint)
+
+2. Context Awareness
+- New device login requires Guardian confirmation
+- Location anomaly triggers verification
+- Time-based unusual access triggers warning
+
+3. Session Safety
+- Automatic session timeout after inactivity
+- Re-authentication required for high-risk actions
+- Background screenshot prevention where supported
+
+4. Failed Access Protection
+- Progressive lockout after failed attempts
+- Guardian notified after repeated failures
+- Trust Ledger entry for suspicious access
+
+--- USER EXIT (LOGOUT) & SESSION TERMINATION ---
+
+1. Manual Exit
+- Clear logout button
+- Immediate session invalidation
+- Sensitive screens auto-blurred on exit
+
+2. Automatic Exit
+- Forced logout on:
+  - Device change
+  - Role revocation
+  - Guardian removal
+  - Emergency Mode activation
+
+3. Silent Exit
+- If Guardian removes a role:
+  - User is logged out silently
+  - No confrontation message shown
+  - Neutral system message displayed on next login
+
+--- ROLE EXIT & SAFETY ---
+
+- When a role is removed:
+  - All active permissions are revoked immediately
+  - Pending actions are frozen
+  - Trust Ledger logs the exit event permanently
+
+- No user may retain cached access after role removal
+
+================================================
+TRUST LEDGER (CRITICAL)
+================================================
+The system must include an IMMUTABLE TRUST LEDGER.
+
+It logs permanently:
+- Guardian activations
+- Custodian changes
+- Spending limits
+- Loans
+- Zakat
+- Charity
+- Emergency actions
+- Overrides
+- Login anomalies
+- Forced exits
+- Role revocations
+
+Rules:
+- No deletion
+- No editing
+- Read-only access based on role
+- Designed for future audit
+
+================================================
+GOVERNANCE MODULE
+================================================
+- Digital Family Charter
+- Decision rules:
+  - Consensus
+  - Weighted approval
+  - Guardian override
+- Emergency Mode:
+  - Temporary freeze of actions
+- Private dispute log (Guardian only)
+
+================================================
+FUND LEDGER MODULE
+================================================
+- Monthly contributions (flexible)
+- Individual and group increases
+- Expense tracking (linked to goals)
+- Emergency reserve tracking
+- Safety Line enforcement
+  (no investment before reaching it)
+
+================================================
+LOAN (SALAF) MODULE
+================================================
+Loans are assistance, not entitlement.
+No interest. No public comparison.
+
+Loan Types:
+
+1. Urgent Loan (عاجل)
+- Source: Flexible Capital
+- Max: 3% of total fund OR 15% of flexible capital (lower applies)
+- Immediate release
+- Review after 30 days
+- No repeat within 90 days
+
+2. Emergency Loan (طارئ)
+- Source: Emergency Reserve
+- Max: 8% of total fund OR 40% of emergency reserve
+- Guardian approval only
+- Immediate logging
+- No voting
+
+3. Non-Urgent Loan (غير عاجل)
+- Source: Flexible Capital
+- Max: 6% of total fund OR 30% of flexible capital
+- Reflection period: 48–72 hours
+- Voting + Guardian confirmation
+- Soft repayment plan
+- No new loan if previous loan unresolved within 12 months
+
+================================================
+ZAKAT MODULE
+================================================
+Zakat is a mandatory religious obligation.
+
+Rules:
+- Rate: 2.5%
+- Calculated annually on zakatable assets only
+- Excluded from loans, expenses, and charity
+- Guardian confirmation required
+- Logged permanently in Trust Ledger
+- Never auto-paid
+
+================================================
+CHARITY MODULE
+================================================
+Charity is voluntary but governed.
+
+Rules:
+- Max 3% of total fund annually
+- OR 15% of flexible capital (lower applies)
+- Cannot affect Emergency or Protected Capital
+- Guardian approval required above 1%
+- Details remain private
+
+================================================
+GOALS MODULE
+================================================
+- Annual goals
+- Medium-term goals (3–5 years)
+- Strategic goals (10–20 years)
+
+Each goal includes:
+- Linked amount
+- Temporary responsible role
+- Simple KPI
+- Review date
+- Calm progress visualization
+
+================================================
+DECISION MODULE
+================================================
+- Decision request
+- Purpose explanation
+- Financial + family impact
+- Weighted voting
+- Mandatory reflection period
+- Automatic documentation
+
+No instant decisions allowed.
+
+================================================
+REPORTING MODULE
+================================================
+- Monthly summary
+- Aggregated numbers only
+- No individual ranking
+- Simple, reassuring language
+
+================================================
+AI ASSISTANT (ADVISORY ONLY)
+================================================
+The AI must:
+- Warn before risky actions
+- Ask reflective questions
+- Highlight similar past events
+- Suggest safer alternatives
+- Link actions to goals and Safety Line
+
+The AI must NEVER:
+- Decide
+- Approve
+- Vote
+- Override humans
+
+================================================
+FINAL PRINCIPLE
+================================================
+If an action increases money but risks family harmony,
+the system must recommend caution.
+
+================================================
+OUTPUT REQUIRED
+================================================
+Generate:
+1. App architecture
+2. Data models
+3. Permission logic
+4. Mobile screen flow
+5. Sample Arabic UI text
+6. AI behavior rules
+7. System safeguards
+
+The system must feel:
+- Calm
+- Trustworthy
+- Slow by design
+- Built to be inherited, not consumed
