@@ -58,7 +58,18 @@ export function registerContributionRoutes(app: Express) {
     }
   });
 
-  app.delete("/api/contributions/:id", isAuthenticated, isAdmin, async (_req, res) => {
-    return res.status(403).json({ error: "تم تعطيل الحذف النهائي حفاظاً على البيانات" });
+  app.delete("/api/contributions/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const contributionId = req.params.id as string;
+      const contribution = (await storage.getContributions()).find((item) => item.id === contributionId);
+      if (!contribution) {
+        return res.status(404).json({ error: "Contribution not found" });
+      }
+      await storage.deleteContribution(contributionId);
+      await rebalanceYear(contribution.year);
+      return res.status(204).send();
+    } catch (error) {
+      return res.status(500).json({ error: "Failed to delete contribution" });
+    }
   });
 }

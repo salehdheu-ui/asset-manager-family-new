@@ -102,8 +102,20 @@ export function registerLoanRoutes(app: Express) {
     }
   });
 
-  app.delete("/api/loans/:id", isAuthenticated, async (_req, res) => {
-    return res.status(403).json({ error: "تم تعطيل الحذف النهائي حفاظاً على البيانات" });
+  app.delete("/api/loans/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const loanId = req.params.id as string;
+      const loan = (await storage.getLoans()).find((item) => item.id === loanId);
+      if (!loan) {
+        return res.status(404).json({ error: "Loan not found" });
+      }
+      await storage.deleteLoan(loanId);
+      const loanYear = (loan.approvedAt || loan.createdAt || new Date()).getFullYear();
+      await rebalanceYear(loanYear);
+      return res.status(204).send();
+    } catch (error) {
+      return res.status(500).json({ error: "Failed to delete loan" });
+    }
   });
 
   // Loan Repayments

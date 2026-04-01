@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { storage } from "../storage";
-import { insertFundAdjustmentSchema } from "@shared/schema";
+import { capitalAllocations, contributions, expenses, familySettings, fundAdjustments, insertFundAdjustmentSchema, loanRepayments, loans, members, systemBackups } from "@shared/schema";
 import { z } from "zod";
 import { isAuthenticated, isAdmin } from "../auth";
 import { db } from "../db";
@@ -89,12 +89,38 @@ export function registerAdminRoutes(app: Express) {
     }
   });
 
-  app.delete("/api/fund-adjustments/:id", isAuthenticated, isAdmin, async (_req, res) => {
-    return res.status(403).json({ error: "تم تعطيل الحذف النهائي حفاظاً على البيانات" });
+  app.delete("/api/fund-adjustments/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const adjustmentId = req.params.id as string;
+      const adjustment = (await storage.getFundAdjustments()).find((item) => item.id === adjustmentId);
+      if (!adjustment) {
+        return res.status(404).json({ error: "Fund adjustment not found" });
+      }
+      await storage.deleteFundAdjustment(adjustmentId);
+      await rebalanceYear((adjustment.createdAt || new Date()).getFullYear());
+      return res.status(204).send();
+    } catch (error) {
+      return res.status(500).json({ error: "Failed to delete fund adjustment" });
+    }
   });
 
   // ============= System Reset (Admin Only) =============
   app.post("/api/system/reset", isAuthenticated, isAdmin, async (_req: any, res) => {
-    return res.status(403).json({ error: "تم تعطيل إعادة تصفير النظام حفاظاً على البيانات" });
+    try {
+      await db.transaction(async (tx) => {
+        await tx.delete(loanRepayments);
+        await tx.delete(loans);
+        await tx.delete(contributions);
+        await tx.delete(expenses);
+        await tx.delete(fundAdjustments);
+        await tx.delete(capitalAllocations);
+        await tx.delete(systemBackups);
+        await tx.delete(members);
+        await tx.delete(familySettings);
+      });
+      return res.status(204).send();
+    } catch (error) {
+      return res.status(500).json({ error: "Failed to reset system" });
+    }
   });
 }
