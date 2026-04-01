@@ -180,9 +180,9 @@ export default function Reports() {
       [
         ...contributions
           .filter((c) => c.status === "approved")
-          .map<TransactionItem>((c) => ({
+          .map((c) => ({
             id: c.id,
-            type: "contribution",
+            type: "contribution" as const,
             title: `مساهمة شهر ${c.month}/${c.year}`,
             amount: Number(c.amount),
             rawDate: c.createdAt ? new Date(c.createdAt).toISOString() : "",
@@ -191,13 +191,12 @@ export default function Reports() {
             month: c.month,
             memberName: getMemberName(c.memberId),
             status: "معتمد",
-            repaymentMonths: undefined,
           })),
-        ...expenses.map<TransactionItem>((e) => {
+        ...expenses.map((e) => {
           const d = e.createdAt ? new Date(e.createdAt) : null;
           return {
             id: e.id,
-            type: "expense",
+            type: "expense" as const,
             title: e.title,
             amount: Number(e.amount),
             rawDate: d ? d.toISOString() : "",
@@ -206,16 +205,15 @@ export default function Reports() {
             month: d ? d.getMonth() + 1 : 0,
             memberName: "النظام",
             status: "منفذ",
-            repaymentMonths: undefined,
           };
         }),
         ...loans
           .filter((l) => l.status === "approved")
-          .map<TransactionItem>((l) => {
+          .map((l) => {
             const d = l.createdAt ? new Date(l.createdAt) : null;
             return {
               id: l.id,
-              type: "loan",
+              type: "loan" as const,
               title: l.title,
               amount: Number(l.amount),
               rawDate: d ? d.toISOString() : "",
@@ -224,7 +222,7 @@ export default function Reports() {
               month: d ? d.getMonth() + 1 : 0,
               memberName: getMemberName(l.memberId),
               status: "معتمد",
-              repaymentMonths: l.repaymentMonths ?? undefined,
+              repaymentMonths: l.repaymentMonths,
             };
           }),
       ].sort((a, b) => new Date(b.rawDate).getTime() - new Date(a.rawDate).getTime()),
@@ -362,7 +360,7 @@ export default function Reports() {
       );
 
       const capitalSheet = XLSX.utils.json_to_sheet(
-        capitalDistributionData.map((item: { name: string; value: number; percentage: number }) => ({
+        capitalDistributionData.map((item) => ({
           البند: item.name,
           القيمة: item.value,
           النسبة: item.percentage,
