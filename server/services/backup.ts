@@ -1,14 +1,11 @@
 import { mkdir, readFile, rm, stat, writeFile } from "fs/promises";
 import path from "path";
-import { fileURLToPath } from "url";
 import { db } from "../db";
 import { contributions, expenses, familySettings, fundAdjustments, loanRepayments, loans, members, systemBackups } from "@shared/schema";
 import { users } from "@shared/models/auth";
 import { asc, desc, eq } from "drizzle-orm";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const backupRoot = path.resolve(__dirname, "../../backups");
+const backupRoot = path.resolve(process.cwd(), "backups");
 
 function pad(value: number) {
   return value.toString().padStart(2, "0");
