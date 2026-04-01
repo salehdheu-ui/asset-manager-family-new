@@ -31,11 +31,12 @@ export function getSession() {
   return session({
     secret: sessionSecret || "dev-only-secret-" + Math.random().toString(36),
     store: sessionStore,
+    proxy: true,
     resave: false,
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: "auto",
       sameSite: "lax",
       maxAge: sessionTtl,
     },
