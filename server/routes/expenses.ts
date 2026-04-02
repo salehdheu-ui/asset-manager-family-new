@@ -42,19 +42,7 @@ export function registerExpenseRoutes(app: Express) {
     }
   });
 
-  app.delete("/api/expenses/:id", isAuthenticated, isAdmin, async (req, res) => {
-    try {
-      const expenseId = req.params.id as string;
-      const expense = (await storage.getExpenses()).find((item) => item.id === expenseId);
-      if (!expense) {
-        return res.status(404).json({ error: "Expense not found" });
-      }
-      await storage.deleteExpense(expenseId);
-      const expenseYear = (expense.createdAt || new Date()).getFullYear();
-      await rebalanceYear(expenseYear);
-      return res.status(204).send();
-    } catch (error) {
-      return res.status(500).json({ error: "Failed to delete expense" });
-    }
+  app.delete("/api/expenses/:id", isAuthenticated, isAdmin, async (_req, res) => {
+    return res.status(403).json({ error: "تم تعطيل الحذف النهائي حفاظاً على البيانات" });
   });
 }

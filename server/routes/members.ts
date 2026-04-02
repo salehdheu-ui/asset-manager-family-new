@@ -44,17 +44,7 @@ export function registerMemberRoutes(app: Express) {
     }
   });
 
-  app.delete("/api/members/:id", isAuthenticated, isAdmin, async (req, res) => {
-    try {
-      const memberId = req.params.id as string;
-      const member = await storage.getMember(memberId);
-      if (!member) {
-        return res.status(404).json({ error: "Member not found" });
-      }
-      await storage.deleteMember(memberId);
-      return res.status(204).send();
-    } catch (error) {
-      return res.status(500).json({ error: "Failed to delete member" });
-    }
+  app.delete("/api/members/:id", isAuthenticated, isAdmin, async (_req, res) => {
+    return res.status(403).json({ error: "تم تعطيل الحذف النهائي حفاظاً على البيانات" });
   });
 }
