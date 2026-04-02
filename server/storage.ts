@@ -26,7 +26,7 @@ export interface IStorage {
   getContributionsByYearAndMonth(year: number, month: number): Promise<Contribution[]>;
   createContribution(contribution: InsertContribution): Promise<Contribution>;
   approveContribution(id: string): Promise<Contribution | undefined>;
-  deleteContribution(id: string): Promise<void>;
+  deleteContribution(id: string): Promise<Contribution | undefined>;
 
   // Loans
   getLoans(): Promise<Loan[]>;
@@ -129,8 +129,9 @@ export class DatabaseStorage implements IStorage {
     return updated;
   }
 
-  async deleteContribution(id: string): Promise<void> {
-    await db.delete(contributions).where(eq(contributions.id, id));
+  async deleteContribution(id: string): Promise<Contribution | undefined> {
+    const [deleted] = await db.delete(contributions).where(eq(contributions.id, id)).returning();
+    return deleted;
   }
 
   // Loans
