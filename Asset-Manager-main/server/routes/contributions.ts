@@ -60,16 +60,15 @@ export function registerContributionRoutes(app: Express) {
 
   app.delete("/api/contributions/:id", isAuthenticated, isAdmin, async (req, res) => {
     try {
-      const contributionId = req.params.id as string;
-      const contribution = (await storage.getContributions()).find((item) => item.id === contributionId);
-      if (!contribution) {
+      const contribId = req.params.id as string;
+      const deletedContribution = await storage.deleteContribution(contribId);
+      if (!deletedContribution) {
         return res.status(404).json({ error: "Contribution not found" });
       }
-      await storage.deleteContribution(contributionId);
-      await rebalanceYear(contribution.year);
-      return res.status(204).send();
+      await rebalanceYear(deletedContribution.year);
+      res.status(204).send();
     } catch (error) {
-      return res.status(500).json({ error: "Failed to delete contribution" });
+      res.status(500).json({ error: "Failed to delete contribution" });
     }
   });
 }

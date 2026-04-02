@@ -14,7 +14,7 @@ interface CapitalDistributionChartProps {
   delay?: number;
 }
 
-const defaultColors = ["#10b981", "#f59e0b", "#6366f1", "#3b82f6"];
+const defaultColors = ["#3b82f6", "#f59e0b", "#10b981", "#6366f1"];
 const formatCompactCurrency = (value: number) =>
   value >= 1000 ? `${(value / 1000).toFixed(value >= 10000 ? 0 : 1)}k` : value.toLocaleString("en-US");
 
@@ -43,19 +43,22 @@ export function CapitalDistributionChart({
   }));
 
   const total = data.reduce((sum, item) => sum + item.value, 0);
-  const highestSlice = [...chartData].sort((a, b) => b.value - a.value)[0];
+  const isEmpty = total === 0;
+
+  const displayData = isEmpty
+    ? chartData.map((item) => ({ ...item, value: 1 }))
+    : chartData;
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       const item = payload[0].payload;
-      const percentage = total > 0 ? Math.round((item.value / total) * 100) : 0;
+      if (isEmpty) return null;
+      const percentage = Math.round((item.value / total) * 100);
       return (
         <div className="rounded-2xl border border-border/60 bg-background/95 px-3 py-2 text-xs shadow-xl backdrop-blur">
-          <p className="mb-1 font-bold text-foreground">{item.name}</p>
-          <p className="text-muted-foreground">
-            {item.value.toLocaleString()} ر.ع
-          </p>
-          <p className="font-medium text-primary">{percentage}% من الإجمالي</p>
+          <p className="mb-1 font-bold" style={{ color: item.fill }}>{item.name}</p>
+          <p className="text-muted-foreground">{item.value.toLocaleString()} ر.ع</p>
+          <p className="font-bold" style={{ color: item.fill }}>{percentage}% من الإجمالي</p>
         </div>
       );
     }
@@ -68,75 +71,79 @@ export function CapitalDistributionChart({
       icon={<PieChartIcon className="w-6 h-6" />}
       delay={delay}
     >
-      {/* Pie chart centered at top */}
-      <div className="relative flex items-center justify-center">
-        <div className="h-[260px] w-full max-w-[260px]">
+      {/* Donut Chart — top, centered */}
+      <div className="relative flex items-center justify-center py-2">
+        <div className="h-[240px] w-full max-w-[280px]">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
-                data={chartData}
+                data={displayData}
                 cx="50%"
                 cy="50%"
-                innerRadius={70}
-                outerRadius={115}
-                paddingAngle={4}
+                innerRadius={72}
+                outerRadius={108}
+                paddingAngle={isEmpty ? 2 : 4}
                 cornerRadius={8}
-                stroke="rgba(255,255,255,1)"
-                strokeWidth={4}
+                stroke="none"
+                strokeWidth={0}
                 dataKey="value"
+                startAngle={90}
+                endAngle={-270}
               >
-                {chartData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.fill} />
+                {displayData.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={entry.fill}
+                    opacity={isEmpty ? 0.25 : 1}
+                  />
                 ))}
               </Pie>
-              <Tooltip content={<CustomTooltip />} />
+              {!isEmpty && <Tooltip content={<CustomTooltip />} />}
             </PieChart>
           </ResponsiveContainer>
         </div>
-        {/* Center label inside donut */}
-        <div className="pointer-events-none absolute flex flex-col items-center justify-center">
-          <p className="text-[11px] font-bold text-muted-foreground">الإجمالي</p>
-          <p className="text-lg font-extrabold font-mono text-primary leading-tight">
-            {formatCompactCurrency(total)}
+        {/* Center label */}
+        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+          <p className="text-2xl font-extrabold font-mono text-primary leading-none">
+            {isEmpty ? "—" : formatCompactCurrency(total)}
           </p>
-          <p className="text-[10px] text-muted-foreground">ر.ع</p>
+          <p className="mt-1 text-[11px] font-bold text-muted-foreground">
+            {isEmpty ? "لا توجد بيانات" : "ر.ع إجمالي"}
+          </p>
         </div>
       </div>
 
-      {/* Legend grid below */}
-      <div className="mt-5 grid grid-cols-2 gap-3">
+      {/* Legend grid — 2×2 below chart */}
+      <div className="mt-4 grid grid-cols-2 gap-3">
         {chartData.map((item) => {
           const percentage = total > 0 ? Math.round((item.value / total) * 100) : 0;
           return (
             <div
               key={item.name}
-              className="rounded-2xl border p-3"
-              style={{
-                borderColor: `${item.fill}30`,
-                backgroundColor: `${item.fill}0d`,
-              }}
+              className="flex flex-col gap-2 rounded-2xl border p-3.5"
+              style={{ borderColor: `${item.fill}35`, backgroundColor: `${item.fill}0A` }}
             >
-              <div className="mb-2 flex items-center gap-2">
+              <div className="flex items-center justify-between gap-2">
                 <span
-                  className="h-3 w-3 shrink-0 rounded-full"
+                  className="h-2.5 w-2.5 shrink-0 rounded-full"
                   style={{ backgroundColor: item.fill }}
                 />
-                <p className="text-[12px] font-bold leading-tight" style={{ color: item.fill }}>
-                  {item.name}
-                </p>
-              </div>
-              <div className="flex items-baseline justify-between gap-1">
-                <span className="text-[13px] font-extrabold font-mono text-foreground">
-                  {formatCompactCurrency(item.value)}
-                  <span className="text-[10px] font-sans text-muted-foreground"> ر.ع</span>
-                </span>
                 <span
-                  className="rounded-lg px-1.5 py-0.5 text-[11px] font-extrabold font-mono"
+                  className="rounded-md px-1.5 py-0.5 text-[10px] font-extrabold font-mono"
                   style={{ backgroundColor: `${item.fill}20`, color: item.fill }}
                 >
                   {percentage}%
                 </span>
               </div>
+              <p
+                className="text-[12px] font-bold leading-tight"
+                style={{ color: item.fill }}
+              >
+                {item.name}
+              </p>
+              <p className="text-[11px] font-mono font-semibold text-muted-foreground">
+                {formatCompactCurrency(item.value)} ر.ع
+              </p>
             </div>
           );
         })}

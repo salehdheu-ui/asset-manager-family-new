@@ -14,7 +14,8 @@ import {
   TrendingUp,
   Coins,
   Trash2,
-  XCircle
+  XCircle,
+  CheckCheck
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -91,6 +92,25 @@ export default function YearlyPaymentMatrix() {
     },
     onError: (error) => {
       toast({ title: "حدث خطأ", description: (error as any)?.message || "تعذر حذف المساهمة", variant: "destructive" });
+    },
+  });
+
+  const [approvingAllFor, setApprovingAllFor] = useState<string | null>(null);
+
+  const bulkApproveMutation = useMutation({
+    mutationFn: async ({ memberId, pendingIds }: { memberId: string; pendingIds: string[] }) => {
+      setApprovingAllFor(memberId);
+      return Promise.all(pendingIds.map((id) => approveContribution(id)));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contributions"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] });
+      toast({ title: "تم اعتماد جميع الأشهر المعلقة بنجاح" });
+      setApprovingAllFor(null);
+    },
+    onError: (error) => {
+      toast({ title: "حدث خطأ", description: (error as any)?.message || "تعذر اعتماد بعض المساهمات", variant: "destructive" });
+      setApprovingAllFor(null);
     },
   });
 
@@ -403,9 +423,27 @@ export default function YearlyPaymentMatrix() {
                         </Dialog>
                       )}
                       {memberPending.length > 0 && (
-                        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200/60">
-                          <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse" />
-                          <span className="text-[9px] font-bold text-amber-600">{memberPending.length} معلق</span>
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200/60">
+                            <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse" />
+                            <span className="text-[9px] font-bold text-amber-600">{memberPending.length} معلق</span>
+                          </div>
+                          {isGuardian && (
+                            <button
+                              onClick={() =>
+                                bulkApproveMutation.mutate({
+                                  memberId: member.id,
+                                  pendingIds: memberPending.map((c) => c.id),
+                                })
+                              }
+                              disabled={approvingAllFor === member.id}
+                              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-700 text-[10px] font-bold hover:bg-emerald-500/20 transition-all active:scale-95 disabled:opacity-50"
+                              data-testid={`button-approve-all-${member.id}`}
+                            >
+                              <CheckCheck className="w-3.5 h-3.5" />
+                              {approvingAllFor === member.id ? "جاري..." : "اعتماد الكل"}
+                            </button>
+                          )}
                         </div>
                       )}
                     </div>
