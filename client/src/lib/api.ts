@@ -1,10 +1,24 @@
 import { apiRequest } from "./queryClient";
-import type { Member, Contribution, Loan, LoanRepayment, Expense, FamilySettings, User, FundAdjustment, SystemBackup } from "@shared/schema";
+import type { Member, Contribution, Loan, LoanRepayment, Expense, FamilySettings, User, FundAdjustment, SystemBackup, AuditLog } from "@shared/schema";
+
+async function parseFetchError(res: Response) {
+  const contentType = res.headers.get("content-type") || "";
+
+  if (contentType.includes("application/json")) {
+    const body = await res.json().catch(() => null);
+    const message = body?.message || body?.error;
+    if (typeof message === "string" && message.trim()) {
+      throw new Error(message);
+    }
+  }
+
+  throw new Error((await res.text().catch(() => "")) || res.statusText);
+}
 
 // Members
 export async function getMembers(): Promise<Member[]> {
   const res = await fetch("/api/members", { credentials: "include" });
-  if (!res.ok) throw new Error("Failed to fetch members");
+  if (!res.ok) await parseFetchError(res);
   return res.json();
 }
 
@@ -26,7 +40,7 @@ export async function deleteMember(id: string): Promise<void> {
 export async function getContributions(year?: number): Promise<Contribution[]> {
   const url = year ? `/api/contributions?year=${year}` : "/api/contributions";
   const res = await fetch(url, { credentials: "include" });
-  if (!res.ok) throw new Error("Failed to fetch contributions");
+  if (!res.ok) await parseFetchError(res);
   return res.json();
 }
 
@@ -47,7 +61,7 @@ export async function approveContribution(id: string): Promise<Contribution> {
 // Loans
 export async function getLoans(): Promise<Loan[]> {
   const res = await fetch("/api/loans", { credentials: "include" });
-  if (!res.ok) throw new Error("Failed to fetch loans");
+  if (!res.ok) await parseFetchError(res);
   return res.json();
 }
 
@@ -67,7 +81,7 @@ export async function deleteLoan(id: string): Promise<void> {
 
 export async function getLoanRepayments(loanId: string): Promise<LoanRepayment[]> {
   const res = await fetch(`/api/loans/${loanId}/repayments`, { credentials: "include" });
-  if (!res.ok) throw new Error("Failed to fetch repayments");
+  if (!res.ok) await parseFetchError(res);
   return res.json();
 }
 
@@ -79,7 +93,7 @@ export async function markRepaymentPaid(id: string): Promise<LoanRepayment> {
 // Expenses
 export async function getExpenses(): Promise<Expense[]> {
   const res = await fetch("/api/expenses", { credentials: "include" });
-  if (!res.ok) throw new Error("Failed to fetch expenses");
+  if (!res.ok) await parseFetchError(res);
   return res.json();
 }
 
@@ -95,7 +109,7 @@ export async function deleteExpense(id: string): Promise<void> {
 // Settings
 export async function getSettings(): Promise<FamilySettings> {
   const res = await fetch("/api/settings", { credentials: "include" });
-  if (!res.ok) throw new Error("Failed to fetch settings");
+  if (!res.ok) await parseFetchError(res);
   return res.json();
 }
 
@@ -106,7 +120,7 @@ export async function updateSettings(data: Partial<FamilySettings>): Promise<Fam
 
 export async function getBackups(): Promise<SystemBackup[]> {
   const res = await fetch("/api/backups", { credentials: "include" });
-  if (!res.ok) throw new Error("Failed to fetch backups");
+  if (!res.ok) await parseFetchError(res);
   return res.json();
 }
 
@@ -141,14 +155,14 @@ export interface DashboardSummary {
 
 export async function getDashboardSummary(): Promise<DashboardSummary> {
   const res = await fetch("/api/dashboard/summary", { credentials: "include" });
-  if (!res.ok) throw new Error("Failed to fetch dashboard summary");
+  if (!res.ok) await parseFetchError(res);
   return res.json();
 }
 
 // User Profile
 export async function getUserProfile(): Promise<User & { member?: Member }> {
   const res = await fetch("/api/user/profile", { credentials: "include" });
-  if (!res.ok) throw new Error("Failed to fetch profile");
+  if (!res.ok) await parseFetchError(res);
   return res.json();
 }
 
@@ -160,7 +174,13 @@ export async function updateUserProfile(data: { firstName?: string; lastName?: s
 // Admin - Users
 export async function getAdminUsers(): Promise<User[]> {
   const res = await fetch("/api/admin/users", { credentials: "include" });
-  if (!res.ok) throw new Error("Failed to fetch users");
+  if (!res.ok) await parseFetchError(res);
+  return res.json();
+}
+
+export async function getAuditLogs(): Promise<AuditLog[]> {
+  const res = await fetch("/api/admin/audit-logs", { credentials: "include" });
+  if (!res.ok) await parseFetchError(res);
   return res.json();
 }
 
@@ -210,7 +230,7 @@ export async function deleteUser(id: string): Promise<void> {
 // Fund Adjustments (Admin)
 export async function getFundAdjustments(): Promise<FundAdjustment[]> {
   const res = await fetch("/api/fund-adjustments", { credentials: "include" });
-  if (!res.ok) throw new Error("Failed to fetch fund adjustments");
+  if (!res.ok) await parseFetchError(res);
   return res.json();
 }
 
@@ -258,7 +278,7 @@ export async function getMonthlyReport(year?: number, month?: number): Promise<M
   if (year) url.searchParams.append("year", year.toString());
   if (month) url.searchParams.append("month", month.toString());
   const res = await fetch(url.toString(), { credentials: "include" });
-  if (!res.ok) throw new Error("Failed to fetch monthly report");
+  if (!res.ok) await parseFetchError(res);
   return res.json();
 }
 
@@ -288,7 +308,7 @@ export async function getYearlyReport(year?: number): Promise<YearlyReport> {
   const url = new URL("/api/reports/yearly", window.location.origin);
   if (year) url.searchParams.append("year", year.toString());
   const res = await fetch(url.toString(), { credentials: "include" });
-  if (!res.ok) throw new Error("Failed to fetch yearly report");
+  if (!res.ok) await parseFetchError(res);
   return res.json();
 }
 
@@ -319,7 +339,7 @@ export async function getMembersPerformance(year?: number): Promise<MembersPerfo
   const url = new URL("/api/reports/members-performance", window.location.origin);
   if (year) url.searchParams.append("year", year.toString());
   const res = await fetch(url.toString(), { credentials: "include" });
-  if (!res.ok) throw new Error("Failed to fetch members performance");
+  if (!res.ok) await parseFetchError(res);
   return res.json();
 }
 
@@ -352,7 +372,7 @@ export async function getLoansAnalysis(year?: number): Promise<LoansAnalysis> {
   const url = new URL("/api/reports/loans-analysis", window.location.origin);
   if (year) url.searchParams.append("year", year.toString());
   const res = await fetch(url.toString(), { credentials: "include" });
-  if (!res.ok) throw new Error("Failed to fetch loans analysis");
+  if (!res.ok) await parseFetchError(res);
   return res.json();
 }
 
@@ -367,6 +387,6 @@ export async function getChartData(type: string, period?: string): Promise<Chart
   url.searchParams.append("type", type);
   if (period) url.searchParams.append("period", period);
   const res = await fetch(url.toString(), { credentials: "include" });
-  if (!res.ok) throw new Error("Failed to fetch chart data");
+  if (!res.ok) await parseFetchError(res);
   return res.json();
 }

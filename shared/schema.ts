@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, timestamp, boolean, decimal } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, timestamp, boolean, decimal, jsonb, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -31,7 +31,9 @@ export const contributions = pgTable("contributions", {
   status: text("status").notNull().default("pending_approval"), // 'pending_approval' | 'approved'
   createdAt: timestamp("created_at").defaultNow(),
   approvedAt: timestamp("approved_at"),
-});
+}, (table) => ({
+  memberMonthYearUnique: uniqueIndex("contributions_member_year_month_unique").on(table.memberId, table.year, table.month),
+}));
 
 export const insertContributionSchema = createInsertSchema(contributions).omit({ id: true, createdAt: true, approvedAt: true }).extend({
   month: z.number().int().min(1).max(12),
@@ -131,6 +133,22 @@ export const systemBackups = pgTable("system_backups", {
 export const insertSystemBackupSchema = createInsertSchema(systemBackups).omit({ id: true });
 export type InsertSystemBackup = z.infer<typeof insertSystemBackupSchema>;
 export type SystemBackup = typeof systemBackups.$inferSelect;
+
+export const auditLogs = pgTable("audit_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  action: text("action").notNull(),
+  entityType: text("entity_type").notNull(),
+  entityId: varchar("entity_id"),
+  actorUserId: varchar("actor_user_id"),
+  actorName: text("actor_name"),
+  description: text("description").notNull(),
+  metadata: jsonb("metadata").$type<Record<string, unknown> | null>().default(null),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertAuditLogSchema = createInsertSchema(auditLogs).omit({ id: true, createdAt: true });
+export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
+export type AuditLog = typeof auditLogs.$inferSelect;
 
 // Fund Adjustments (admin direct deposits/withdrawals)
 export const fundAdjustments = pgTable("fund_adjustments", {

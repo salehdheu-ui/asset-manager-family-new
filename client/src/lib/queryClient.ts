@@ -1,9 +1,25 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
+async function getErrorMessage(res: Response) {
+  const contentType = res.headers.get("content-type") || "";
+
+  if (contentType.includes("application/json")) {
+    const body = await res.json().catch(() => null);
+    const message = body?.message || body?.error;
+
+    if (typeof message === "string" && message.trim()) {
+      return message;
+    }
+  }
+
+  const text = (await res.text().catch(() => "")) || res.statusText;
+  return text;
+}
+
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
-    const text = (await res.text()) || res.statusText;
-    throw new Error(`${res.status}: ${text}`);
+    const message = await getErrorMessage(res);
+    throw new Error(message || `Request failed with status ${res.status}`);
   }
 }
 

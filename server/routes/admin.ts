@@ -16,7 +16,7 @@ export function registerAdminRoutes(app: Express) {
       const userId = req.user?.id;
       const [user] = await db.select().from(users).where(eq(users.id, userId));
       if (!user) {
-        return res.status(404).json({ error: "User not found" });
+        return res.status(404).json({ message: "المستخدم غير موجود" });
       }
       
       // If linked to a member, get member data too
@@ -27,7 +27,7 @@ export function registerAdminRoutes(app: Express) {
       
       res.json({ ...user, member: memberData });
     } catch (error) {
-      res.status(500).json({ error: "Failed to fetch profile" });
+      res.status(500).json({ message: "تعذر جلب الملف الشخصي" });
     }
   });
 
@@ -42,7 +42,7 @@ export function registerAdminRoutes(app: Express) {
         .returning();
       res.json(updated);
     } catch (error) {
-      res.status(500).json({ error: "Failed to update profile" });
+      res.status(500).json({ message: "تعذر تحديث الملف الشخصي" });
     }
   });
 
@@ -53,7 +53,16 @@ export function registerAdminRoutes(app: Express) {
       res.json(summary);
     } catch (error) {
       console.error("Dashboard summary error:", error);
-      res.status(500).json({ error: "Failed to fetch dashboard summary" });
+      res.status(500).json({ message: "تعذر تحميل ملخص لوحة التحكم" });
+    }
+  });
+
+  app.get("/api/admin/audit-logs", isAuthenticated, isAdmin, async (_req, res) => {
+    try {
+      const logs = await storage.getAuditLogs();
+      res.json(logs);
+    } catch (error) {
+      res.status(500).json({ message: "تعذر تحميل سجل التدقيق" });
     }
   });
 
@@ -63,7 +72,7 @@ export function registerAdminRoutes(app: Express) {
       const adjustments = await storage.getFundAdjustments();
       res.json(adjustments);
     } catch (error) {
-      res.status(500).json({ error: "Failed to fetch fund adjustments" });
+      res.status(500).json({ message: "تعذر تحميل العمليات المباشرة" });
     }
   });
 
@@ -74,7 +83,7 @@ export function registerAdminRoutes(app: Express) {
         createdBy: req.user?.id,
       });
       if (!['deposit', 'withdrawal'].includes(data.type)) {
-        return res.status(400).json({ error: "Invalid type" });
+        return res.status(400).json({ message: "نوع العملية غير صالح" });
       }
       const adjustment = await storage.createFundAdjustment(data);
       const currentYear = new Date().getFullYear();
@@ -82,19 +91,32 @@ export function registerAdminRoutes(app: Express) {
       res.status(201).json(adjustment);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        res.status(400).json({ error: error.errors });
+        res.status(400).json({ message: "بيانات العملية غير صحيحة", error: error.errors });
       } else {
-        res.status(500).json({ error: "Failed to create fund adjustment" });
+        res.status(500).json({ message: "تعذر تنفيذ العملية المباشرة" });
       }
     }
   });
 
-  app.delete("/api/fund-adjustments/:id", isAuthenticated, isAdmin, async (_req, res) => {
-    return res.status(403).json({ error: "تم تعطيل الحذف النهائي حفاظاً على البيانات" });
+  app.delete("/api/fund-adjustments/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const adjustmentId = req.params.id as string;
+      await storage.deleteFundAdjustment(adjustmentId);
+      const currentYear = new Date().getFullYear();
+      await rebalanceYear(currentYear);
+      return res.status(204).send();
+    } catch (error) {
+      return res.status(500).json({ message: "تعذر حذف العملية المباشرة" });
+    }
   });
 
   // ============= System Reset (Admin Only) =============
   app.post("/api/system/reset", isAuthenticated, isAdmin, async (_req: any, res) => {
-    return res.status(403).json({ error: "تم تعطيل إعادة تصفير النظام حفاظاً على البيانات" });
+    try {
+      await storage.resetSystemData();
+      return res.json({ message: "تم تصفير النظام بنجاح" });
+    } catch (error) {
+      return res.status(500).json({ message: "تعذر تصفير النظام" });
+    }
   });
 }

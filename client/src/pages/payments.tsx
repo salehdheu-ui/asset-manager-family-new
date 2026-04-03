@@ -173,6 +173,20 @@ export default function YearlyPaymentMatrix() {
     );
   }
 
+  if (members.length === 0) {
+    return (
+      <MobileLayout title="سجل المساهمات والاعتمادات">
+        <div className="space-y-4 pt-6">
+          <div className="rounded-3xl border border-dashed border-border bg-muted/20 p-8 text-center">
+            <AlertCircle className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
+            <p className="text-sm font-bold text-foreground">لا يوجد أعضاء متاحون لعرض سجل المساهمات</p>
+            <p className="mt-2 text-sm text-muted-foreground">أضف عضوًا أولًا أو تأكد من ربط حسابك بعضو في النظام.</p>
+          </div>
+        </div>
+      </MobileLayout>
+    );
+  }
+
   return (
     <MobileLayout title="سجل المساهمات والاعتمادات">
       <div className="space-y-5 pt-2 pb-16">

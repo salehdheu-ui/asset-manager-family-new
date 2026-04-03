@@ -5,10 +5,14 @@ import {
   type LoanRepayment, type InsertLoanRepayment, loanRepayments,
   type Expense, type InsertExpense, expenses,
   type FamilySettings, type InsertFamilySettings, familySettings,
-  type FundAdjustment, type InsertFundAdjustment, fundAdjustments
+  type FundAdjustment, type InsertFundAdjustment, fundAdjustments,
+  type AuditLog, type InsertAuditLog, auditLogs,
+  capitalAllocations,
+  systemBackups
 } from "@shared/schema";
+import { users } from "@shared/models/auth";
 import { db } from "./db";
-import { eq, and, desc, gte, lte, sql as dsql } from "drizzle-orm";
+import { eq, and, desc, gte, lte } from "drizzle-orm";
 
 export interface IStorage {
   // Members
@@ -24,6 +28,7 @@ export interface IStorage {
   getContributionsByYear(year: number): Promise<Contribution[]>;
   getApprovedContributionsByYear(year: number): Promise<Contribution[]>;
   getContributionsByYearAndMonth(year: number, month: number): Promise<Contribution[]>;
+  getContributionByMemberYearMonth(memberId: string, year: number, month: number): Promise<Contribution | undefined>;
   createContribution(contribution: InsertContribution): Promise<Contribution>;
   approveContribution(id: string): Promise<Contribution | undefined>;
   deleteContribution(id: string): Promise<Contribution | undefined>;
@@ -56,6 +61,13 @@ export interface IStorage {
   // Family Settings
   getFamilySettings(): Promise<FamilySettings | undefined>;
   updateFamilySettings(settings: Partial<InsertFamilySettings>): Promise<FamilySettings>;
+
+  // Audit Logs
+  getAuditLogs(): Promise<AuditLog[]>;
+  createAuditLog(log: InsertAuditLog): Promise<AuditLog>;
+
+  // System Reset
+  resetSystemData(): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -114,6 +126,13 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(contributions).where(
       and(eq(contributions.year, year), eq(contributions.month, month))
     );
+  }
+
+  async getContributionByMemberYearMonth(memberId: string, year: number, month: number): Promise<Contribution | undefined> {
+    const [contribution] = await db.select().from(contributions).where(
+      and(eq(contributions.memberId, memberId), eq(contributions.year, year), eq(contributions.month, month))
+    );
+    return contribution;
   }
 
   async createContribution(contribution: InsertContribution): Promise<Contribution> {
@@ -243,6 +262,50 @@ export class DatabaseStorage implements IStorage {
       const [created] = await db.insert(familySettings).values(settings as InsertFamilySettings).returning();
       return created;
     }
+  }
+
+  // Audit Logs
+  async getAuditLogs(): Promise<AuditLog[]> {
+    return await db.select().from(auditLogs).orderBy(desc(auditLogs.createdAt));
+  }
+
+  async createAuditLog(log: InsertAuditLog): Promise<AuditLog> {
+    const [created] = await db.insert(auditLogs).values({
+      ...log,
+      metadata: log.metadata && typeof log.metadata === "object" && !Array.isArray(log.metadata)
+        ? (log.metadata as Record<string, unknown>)
+        : null,
+    }).returning();
+    return created;
+  }
+
+  async resetSystemData(): Promise<void> {
+    await db.transaction(async (tx) => {
+      await tx.update(familySettings).set({
+        familyName: "صندوق العائلة",
+        currency: "ر.ع",
+        protectedPercent: 45,
+        emergencyPercent: 15,
+        flexiblePercent: 20,
+        growthPercent: 20,
+        backupEnabled: false,
+        backupKeepDays: 7,
+        backupKeepWeeksPerMonth: 4,
+        backupKeepMonths: 12,
+        backupLastRunAt: null,
+      });
+
+      await tx.delete(auditLogs);
+      await tx.delete(systemBackups);
+      await tx.delete(capitalAllocations);
+      await tx.delete(loanRepayments);
+      await tx.delete(loans);
+      await tx.delete(contributions);
+      await tx.delete(expenses);
+      await tx.delete(fundAdjustments);
+      await tx.update(users).set({ memberId: null });
+      await tx.delete(members);
+    });
   }
 }
 

@@ -1,8 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import MobileLayout from "@/components/layout/MobileLayout";
-import { getAdminUsers, getMembers, updateUserRole, linkUserToMember, deleteUser, createUser, updateUserPassword, updateUser, getFundAdjustments, createFundAdjustment, deleteFundAdjustment, resetSystem, lockYearAllocation, resetYearAllocation } from "@/lib/api";
+import { getAdminUsers, getMembers, updateUserRole, linkUserToMember, deleteUser, createUser, updateUserPassword, updateUser, getFundAdjustments, createFundAdjustment, deleteFundAdjustment, resetSystem, lockYearAllocation, resetYearAllocation, getAuditLogs } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
-import { Shield, Users, Trash2, UserCheck, Link, Crown, User as UserIcon, Plus, Key, Edit2, Eye, EyeOff, Wallet, ArrowUpCircle, ArrowDownCircle, RotateCcw, AlertTriangle, Lock } from "lucide-react";
+import { Shield, Users, Trash2, UserCheck, Link, Crown, User as UserIcon, Plus, Key, Eye, EyeOff, Wallet, ArrowUpCircle, ArrowDownCircle, RotateCcw, AlertTriangle, Lock, History } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -60,6 +60,12 @@ export default function AdminDashboard() {
     enabled: !!user,
   });
 
+  const { data: auditLogs = [], isLoading: auditLogsLoading, error: auditLogsError } = useQuery({
+    queryKey: ["audit-logs"],
+    queryFn: getAuditLogs,
+    enabled: !!user,
+  });
+
   const createAdjustmentMutation = useMutation({
     mutationFn: createFundAdjustment,
     onSuccess: () => {
@@ -71,8 +77,8 @@ export default function AdminDashboard() {
       setAdjustMemberId("");
       setAdjustDialogOpen(false);
     },
-    onError: () => {
-      toast({ title: "فشلت العملية", variant: "destructive" });
+    onError: (error: any) => {
+      toast({ title: "فشلت العملية", description: error?.message || "تعذر تنفيذ العملية", variant: "destructive" });
     },
   });
 
@@ -83,8 +89,8 @@ export default function AdminDashboard() {
       queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] });
       toast({ title: "تم حذف العملية" });
     },
-    onError: () => {
-      toast({ title: "فشل حذف العملية", variant: "destructive" });
+    onError: (error: any) => {
+      toast({ title: "فشل حذف العملية", description: error?.message || "تعذر حذف العملية", variant: "destructive" });
     },
   });
 
@@ -181,8 +187,8 @@ export default function AdminDashboard() {
       setResetDialogOpen(false);
       setResetConfirmText("");
     },
-    onError: () => {
-      toast({ title: "فشل في تصفير النظام", variant: "destructive" });
+    onError: (error: any) => {
+      toast({ title: "فشل في تصفير النظام", description: error?.message || "تعذر تصفير النظام", variant: "destructive" });
     },
   });
 
@@ -217,6 +223,13 @@ export default function AdminDashboard() {
   const getMemberName = (memberId: string | null) => {
     if (!memberId) return "غير مرتبط";
     return members.find(m => m.id === memberId)?.name || "غير معروف";
+  };
+
+  const getAuditActionLabel = (action: string) => {
+    if (action === "contribution_approved") return "اعتماد مساهمة";
+    if (action === "contribution_deleted") return "حذف مساهمة";
+    if (action === "settings_updated") return "تعديل الإعدادات";
+    return "عملية إدارية";
   };
 
   return (
@@ -534,6 +547,61 @@ export default function AdminDashboard() {
           </div>
         )}
 
+        <div className="space-y-4">
+          <div className="flex items-center justify-between px-1">
+            <h3 className="font-bold text-lg text-primary font-heading flex items-center gap-2">
+              <History className="w-5 h-5" /> سجل التدقيق
+            </h3>
+            <span className="text-[11px] text-muted-foreground">آخر العمليات الحساسة في النظام</span>
+          </div>
+
+          {auditLogsLoading ? (
+            <div className="rounded-3xl border border-border/60 bg-card p-6 text-center">
+              <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+              <p className="text-sm font-medium text-muted-foreground">جاري تحميل سجل التدقيق...</p>
+            </div>
+          ) : auditLogsError ? (
+            <div className="rounded-3xl border border-red-200 bg-red-50 p-6 text-center">
+              <History className="mx-auto mb-3 h-10 w-10 text-red-500" />
+              <p className="font-bold text-red-700">تعذر تحميل سجل التدقيق</p>
+              <p className="mt-1 text-sm text-red-600">حاول تحديث الصفحة أو إعادة المحاولة لاحقًا.</p>
+            </div>
+          ) : auditLogs.length === 0 ? (
+            <div className="rounded-3xl border border-dashed border-border bg-muted/20 p-6 text-center">
+              <p className="text-sm font-medium text-muted-foreground">لا توجد عمليات مسجلة بعد في سجل التدقيق.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {auditLogs.slice(0, 10).map((log, idx) => (
+                <motion.div
+                  key={log.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.03 }}
+                  className="rounded-[1.5rem] border border-border/60 bg-card p-4 shadow-sm"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-bold text-primary">
+                          {getAuditActionLabel(log.action)}
+                        </span>
+                        <span className="text-[11px] text-muted-foreground">
+                          {log.createdAt ? new Date(log.createdAt).toLocaleString("ar-OM") : ""}
+                        </span>
+                      </div>
+                      <p className="mt-2 text-sm font-bold text-foreground">{log.description}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        بواسطة: {log.actorName || "مستخدم إداري"}
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* Divider */}
         <div className="border-t border-border/40 my-2" />
 
@@ -776,7 +844,7 @@ export default function AdminDashboard() {
             ) : (
               <>
                 <RotateCcw className="w-5 h-5" />
-                صفّر المستخدَم {currentYear}
+                إعادة ضبط التخصيص {currentYear}
               </>
             )}
           </button>
