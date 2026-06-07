@@ -96,7 +96,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteMember(id: string): Promise<void> {
-    await db.transaction(async (tx) => {
+    await db.transaction(async (tx: any) => {
       const memberLoans = await tx.select({ id: loans.id }).from(loans).where(eq(loans.memberId, id));
       for (const loan of memberLoans) {
         await tx.delete(loanRepayments).where(eq(loanRepayments.loanId, loan.id));
@@ -170,9 +170,14 @@ export class DatabaseStorage implements IStorage {
   async getLoansByYear(year: number): Promise<Loan[]> {
     const startDate = new Date(year, 0, 1);
     const endDate = new Date(year + 1, 0, 1);
-    return await db.select().from(loans).where(
+    const yearLoans = await db.select().from(loans).where(
       and(gte(loans.createdAt, startDate), lte(loans.createdAt, endDate))
     );
+
+    return yearLoans.filter((loan: Loan) => {
+      const effectiveDate = loan.approvedAt || loan.createdAt;
+      return effectiveDate ? effectiveDate >= startDate && effectiveDate < endDate : false;
+    });
   }
 
   async createLoan(loan: InsertLoan): Promise<Loan> {
@@ -305,7 +310,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async resetSystemData(): Promise<void> {
-    await db.transaction(async (tx) => {
+    await db.transaction(async (tx: any) => {
       await tx.update(familySettings).set({
         familyName: "صندوق العائلة",
         currency: "ر.ع",

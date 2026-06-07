@@ -1,5 +1,5 @@
 import { apiRequest } from "./queryClient";
-import type { Member, Contribution, Loan, LoanRepayment, LoanPayment, Expense, FamilySettings, User, FundAdjustment, SystemBackup, AuditLog } from "@shared/schema";
+import type { Member, Contribution, Loan, LoanRepayment, LoanPayment, Expense, FamilySettings, PublicUser, FundAdjustment, SystemBackup, AuditLog } from "@shared/schema";
 
 async function parseFetchError(res: Response) {
   const contentType = res.headers.get("content-type") || "";
@@ -159,6 +159,16 @@ export interface DashboardSummary {
   totalDeposits: number;
   totalWithdrawals: number;
   netCapital: number;
+  lockedNetAssets?: number;
+  allocation?: {
+    year: number;
+    netAssets: number;
+    locked: boolean;
+    protected: { amount: number; percent: number };
+    emergency: { amount: number; percent: number; used: number; available: number };
+    flexible: { amount: number; percent: number; used: number; available: number };
+    growth: { amount: number; percent: number; used: number; available: number };
+  };
   layers: Array<{
     id: string;
     name: string;
@@ -178,26 +188,37 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
 }
 
 // User Profile
-export async function getUserProfile(): Promise<User & { member?: Member }> {
+export async function getUserProfile(): Promise<PublicUser & { member?: Member }> {
   const res = await fetch("/api/user/profile", { credentials: "include" });
   if (!res.ok) await parseFetchError(res);
   return res.json();
 }
 
-export async function updateUserProfile(data: { firstName?: string; lastName?: string }): Promise<User> {
+export async function updateUserProfile(data: { firstName?: string; lastName?: string }): Promise<PublicUser> {
   const res = await apiRequest("PATCH", "/api/user/profile", data);
   return res.json();
 }
 
 // Admin - Users
-export async function getAdminUsers(): Promise<User[]> {
+export async function getAdminUsers(): Promise<PublicUser[]> {
   const res = await fetch("/api/admin/users", { credentials: "include" });
   if (!res.ok) await parseFetchError(res);
   return res.json();
 }
 
-export async function getAuditLogs(): Promise<AuditLog[]> {
-  const res = await fetch("/api/admin/audit-logs", { credentials: "include" });
+export interface AuditLogsResponse {
+  data: AuditLog[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export async function getAuditLogs(page = 1, limit = 50): Promise<AuditLogsResponse> {
+  const url = new URL("/api/admin/audit-logs", window.location.origin);
+  url.searchParams.append("page", String(page));
+  url.searchParams.append("limit", String(limit));
+  const res = await fetch(url.toString(), { credentials: "include" });
   if (!res.ok) await parseFetchError(res);
   return res.json();
 }
@@ -210,7 +231,7 @@ export async function createUser(data: {
   email?: string;
   role?: string;
   memberId?: string;
-}): Promise<User> {
+}): Promise<PublicUser> {
   const res = await apiRequest("POST", "/api/admin/users", data);
   return res.json();
 }
@@ -222,7 +243,7 @@ export async function updateUser(id: string, data: Partial<{
   email: string;
   role: string;
   memberId: string;
-}>): Promise<User> {
+}>): Promise<PublicUser> {
   const res = await apiRequest("PUT", `/api/admin/users/${id}`, data);
   return res.json();
 }
@@ -231,12 +252,12 @@ export async function updateUserPassword(id: string, password: string): Promise<
   await apiRequest("PUT", `/api/admin/users/${id}/password`, { password });
 }
 
-export async function updateUserRole(id: string, role: string): Promise<User> {
+export async function updateUserRole(id: string, role: string): Promise<PublicUser> {
   const res = await apiRequest("PUT", `/api/admin/users/${id}`, { role });
   return res.json();
 }
 
-export async function linkUserToMember(id: string, memberId: string): Promise<User> {
+export async function linkUserToMember(id: string, memberId: string): Promise<PublicUser> {
   const res = await apiRequest("PUT", `/api/admin/users/${id}`, { memberId });
   return res.json();
 }
@@ -346,6 +367,12 @@ export interface MemberPerformance {
 export interface MembersPerformanceReport {
   year: number;
   members: MemberPerformance[];
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
   totals: {
     contributions: number;
     loans: number;
@@ -381,7 +408,7 @@ export interface LoansAnalysis {
     memberName: string;
     type: string;
     amount: number;
-    createdAt: Date;
+    createdAt: string | null;
     status: string;
   }>;
 }

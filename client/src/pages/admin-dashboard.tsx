@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
+import type { PublicUser } from "@shared/models/auth";
 
 export default function AdminDashboard() {
   const { toast } = useToast();
@@ -37,7 +38,7 @@ export default function AdminDashboard() {
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const [resetConfirmText, setResetConfirmText] = useState("");
 
-  const { data: allUsers = [], isLoading: usersLoading, error } = useQuery({
+  const { data: allUsers = [], isLoading: usersLoading, error } = useQuery<PublicUser[]>({
     queryKey: ["admin-users"],
     queryFn: getAdminUsers,
     enabled: !!user,
@@ -352,14 +353,14 @@ export default function AdminDashboard() {
                       />
                     ) : (
                       <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
-                        {(u.firstName?.[0] || (u as any).username?.[0] || "U").toUpperCase()}
+                        {(u.firstName?.[0] || u.username?.[0] || "U").toUpperCase()}
                       </div>
                     )}
                     <div className="flex-1">
                       <h4 className="font-bold text-sm leading-none">
-                        {u.firstName || (u as any).username} {u.lastName}
+                        {u.firstName || u.username} {u.lastName}
                       </h4>
-                      <p className="text-[10px] text-muted-foreground mt-1">@{(u as any).username}</p>
+                      <p className="text-[10px] text-muted-foreground mt-1">@{u.username}</p>
                       <div className="flex items-center gap-2 mt-2">
                         <span className={cn(
                           "text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border flex items-center gap-1",
@@ -459,7 +460,7 @@ export default function AdminDashboard() {
                           }}
                         >
                           <p className="text-sm text-muted-foreground">
-                            تغيير كلمة المرور للمستخدم: <strong>{(u as any).username}</strong>
+                            تغيير كلمة المرور للمستخدم: <strong>{u.username}</strong>
                           </p>
                           <div className="space-y-2">
                             <label className="text-sm font-medium">كلمة المرور الجديدة</label>

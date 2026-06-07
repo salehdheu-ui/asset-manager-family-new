@@ -159,6 +159,7 @@ export async function restoreBackupSnapshot(id: string) {
   const data = payload.data ?? {};
 
   await db.transaction(async (tx: any) => {
+    // Clear dependent tables first to avoid FK violations (if any)
     await tx.delete(loanPayments);
     await tx.delete(loanRepayments);
     await tx.delete(loans);
@@ -169,7 +170,9 @@ export async function restoreBackupSnapshot(id: string) {
     await tx.delete(capitalAllocations);
     await tx.delete(members);
     await tx.delete(familySettings);
+    await tx.delete(users);
 
+    // Insert parents first
     const familySettingsRow = Array.isArray(data.familySettings)
       ? data.familySettings[0]
       : data.familySettings;
@@ -179,6 +182,7 @@ export async function restoreBackupSnapshot(id: string) {
     }
 
     if (data.members?.length) await tx.insert(members).values(data.members as never);
+    if (data.users?.length) await tx.insert(users).values(data.users as never);
     if (data.contributions?.length) await tx.insert(contributions).values(data.contributions as never);
     if (data.loans?.length) await tx.insert(loans).values(data.loans as never);
     if (data.loanRepayments?.length) await tx.insert(loanRepayments).values(data.loanRepayments as never);
