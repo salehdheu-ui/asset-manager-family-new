@@ -220,6 +220,114 @@ export function registerReportRoutes(app: Express) {
     }
   });
 
+  app.get("/api/reports/member/:id", isAuthenticated, async (req, res) => {
+    try {
+      const memberId = req.params.id;
+      const year = Number(req.query.year) || new Date().getFullYear();
+
+      const [member, allContributions, memberLoans, allPayments] = await Promise.all([
+        storage.getMember(memberId),
+        storage.getContributionsByMember(memberId),
+        storage.getLoansByMember(memberId),
+        storage.getAllLoanPayments()
+      ]);
+
+      if (!member) {
+        return res.status(404).json({ error: "Member not found" });
+      }
+
+      const currentYear = new Date().getFullYear();
+      const currentMonth = new Date().getMonth() + 1;
+      const maxMonth = year === currentYear ? currentMonth : 12;
+
+      // Monthly contributions grid for selected year
+      const contributionsGrid = Array.from({ length: 12 }, (_, i) => {
+        const m = i + 1;
+        const contribution = allContributions.find(c => c.year === year && c.month === m);
+        let status: string;
+        if (contribution) {
+          status = contribution.status;
+        } else if (m <= maxMonth) {
+          status = 'missing';
+        } else {
+          status = 'upcoming';
+        }
+        return {
+          month: m,
+          monthName: new Date(year, m - 1).toLocaleString('ar-OM', { month: 'long' }),
+          status,
+          amount: contribution ? Number(contribution.amount) : 0,
+          paidAt: contribution?.approvedAt || contribution?.createdAt || null,
+          contributionId: contribution?.id || null
+        };
+      });
+
+      // Loans with payment details
+      const loansWithPayments = memberLoans.map(loan => {
+        const payments = allPayments.filter(p => p.loanId === loan.id);
+        const totalPaid = payments.reduce((sum, p) => sum + Number(p.amount), 0);
+        const remaining = Math.max(0, Number(loan.amount) - totalPaid);
+        return {
+          id: loan.id,
+          title: loan.title,
+          type: loan.type,
+          amount: Number(loan.amount),
+          status: loan.status,
+          repaymentType: loan.repaymentType,
+          repaymentMonths: loan.repaymentMonths,
+          totalPaid,
+          remaining,
+          createdAt: loan.createdAt,
+          approvedAt: loan.approvedAt,
+          description: loan.description
+        };
+      });
+
+      // Summary aggregates (all-time)
+      const approvedContributions = allContributions.filter(c => c.status === 'approved');
+      const approvedLoans = memberLoans.filter(l => l.status === 'approved');
+      const totalContributions = approvedContributions.reduce((sum, c) => sum + Number(c.amount), 0);
+      const totalLoaned = approvedLoans.reduce((sum, l) => sum + Number(l.amount), 0);
+      const approvedLoansPayments = loansWithPayments.filter(l => l.status === 'approved');
+      const totalLoanPaid = approvedLoansPayments.reduce((sum, l) => sum + l.totalPaid, 0);
+      const totalLoanRemaining = approvedLoansPayments.reduce((sum, l) => sum + l.remaining, 0);
+
+      // Performance for selected year
+      const yearPaidContributions = allContributions.filter(c => c.year === year && c.status === 'approved');
+      const paidMonths = yearPaidContributions.length;
+      const expectedMonths = maxMonth;
+      const commitmentRate = expectedMonths > 0 ? Math.round((paidMonths / expectedMonths) * 100) : 0;
+      let rating = 'متأخر';
+      if (commitmentRate >= 90) rating = 'ممتاز';
+      else if (commitmentRate >= 70) rating = 'جيد';
+
+      res.json({
+        member: { id: member.id, name: member.name, role: member.role, avatar: member.avatar },
+        year,
+        summary: {
+          totalContributions,
+          totalLoaned,
+          totalLoanPaid,
+          totalLoanRemaining,
+          contributionCount: approvedContributions.length,
+          loanCount: approvedLoans.length,
+          pendingCount: allContributions.filter(c => c.status === 'pending_approval').length,
+        },
+        performance: {
+          paidMonths,
+          expectedMonths,
+          commitmentRate,
+          rating
+        },
+        contributionsGrid,
+        loans: loansWithPayments
+      });
+    } catch (error) {
+      console.error("Member report error:", error);
+      res.status(500).json({ error: "Failed to fetch member report" });
+    }
+  });
+
   app.get("/api/reports/chart-data", isAuthenticated, async (req, res) => {
     try {
       const type = req.query.type as string || 'overview';

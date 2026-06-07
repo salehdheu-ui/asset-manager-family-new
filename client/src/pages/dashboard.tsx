@@ -41,8 +41,8 @@ export default function Dashboard() {
   }
 
   const totalCapital = summary?.netCapital || 0;
-  const totalContributions = summary?.totalContributions || 0;
-  const totalExpenses = (summary?.totalExpenses || 0) + (summary?.totalLoans || 0) - (summary?.totalRepayments || 0);
+  const totalContributions = (summary?.totalContributions || 0) + (summary?.totalDeposits || 0);
+  const totalExpenses = (summary?.totalExpenses || 0) + (summary?.totalLoans || 0) - (summary?.totalRepayments || 0) + (summary?.totalWithdrawals || 0);
 
   const defaultLayers = [
     { id: "protected", name: "رأس المال المحمي", percentage: 45, amount: totalCapital * 0.45, locked: true, used: 0, available: 0 },

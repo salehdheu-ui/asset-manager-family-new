@@ -156,6 +156,8 @@ export interface DashboardSummary {
   totalLoans: number;
   totalExpenses: number;
   totalRepayments: number;
+  totalDeposits: number;
+  totalWithdrawals: number;
   netCapital: number;
   layers: Array<{
     id: string;
@@ -386,6 +388,56 @@ export interface LoansAnalysis {
 
 export async function getLoansAnalysis(year?: number): Promise<LoansAnalysis> {
   const url = new URL("/api/reports/loans-analysis", window.location.origin);
+  if (year) url.searchParams.append("year", year.toString());
+  const res = await fetch(url.toString(), { credentials: "include" });
+  if (!res.ok) await parseFetchError(res);
+  return res.json();
+}
+
+export interface MemberReport {
+  member: { id: string; name: string; role: string; avatar: string | null };
+  year: number;
+  summary: {
+    totalContributions: number;
+    totalLoaned: number;
+    totalLoanPaid: number;
+    totalLoanRemaining: number;
+    contributionCount: number;
+    loanCount: number;
+    pendingCount: number;
+  };
+  performance: {
+    paidMonths: number;
+    expectedMonths: number;
+    commitmentRate: number;
+    rating: string;
+  };
+  contributionsGrid: Array<{
+    month: number;
+    monthName: string;
+    status: 'approved' | 'pending_approval' | 'missing' | 'upcoming';
+    amount: number;
+    paidAt: string | null;
+    contributionId: string | null;
+  }>;
+  loans: Array<{
+    id: string;
+    title: string;
+    type: string;
+    amount: number;
+    status: string;
+    repaymentType: string;
+    repaymentMonths: number | null;
+    totalPaid: number;
+    remaining: number;
+    createdAt: string | null;
+    approvedAt: string | null;
+    description: string | null;
+  }>;
+}
+
+export async function getMemberReport(memberId: string, year?: number): Promise<MemberReport> {
+  const url = new URL(`/api/reports/member/${memberId}`, window.location.origin);
   if (year) url.searchParams.append("year", year.toString());
   const res = await fetch(url.toString(), { credentials: "include" });
   if (!res.ok) await parseFetchError(res);

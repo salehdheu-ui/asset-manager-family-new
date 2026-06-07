@@ -6,6 +6,8 @@ export interface DashboardSummaryResult {
   totalLoans: number;
   totalExpenses: number;
   totalRepayments: number;
+  totalDeposits: number;
+  totalWithdrawals: number;
   netCapital: number;
   allocation: any;
   lockedNetAssets: number;
@@ -56,6 +58,8 @@ export async function computeDashboardSummary(): Promise<DashboardSummaryResult>
     totalLoans,
     totalExpenses,
     totalRepayments,
+    totalDeposits,
+    totalWithdrawals,
     netCapital: capital,
     allocation,
     lockedNetAssets: allocation.netAssets,
