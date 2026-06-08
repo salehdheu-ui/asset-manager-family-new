@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { isAuthenticated, isAdmin } from "../auth";
-import { applyRetentionPolicy, createBackupSnapshot, listBackups, restoreBackupSnapshot } from "../services/backup";
+import { applyRetentionPolicy, createBackupSnapshot, listBackups, readBackupRecord, restoreBackupSnapshot } from "../services/backup";
 
 export function registerBackupRoutes(app: Express) {
   app.get("/api/backups", isAuthenticated, isAdmin, async (_req, res) => {
@@ -30,6 +30,22 @@ export function registerBackupRoutes(app: Express) {
     } catch (error) {
       console.error("Apply backup retention error:", error);
       res.status(500).json({ error: "Failed to apply backup retention" });
+    }
+  });
+
+  app.get("/api/backups/:id/download", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const snapshot = await readBackupRecord(req.params.id);
+      if (!snapshot) {
+        return res.status(404).json({ error: "Backup not found" });
+      }
+      const json = JSON.stringify(snapshot.payload, null, 2);
+      res.setHeader("Content-Disposition", `attachment; filename="${snapshot.record.fileName}"`);
+      res.setHeader("Content-Type", "application/json");
+      res.send(json);
+    } catch (error) {
+      console.error("Download backup error:", error);
+      res.status(500).json({ error: "Failed to download backup" });
     }
   });
 

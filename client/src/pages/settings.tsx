@@ -3,7 +3,7 @@ import { Link } from "wouter";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import MobileLayout from "@/components/layout/MobileLayout";
 import { applyBackupRetention, createBackup, getBackups, getMembers, getSettings, restoreBackup, updateSettings } from "@/lib/api";
-import { Home, Users, ChevronLeft, Shield, Wallet, DatabaseBackup, CalendarClock, Archive } from "lucide-react";
+import { Home, Users, ChevronLeft, Shield, Wallet, DatabaseBackup, CalendarClock, Archive, Download } from "lucide-react";
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -82,6 +82,7 @@ export default function FamilySettings() {
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       queryClient.invalidateQueries({ queryKey: ["reports"] });
       queryClient.invalidateQueries({ queryKey: ["analytics"] });
+      queryClient.invalidateQueries({ queryKey: ["allocation"] });
       toast({ title: "تمت استعادة النسخة الاحتياطية" });
     },
     onError: (error) => {
@@ -240,6 +241,20 @@ export default function FamilySettings() {
                       <Badge>
                         {Math.max(1, Math.round((backup.sizeBytes ?? 0) / 1024))} ك.ب
                       </Badge>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="rounded-lg px-2"
+                        title="تنزيل النسخة"
+                        onClick={() => {
+                          const a = document.createElement("a");
+                          a.href = `/api/backups/${backup.id}/download`;
+                          a.download = backup.fileName;
+                          a.click();
+                        }}
+                      >
+                        <Download className="w-4 h-4" />
+                      </Button>
                       <Button
                         variant="outline"
                         size="sm"

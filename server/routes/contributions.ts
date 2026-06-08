@@ -60,15 +60,19 @@ export function registerContributionRoutes(app: Express) {
         return res.status(404).json({ message: "المساهمة غير موجودة" });
       }
 
+      const member = await storage.getMember(contribution.memberId);
+      const memberName = member?.name ?? "عضو غير معروف";
+
       await storage.createAuditLog({
         action: "contribution_approved",
         entityType: "contribution",
         entityId: contribution.id,
         actorUserId: req.user?.id ?? null,
         actorName: req.user?.username ?? req.user?.firstName ?? "مشرف",
-        description: `تم اعتماد مساهمة الشهر ${contribution.month}/${contribution.year}`,
+        description: `تم اعتماد مساهمة ${memberName} للشهر ${contribution.month}/${contribution.year}`,
         metadata: {
           memberId: contribution.memberId,
+          memberName,
           amount: contribution.amount,
           year: contribution.year,
           month: contribution.month,
@@ -90,15 +94,19 @@ export function registerContributionRoutes(app: Express) {
         return res.status(404).json({ message: "المساهمة غير موجودة" });
       }
 
+      const deletedMember = await storage.getMember(deletedContribution.memberId);
+      const deletedMemberName = deletedMember?.name ?? "عضو غير معروف";
+
       await storage.createAuditLog({
         action: "contribution_deleted",
         entityType: "contribution",
         entityId: deletedContribution.id,
         actorUserId: req.user?.id ?? null,
         actorName: req.user?.username ?? req.user?.firstName ?? "مشرف",
-        description: `تم حذف مساهمة الشهر ${deletedContribution.month}/${deletedContribution.year}`,
+        description: `تم حذف مساهمة ${deletedMemberName} للشهر ${deletedContribution.month}/${deletedContribution.year}`,
         metadata: {
           memberId: deletedContribution.memberId,
+          memberName: deletedMemberName,
           amount: deletedContribution.amount,
           year: deletedContribution.year,
           month: deletedContribution.month,
