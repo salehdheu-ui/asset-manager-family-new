@@ -115,6 +115,11 @@ export async function createBackup(): Promise<SystemBackup> {
   return res.json();
 }
 
+export async function restoreBackup(id: string): Promise<{ restoredBackupId: string; restoredAt: string; restoredBy: string | null; fileName: string }> {
+  const res = await apiRequest("POST", `/api/backups/${id}/restore`, {});
+  return res.json();
+}
+
 export async function applyBackupRetention(): Promise<{ kept: number; deleted: number }> {
   const res = await apiRequest("POST", "/api/backups/apply-retention", {});
   return res.json();

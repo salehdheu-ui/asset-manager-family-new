@@ -25,8 +25,57 @@ export function registerLoanRoutes(app: Express) {
 
   app.post("/api/loans", isAuthenticated, async (req, res) => {
     try {
-      const data = insertLoanSchema.parse(req.body);
+      const requestedStatus = req.body?.status;
+      const data = insertLoanSchema.parse({
+        ...req.body,
+        status: req.user?.role === "admin" && requestedStatus === "approved" ? "approved" : req.body?.status,
+      });
+
+      if (data.status === "approved") {
+        if (req.user?.role !== "admin") {
+          return res.status(403).json({ error: "اعتماد السلفة مباشرة متاح للإدارة فقط" });
+        }
+
+        const currentYear = new Date().getFullYear();
+        const check = await checkLoanTransaction(Number(data.amount), currentYear);
+        if (!check.allowed) {
+          return res.status(403).json({
+            error: check.reason,
+            layer: check.layer,
+            available: check.available,
+            requested: check.requested,
+          });
+        }
+      }
+
       const loan = await storage.createLoan(data);
+
+      if (loan.status === "approved") {
+        const approvalYear = new Date().getFullYear();
+
+        if (loan.repaymentType === "scheduled" && loan.repaymentMonths && loan.repaymentMonths > 0) {
+          const monthlyAmount = Number(loan.amount) / loan.repaymentMonths;
+          const repayments = [];
+          const approvalDate = loan.approvedAt || loan.createdAt || new Date();
+
+          for (let i = 1; i <= loan.repaymentMonths; i++) {
+            const dueDate = new Date(approvalDate);
+            dueDate.setMonth(dueDate.getMonth() + i);
+            repayments.push({
+              loanId: loan.id,
+              installmentNumber: i,
+              amount: monthlyAmount.toFixed(3),
+              dueDate,
+              status: "scheduled"
+            });
+          }
+
+          await storage.createLoanRepayments(repayments as any);
+        }
+
+        await rebalanceYear(approvalYear);
+      }
+
       res.status(201).json(loan);
     } catch (error) {
       if (error instanceof z.ZodError) {

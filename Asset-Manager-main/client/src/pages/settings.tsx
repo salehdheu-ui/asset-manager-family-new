@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import MobileLayout from "@/components/layout/MobileLayout";
-import { applyBackupRetention, createBackup, getBackups, getMembers, getSettings, updateSettings } from "@/lib/api";
+import { applyBackupRetention, createBackup, getBackups, getMembers, getSettings, restoreBackup, updateSettings } from "@/lib/api";
 import { Home, Users, ChevronLeft, Shield, Wallet, DatabaseBackup, CalendarClock, Archive } from "lucide-react";
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
@@ -98,6 +98,26 @@ export default function FamilySettings() {
     onError: (error) => {
       toast({
         title: "تعذر تنظيف النسخ القديمة",
+        description: (error as Error).message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const restoreBackupMutation = useMutation<{ restoredBackupId: string; restoredAt: string; restoredBy: string | null; fileName: string }, Error, string>({
+    mutationFn: restoreBackup,
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ["backups"] });
+      queryClient.invalidateQueries({ queryKey: ["settings"] });
+      queryClient.invalidateQueries({ queryKey: ["members"] });
+      toast({
+        title: "تمت استعادة النسخة الاحتياطية",
+        description: `تمت استعادة البيانات من ${result.fileName}`,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "تعذرت استعادة النسخة الاحتياطية",
         description: (error as Error).message,
         variant: "destructive",
       });
@@ -213,9 +233,24 @@ export default function FamilySettings() {
                         {new Date(backup.backupDate).toLocaleString("ar-OM")}
                       </div>
                     </div>
-                    <Badge variant="secondary">
-                      {Math.max(1, Math.round((backup.sizeBytes ?? 0) / 1024))} ك.ب
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary">
+                        {Math.max(1, Math.round((backup.sizeBytes ?? 0) / 1024))} ك.ب
+                      </Badge>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={restoreBackupMutation.isPending}
+                        onClick={() => {
+                          const confirmed = window.confirm(`سيتم استبدال البيانات الحالية بالكامل بالنسخة ${backup.fileName}. هل تريد المتابعة؟`);
+                          if (confirmed) {
+                            restoreBackupMutation.mutate(backup.id);
+                          }
+                        }}
+                      >
+                        {restoreBackupMutation.isPending ? "جاري الاستعادة..." : "استعادة"}
+                      </Button>
+                    </div>
                   </div>
                 ))
               )}

@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { isAuthenticated, isAdmin } from "../auth";
-import { applyRetentionPolicy, createBackupSnapshot, listBackups } from "../services/backup";
+import { applyRetentionPolicy, createBackupSnapshot, listBackups, restoreBackupSnapshot } from "../services/backup";
 
 export function registerBackupRoutes(app: Express) {
   app.get("/api/backups", isAuthenticated, isAdmin, async (_req, res) => {
@@ -20,6 +20,16 @@ export function registerBackupRoutes(app: Express) {
     } catch (error) {
       console.error("Create backup error:", error);
       res.status(500).json({ error: "Failed to create backup" });
+    }
+  });
+
+  app.post("/api/backups/:id/restore", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const result = await restoreBackupSnapshot(req.params.id, req.user?.id);
+      res.json(result);
+    } catch (error) {
+      console.error("Restore backup error:", error);
+      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to restore backup" });
     }
   });
 

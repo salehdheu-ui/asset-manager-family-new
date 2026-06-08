@@ -65,7 +65,7 @@ export async function getLoans(): Promise<Loan[]> {
   return res.json();
 }
 
-export async function createLoan(data: { memberId: string; type: string; title: string; amount: string; description?: string; repaymentType?: string; repaymentMonths?: number | null }): Promise<Loan> {
+export async function createLoan(data: { memberId: string; type: string; title: string; amount: string; description?: string; repaymentType?: string; repaymentMonths?: number | null; status?: string }): Promise<Loan> {
   const res = await apiRequest("POST", "/api/loans", data);
   return res.json();
 }

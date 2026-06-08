@@ -1,8 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import MobileLayout from "@/components/layout/MobileLayout";
-import { getAdminUsers, getMembers, updateUserRole, linkUserToMember, deleteUser, createUser, updateUserPassword, updateUser, getFundAdjustments, createFundAdjustment, deleteFundAdjustment, resetSystem, lockYearAllocation, resetYearAllocation, getAuditLogs } from "@/lib/api";
+import { getAdminUsers, getMembers, updateUserRole, linkUserToMember, deleteUser, createUser, updateUserPassword, updateUser, getFundAdjustments, createFundAdjustment, resetSystem, lockYearAllocation, resetYearAllocation, getAuditLogs, createLoan, createExpense, getDashboardSummary } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
-import { Shield, Users, Trash2, UserCheck, Link, Crown, User as UserIcon, Plus, Key, Eye, EyeOff, Wallet, ArrowUpCircle, ArrowDownCircle, RotateCcw, AlertTriangle, Lock, History } from "lucide-react";
+import { Shield, Users, Trash2, UserCheck, Link, Crown, User as UserIcon, Plus, Key, Eye, EyeOff, Wallet, ArrowDownCircle, RotateCcw, AlertTriangle, Lock, History, HandCoins, ReceiptText } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -34,11 +34,22 @@ export default function AdminDashboard() {
   const [newUserPassword, setNewUserPassword] = useState("");
   const [showChangePassword, setShowChangePassword] = useState(false);
 
-  const [adjustType, setAdjustType] = useState<"deposit" | "withdrawal">("deposit");
-  const [adjustAmount, setAdjustAmount] = useState("");
-  const [adjustDescription, setAdjustDescription] = useState("");
-  const [adjustMemberId, setAdjustMemberId] = useState("");
-  const [adjustDialogOpen, setAdjustDialogOpen] = useState(false);
+  const [depositAmount, setDepositAmount] = useState("");
+  const [depositDescription, setDepositDescription] = useState("");
+  const [depositSourceType, setDepositSourceType] = useState<"known" | "unknown">("unknown");
+  const [depositDialogOpen, setDepositDialogOpen] = useState(false);
+  const [loanDialogOpen, setLoanDialogOpen] = useState(false);
+  const [expenseDialogOpen, setExpenseDialogOpen] = useState(false);
+  const [adminLoanMemberId, setAdminLoanMemberId] = useState("");
+  const [adminLoanType, setAdminLoanType] = useState<"urgent" | "standard" | "emergency">("standard");
+  const [adminLoanAmount, setAdminLoanAmount] = useState("");
+  const [adminLoanDescription, setAdminLoanDescription] = useState("");
+  const [adminLoanRepaymentType, setAdminLoanRepaymentType] = useState<"scheduled" | "open">("scheduled");
+  const [adminLoanMonths, setAdminLoanMonths] = useState("12");
+  const [expenseAmount, setExpenseAmount] = useState("");
+  const [expenseDescription, setExpenseDescription] = useState("");
+  const [expenseCategory, setExpenseCategory] = useState<"general" | "emergency" | "charity" | "zakat">("general");
+  const [expenseTitle, setExpenseTitle] = useState("مصروف إداري");
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const [resetConfirmText, setResetConfirmText] = useState("");
 
@@ -66,31 +77,61 @@ export default function AdminDashboard() {
     enabled: !!user,
   });
 
+  const { data: summary } = useQuery({
+    queryKey: ["dashboard-summary"],
+    queryFn: getDashboardSummary,
+    enabled: !!user,
+  });
+
   const createAdjustmentMutation = useMutation({
     mutationFn: createFundAdjustment,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["fund-adjustments"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] });
-      toast({ title: adjustType === "deposit" ? "تم إيداع المبلغ بنجاح" : "تم سحب المبلغ بنجاح" });
-      setAdjustAmount("");
-      setAdjustDescription("");
-      setAdjustMemberId("");
-      setAdjustDialogOpen(false);
+      toast({ title: "تم تسجيل الإيداع في السجل العام بنجاح" });
+      setDepositAmount("");
+      setDepositDescription("");
+      setDepositSourceType("unknown");
+      setDepositDialogOpen(false);
     },
     onError: (error: any) => {
       toast({ title: "فشلت العملية", description: error?.message || "تعذر تنفيذ العملية", variant: "destructive" });
     },
   });
 
-  const deleteAdjustmentMutation = useMutation({
-    mutationFn: deleteFundAdjustment,
+  const createAdminLoanMutation = useMutation({
+    mutationFn: createLoan,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["fund-adjustments"] });
+      queryClient.invalidateQueries({ queryKey: ["loans"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] });
-      toast({ title: "تم حذف العملية" });
+      toast({ title: "تمت إضافة السلفة واعتمادها بنجاح" });
+      setAdminLoanMemberId("");
+      setAdminLoanType("standard");
+      setAdminLoanAmount("");
+      setAdminLoanDescription("");
+      setAdminLoanRepaymentType("scheduled");
+      setAdminLoanMonths("12");
+      setLoanDialogOpen(false);
     },
     onError: (error: any) => {
-      toast({ title: "فشل حذف العملية", description: error?.message || "تعذر حذف العملية", variant: "destructive" });
+      toast({ title: "تعذر إضافة السلفة", description: error?.message || "تعذر تنفيذ العملية", variant: "destructive" });
+    },
+  });
+
+  const createAdminExpenseMutation = useMutation({
+    mutationFn: createExpense,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["expenses"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] });
+      toast({ title: "تم تسجيل المصروف بنجاح" });
+      setExpenseAmount("");
+      setExpenseDescription("");
+      setExpenseCategory("general");
+      setExpenseTitle("مصروف إداري");
+      setExpenseDialogOpen(false);
+    },
+    onError: (error: any) => {
+      toast({ title: "تعذر تسجيل المصروف", description: error?.message || "تعذر تنفيذ العملية", variant: "destructive" });
     },
   });
 
@@ -231,6 +272,19 @@ export default function AdminDashboard() {
     if (action === "settings_updated") return "تعديل الإعدادات";
     return "عملية إدارية";
   };
+
+  const flexibleLayer = summary?.layers?.find((layer: any) => layer.id === "flexible");
+  const emergencyLayer = summary?.layers?.find((layer: any) => layer.id === "emergency");
+  const availableFlexible = Number((flexibleLayer as any)?.available ?? flexibleLayer?.amount ?? 0);
+  const availableEmergency = Number((emergencyLayer as any)?.available ?? emergencyLayer?.amount ?? 0);
+  const depositRecords = adjustments.filter((adjustment) => adjustment.type === "deposit");
+  const loanTypeOptions = {
+    urgent: "سلفة عاجلة",
+    standard: "سلفة غير عاجلة",
+    emergency: "سلفة طارئة",
+  };
+  const selectedLoanTitle = loanTypeOptions[adminLoanType];
+  const selectedLoanAvailable = adminLoanType === "emergency" ? availableEmergency : availableFlexible;
 
   return (
     <MobileLayout title="لوحة الإدارة">
@@ -374,57 +428,75 @@ export default function AdminDashboard() {
           </DialogContent>
         </Dialog>
 
-        {/* Fund Adjustments Section */}
         <div className="bg-amber-600 text-white p-6 rounded-[2rem] relative overflow-hidden shadow-lg shadow-amber-600/20">
           <div className="relative z-10">
             <div className="flex items-center gap-3 mb-2">
               <Wallet className="w-8 h-8" />
-              <h2 className="text-xl font-bold">التحكم المباشر بالصندوق</h2>
+              <h2 className="text-xl font-bold">إجراءات الصندوق للأدمن</h2>
             </div>
-            <p className="text-sm opacity-80">إيداع أو سحب أي مبلغ بصلاحية مطلقة</p>
+            <p className="text-sm opacity-80">سلفة مباشرة، مصروف، أو إيداع عام بدون حذف السجلات السابقة</p>
           </div>
           <div className="absolute right-[-20px] top-[-20px] w-40 h-40 bg-white/10 rounded-full blur-3xl" />
         </div>
 
-        <div className="flex gap-3">
+        <div className="grid gap-3 md:grid-cols-3">
           <button
-            onClick={() => { setAdjustType("deposit"); setAdjustDialogOpen(true); }}
-            className="flex-1 bg-green-600 text-white py-3 rounded-2xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-green-600/20"
-            data-testid="button-fund-deposit"
+            onClick={() => setLoanDialogOpen(true)}
+            className="w-full bg-primary text-primary-foreground py-3 rounded-2xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-primary/20"
+            data-testid="button-admin-add-loan"
           >
-            <ArrowDownCircle className="w-5 h-5" />
-            إيداع مبلغ
+            <HandCoins className="w-5 h-5" />
+            إضافة سلفة مباشرة
           </button>
           <button
-            onClick={() => { setAdjustType("withdrawal"); setAdjustDialogOpen(true); }}
-            className="flex-1 bg-red-600 text-white py-3 rounded-2xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-red-600/20"
-            data-testid="button-fund-withdrawal"
+            onClick={() => setExpenseDialogOpen(true)}
+            className="w-full bg-red-600 text-white py-3 rounded-2xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-red-600/20"
+            data-testid="button-admin-add-expense"
           >
-            <ArrowUpCircle className="w-5 h-5" />
-            سحب مبلغ
+            <ReceiptText className="w-5 h-5" />
+            إضافة مصروف
+          </button>
+          <button
+            onClick={() => setDepositDialogOpen(true)}
+            className="w-full bg-green-600 text-white py-3 rounded-2xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-green-600/20"
+            data-testid="button-admin-add-deposit"
+          >
+            <ArrowDownCircle className="w-5 h-5" />
+            إضافة مبلغ وارد
           </button>
         </div>
 
-        <Dialog open={adjustDialogOpen} onOpenChange={setAdjustDialogOpen}>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-card border border-border/60 rounded-2xl p-4">
+            <p className="text-[10px] font-bold text-muted-foreground">المتاح للسلف</p>
+            <p className="text-lg font-mono font-bold text-primary">{availableFlexible.toFixed(3)} ر.ع</p>
+          </div>
+          <div className="bg-card border border-border/60 rounded-2xl p-4">
+            <p className="text-[10px] font-bold text-muted-foreground">المتاح للطوارئ</p>
+            <p className="text-lg font-mono font-bold text-amber-600">{availableEmergency.toFixed(3)} ر.ع</p>
+          </div>
+        </div>
+
+        <Dialog open={loanDialogOpen} onOpenChange={setLoanDialogOpen}>
           <DialogContent className="sm:max-w-md font-sans" dir="rtl">
             <DialogHeader>
-              <DialogTitle className="font-heading text-xl">
-                {adjustType === "deposit" ? "إيداع مبلغ للصندوق" : "سحب مبلغ من الصندوق"}
-              </DialogTitle>
-              <DialogDescription>
-                {adjustType === "deposit" ? "أدخل المبلغ المراد إضافته للصندوق" : "أدخل المبلغ المراد سحبه من الصندوق"}
-              </DialogDescription>
+              <DialogTitle className="font-heading text-xl">إضافة سلفة مباشرة</DialogTitle>
+              <DialogDescription>سيتم تسجيل السلفة في قائمة السلف واعتمادها مباشرة بعد التحقق من الرصيد.</DialogDescription>
             </DialogHeader>
             <form
               className="py-4 space-y-4"
               onSubmit={(e) => {
                 e.preventDefault();
-                if (adjustAmount && Number(adjustAmount) > 0) {
-                  createAdjustmentMutation.mutate({
-                    type: adjustType,
-                    amount: adjustAmount,
-                    description: adjustDescription || undefined,
-                    memberId: adjustMemberId || undefined,
+                if (adminLoanMemberId && adminLoanAmount && Number(adminLoanAmount) > 0) {
+                  createAdminLoanMutation.mutate({
+                    memberId: adminLoanMemberId,
+                    type: adminLoanType,
+                    title: selectedLoanTitle,
+                    amount: adminLoanAmount,
+                    description: adminLoanDescription || undefined,
+                    repaymentType: adminLoanRepaymentType,
+                    repaymentMonths: adminLoanRepaymentType === "scheduled" ? Number(adminLoanMonths) : null,
+                    status: "approved",
                   });
                 }
               }}
@@ -432,11 +504,11 @@ export default function AdminDashboard() {
               <div className="space-y-2">
                 <label className="text-sm font-medium">العضو *</label>
                 <select
-                  value={adjustMemberId}
-                  onChange={(e) => setAdjustMemberId(e.target.value)}
+                  value={adminLoanMemberId}
+                  onChange={(e) => setAdminLoanMemberId(e.target.value)}
                   className="w-full bg-background border border-border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/50"
                   required
-                  data-testid="select-adjust-member"
+                  data-testid="select-admin-loan-member"
                 >
                   <option value="">اختر العضو...</option>
                   {members.map(m => (
@@ -445,45 +517,84 @@ export default function AdminDashboard() {
                 </select>
               </div>
               <div className="space-y-2">
+                <label className="text-sm font-medium">نوع السلفة *</label>
+                <select
+                  value={adminLoanType}
+                  onChange={(e) => setAdminLoanType(e.target.value as "urgent" | "standard" | "emergency")}
+                  className="w-full bg-background border border-border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  data-testid="select-admin-loan-type"
+                >
+                  <option value="urgent">سلفة عاجلة</option>
+                  <option value="standard">سلفة غير عاجلة</option>
+                  <option value="emergency">سلفة طارئة</option>
+                </select>
+              </div>
+              <div className="space-y-2">
                 <label className="text-sm font-medium">المبلغ (ر.ع) *</label>
                 <input
                   type="number"
                   step="0.001"
                   min="0.001"
-                  value={adjustAmount}
-                  onChange={(e) => setAdjustAmount(e.target.value)}
+                  value={adminLoanAmount}
+                  onChange={(e) => setAdminLoanAmount(e.target.value)}
                   className="w-full bg-background border border-border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/50"
                   placeholder="0.000"
                   required
-                  data-testid="input-adjust-amount"
+                  data-testid="input-admin-loan-amount"
                 />
+                <p className="text-[11px] text-muted-foreground">الرصيد المتاح لهذا النوع: {selectedLoanAvailable.toFixed(3)} ر.ع</p>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">الوصف (اختياري)</label>
+                <label className="text-sm font-medium">طريقة السداد</label>
+                <select
+                  value={adminLoanRepaymentType}
+                  onChange={(e) => setAdminLoanRepaymentType(e.target.value as "scheduled" | "open")}
+                  className="w-full bg-background border border-border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  data-testid="select-admin-loan-repayment-type"
+                >
+                  <option value="scheduled">بخطة سداد</option>
+                  <option value="open">مفتوحة بدون خطة</option>
+                </select>
+              </div>
+              {adminLoanRepaymentType === "scheduled" && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">مدة السداد بالأشهر</label>
+                  <select
+                    value={adminLoanMonths}
+                    onChange={(e) => setAdminLoanMonths(e.target.value)}
+                    className="w-full bg-background border border-border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    data-testid="select-admin-loan-months"
+                  >
+                    <option value="6">6 أشهر</option>
+                    <option value="12">12 شهر</option>
+                    <option value="18">18 شهر</option>
+                    <option value="24">24 شهر</option>
+                  </select>
+                </div>
+              )}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">الملاحظة (اختياري)</label>
                 <input
                   type="text"
-                  value={adjustDescription}
-                  onChange={(e) => setAdjustDescription(e.target.value)}
+                  value={adminLoanDescription}
+                  onChange={(e) => setAdminLoanDescription(e.target.value)}
                   className="w-full bg-background border border-border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  placeholder="سبب العملية..."
-                  data-testid="input-adjust-description"
+                  placeholder="سبب السلفة أو أي توضيح إضافي"
+                  data-testid="input-admin-loan-description"
                 />
               </div>
               <button
                 type="submit"
-                disabled={createAdjustmentMutation.isPending || !adjustAmount || Number(adjustAmount) <= 0 || !adjustMemberId}
-                className={cn(
-                  "w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-50 text-white",
-                  adjustType === "deposit" ? "bg-green-600" : "bg-red-600"
-                )}
-                data-testid="button-submit-adjustment"
+                disabled={createAdminLoanMutation.isPending || !adminLoanAmount || Number(adminLoanAmount) <= 0 || !adminLoanMemberId}
+                className="w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-50 text-white bg-primary"
+                data-testid="button-submit-admin-loan"
               >
-                {createAdjustmentMutation.isPending ? (
+                {createAdminLoanMutation.isPending ? (
                   <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full" />
                 ) : (
                   <>
-                    {adjustType === "deposit" ? <ArrowDownCircle className="w-5 h-5" /> : <ArrowUpCircle className="w-5 h-5" />}
-                    {adjustType === "deposit" ? "تأكيد الإيداع" : "تأكيد السحب"}
+                    <HandCoins className="w-5 h-5" />
+                    اعتماد السلفة وإضافتها
                   </>
                 )}
               </button>
@@ -491,10 +602,178 @@ export default function AdminDashboard() {
           </DialogContent>
         </Dialog>
 
-        {adjustments.length > 0 && (
+        <Dialog open={expenseDialogOpen} onOpenChange={setExpenseDialogOpen}>
+          <DialogContent className="sm:max-w-md font-sans" dir="rtl">
+            <DialogHeader>
+              <DialogTitle className="font-heading text-xl">إضافة مصروف</DialogTitle>
+              <DialogDescription>سيتم تسجيل المصروف مباشرة ضمن قائمة المصروفات مع بقاء فحص الرصيد المتاح.</DialogDescription>
+            </DialogHeader>
+            <form
+              className="py-4 space-y-4"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (expenseAmount && Number(expenseAmount) > 0) {
+                  createAdminExpenseMutation.mutate({
+                    title: expenseTitle,
+                    amount: expenseAmount,
+                    category: expenseCategory,
+                    description: expenseDescription || undefined,
+                  });
+                }
+              }}
+            >
+              <div className="space-y-2">
+                <label className="text-sm font-medium">نوع المصروف *</label>
+                <select
+                  value={expenseCategory}
+                  onChange={(e) => setExpenseCategory(e.target.value as "general" | "emergency" | "charity" | "zakat")}
+                  className="w-full bg-background border border-border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  data-testid="select-admin-expense-category"
+                >
+                  <option value="general">مصروفات عامة</option>
+                  <option value="emergency">طوارئ</option>
+                  <option value="charity">أعمال خيرية</option>
+                  <option value="zakat">زكاة</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">عنوان العملية *</label>
+                <input
+                  type="text"
+                  value={expenseTitle}
+                  onChange={(e) => setExpenseTitle(e.target.value)}
+                  className="w-full bg-background border border-border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  placeholder="مثال: مصروف تشغيل أو دعم طارئ"
+                  required
+                  data-testid="input-admin-expense-title"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">المبلغ (ر.ع) *</label>
+                <input
+                  type="number"
+                  step="0.001"
+                  min="0.001"
+                  value={expenseAmount}
+                  onChange={(e) => setExpenseAmount(e.target.value)}
+                  className="w-full bg-background border border-border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  placeholder="0.000"
+                  required
+                  data-testid="input-admin-expense-amount"
+                />
+                <p className="text-[11px] text-muted-foreground">الرصيد المتاح: {(expenseCategory === "emergency" ? availableEmergency : availableFlexible).toFixed(3)} ر.ع</p>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">الملاحظة (اختياري)</label>
+                <input
+                  type="text"
+                  value={expenseDescription}
+                  onChange={(e) => setExpenseDescription(e.target.value)}
+                  className="w-full bg-background border border-border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  placeholder="سبب المصروف أو أي توضيح إضافي"
+                  data-testid="input-admin-expense-description"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={createAdminExpenseMutation.isPending || !expenseTitle || !expenseAmount || Number(expenseAmount) <= 0}
+                className="w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-50 text-white bg-red-600"
+                data-testid="button-submit-admin-expense"
+              >
+                {createAdminExpenseMutation.isPending ? (
+                  <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full" />
+                ) : (
+                  <>
+                    <ReceiptText className="w-5 h-5" />
+                    تسجيل المصروف
+                  </>
+                )}
+              </button>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={depositDialogOpen} onOpenChange={setDepositDialogOpen}>
+          <DialogContent className="sm:max-w-md font-sans" dir="rtl">
+            <DialogHeader>
+              <DialogTitle className="font-heading text-xl">إضافة مبلغ وارد</DialogTitle>
+              <DialogDescription>سيتم تسجيل المبلغ في السجل العام كإيداع دون المساس بأي بيانات سابقة.</DialogDescription>
+            </DialogHeader>
+            <form
+              className="py-4 space-y-4"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (depositAmount && Number(depositAmount) > 0) {
+                  const normalizedDescription = depositDescription.trim();
+                  const defaultDescription = depositSourceType === "unknown" ? "إيداع من مصدر غير معروف" : "إيداع عام";
+                  createAdjustmentMutation.mutate({
+                    type: "deposit",
+                    amount: depositAmount,
+                    description: normalizedDescription ? `${depositSourceType === "unknown" ? "إيداع من مصدر غير معروف" : "إيداع عام"} - ${normalizedDescription}` : defaultDescription,
+                  });
+                }
+              }}
+            >
+              <div className="space-y-2">
+                <label className="text-sm font-medium">نوع المصدر *</label>
+                <select
+                  value={depositSourceType}
+                  onChange={(e) => setDepositSourceType(e.target.value as "known" | "unknown")}
+                  className="w-full bg-background border border-border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  data-testid="select-admin-deposit-source-type"
+                >
+                  <option value="unknown">غير معروف</option>
+                  <option value="known">معلوم</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">المبلغ (ر.ع) *</label>
+                <input
+                  type="number"
+                  step="0.001"
+                  min="0.001"
+                  value={depositAmount}
+                  onChange={(e) => setDepositAmount(e.target.value)}
+                  className="w-full bg-background border border-border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  placeholder="0.000"
+                  required
+                  data-testid="input-admin-deposit-amount"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">ملاحظة (اختياري)</label>
+                <input
+                  type="text"
+                  value={depositDescription}
+                  onChange={(e) => setDepositDescription(e.target.value)}
+                  className="w-full bg-background border border-border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  placeholder="مثال: تسوية يدوية أو مبلغ نقدي"
+                  data-testid="input-admin-deposit-description"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={createAdjustmentMutation.isPending || !depositAmount || Number(depositAmount) <= 0}
+                className="w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-50 text-white bg-green-600"
+                data-testid="button-submit-admin-deposit"
+              >
+                {createAdjustmentMutation.isPending ? (
+                  <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full" />
+                ) : (
+                  <>
+                    <ArrowDownCircle className="w-5 h-5" />
+                    تسجيل الإيداع
+                  </>
+                )}
+              </button>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        {depositRecords.length > 0 && (
           <div className="space-y-3">
-            <h3 className="font-bold text-lg text-amber-700 font-heading px-1">سجل العمليات المباشرة</h3>
-            {adjustments.map((adj, idx) => (
+            <h3 className="font-bold text-lg text-amber-700 font-heading px-1">السجل العام للإيداعات</h3>
+            {depositRecords.map((adj, idx) => (
               <motion.div
                 key={adj.id}
                 initial={{ opacity: 0, y: 10 }}
@@ -502,27 +781,16 @@ export default function AdminDashboard() {
                 transition={{ delay: idx * 0.03 }}
                 className="bg-card border border-border/60 rounded-2xl p-4 flex items-center gap-3"
               >
-                <div className={cn(
-                  "w-10 h-10 rounded-full flex items-center justify-center",
-                  adj.type === "deposit" ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"
-                )}>
-                  {adj.type === "deposit" ? <ArrowDownCircle className="w-5 h-5" /> : <ArrowUpCircle className="w-5 h-5" />}
+                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-green-100 text-green-600">
+                  <ArrowDownCircle className="w-5 h-5" />
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <span className={cn(
-                      "text-xs font-bold px-2 py-0.5 rounded-full",
-                      adj.type === "deposit" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-                    )}>
-                      {adj.type === "deposit" ? "إيداع" : "سحب"}
+                    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700">
+                      إيداع
                     </span>
                     <span className="font-bold text-sm">{Number(adj.amount).toFixed(3)} ر.ع</span>
                   </div>
-                  {adj.memberId && (
-                    <p className="text-xs text-primary font-bold mt-1">
-                      {adj.type === "deposit" ? "إيداع لـ" : "سحب من"}: {getMemberName(adj.memberId)}
-                    </p>
-                  )}
                   {adj.description && (
                     <p className="text-xs text-muted-foreground mt-1">{adj.description}</p>
                   )}
@@ -530,18 +798,6 @@ export default function AdminDashboard() {
                     {adj.createdAt ? new Date(adj.createdAt).toLocaleDateString("ar-OM", { year: "numeric", month: "short", day: "numeric" }) : ""}
                   </p>
                 </div>
-                <button
-                  onClick={() => {
-                    if (confirm("هل أنت متأكد من حذف هذه العملية؟")) {
-                      deleteAdjustmentMutation.mutate(adj.id);
-                    }
-                  }}
-                  disabled={deleteAdjustmentMutation.isPending}
-                  className="p-2 bg-red-100 text-red-600 rounded-xl active:scale-95 transition-transform disabled:opacity-50"
-                  data-testid={`button-delete-adjustment-${adj.id}`}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
               </motion.div>
             ))}
           </div>

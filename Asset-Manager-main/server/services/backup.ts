@@ -2,13 +2,31 @@ import { mkdir, readFile, rm, stat, writeFile } from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
 import { db } from "../db";
-import { contributions, expenses, familySettings, fundAdjustments, loanRepayments, loans, members, systemBackups } from "@shared/schema";
+import { capitalAllocations, contributions, expenses, familySettings, fundAdjustments, loanRepayments, loans, members, systemBackups } from "@shared/schema";
 import { users } from "@shared/models/auth";
 import { asc, desc, eq } from "drizzle-orm";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const backupRoot = path.resolve(__dirname, "../../backups");
+
+type BackupPayload = {
+  metadata: {
+    createdAt: string;
+    version: number;
+  };
+  data: {
+    familySettings: typeof familySettings.$inferSelect | null;
+    members: Array<typeof members.$inferSelect>;
+    contributions: Array<typeof contributions.$inferSelect>;
+    loans: Array<typeof loans.$inferSelect>;
+    loanRepayments: Array<typeof loanRepayments.$inferSelect>;
+    expenses: Array<typeof expenses.$inferSelect>;
+    fundAdjustments: Array<typeof fundAdjustments.$inferSelect>;
+    capitalAllocations: Array<typeof capitalAllocations.$inferSelect>;
+    users: Array<typeof users.$inferSelect>;
+  };
+};
 
 function pad(value: number) {
   return value.toString().padStart(2, "0");
@@ -36,6 +54,51 @@ async function ensureBackupDirectory() {
   await mkdir(backupRoot, { recursive: true });
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function asArray<T>(value: unknown, fieldName: string): T[] {
+  if (!Array.isArray(value)) {
+    throw new Error(`Backup payload is invalid: ${fieldName} must be an array`);
+  }
+
+  return value as T[];
+}
+
+function normalizeBackupPayload(payload: unknown): BackupPayload {
+  if (!isRecord(payload) || !isRecord(payload.metadata) || !isRecord(payload.data)) {
+    throw new Error("Backup payload is invalid");
+  }
+
+  const createdAt = payload.metadata.createdAt;
+  const version = payload.metadata.version;
+
+  if (typeof createdAt !== "string" || typeof version !== "number") {
+    throw new Error("Backup metadata is invalid");
+  }
+
+  return {
+    metadata: {
+      createdAt,
+      version,
+    },
+    data: {
+      familySettings: (payload.data.familySettings ?? null) as BackupPayload["data"]["familySettings"],
+      members: asArray<BackupPayload["data"]["members"][number]>(payload.data.members, "members"),
+      contributions: asArray<BackupPayload["data"]["contributions"][number]>(payload.data.contributions, "contributions"),
+      loans: asArray<BackupPayload["data"]["loans"][number]>(payload.data.loans, "loans"),
+      loanRepayments: asArray<BackupPayload["data"]["loanRepayments"][number]>(payload.data.loanRepayments, "loanRepayments"),
+      expenses: asArray<BackupPayload["data"]["expenses"][number]>(payload.data.expenses, "expenses"),
+      fundAdjustments: asArray<BackupPayload["data"]["fundAdjustments"][number]>(payload.data.fundAdjustments, "fundAdjustments"),
+      capitalAllocations: Array.isArray(payload.data.capitalAllocations)
+        ? (payload.data.capitalAllocations as BackupPayload["data"]["capitalAllocations"])
+        : [],
+      users: asArray<BackupPayload["data"]["users"][number]>(payload.data.users, "users"),
+    },
+  };
+}
+
 export async function listBackups() {
   return db.select().from(systemBackups).orderBy(desc(systemBackups.backupDate));
 }
@@ -44,7 +107,7 @@ export async function createBackupSnapshot(createdBy?: string | null) {
   await ensureBackupDirectory();
 
   const backupDate = new Date();
-  const [settingsRows, memberRows, contributionRows, loanRows, repaymentRows, expenseRows, adjustmentRows, userRows] = await Promise.all([
+  const [settingsRows, memberRows, contributionRows, loanRows, repaymentRows, expenseRows, adjustmentRows, allocationRows, userRows] = await Promise.all([
     db.select().from(familySettings).limit(1),
     db.select().from(members).orderBy(asc(members.createdAt)),
     db.select().from(contributions).orderBy(asc(contributions.createdAt)),
@@ -52,10 +115,11 @@ export async function createBackupSnapshot(createdBy?: string | null) {
     db.select().from(loanRepayments).orderBy(asc(loanRepayments.installmentNumber)),
     db.select().from(expenses).orderBy(asc(expenses.createdAt)),
     db.select().from(fundAdjustments).orderBy(asc(fundAdjustments.createdAt)),
+    db.select().from(capitalAllocations).orderBy(asc(capitalAllocations.year)),
     db.select().from(users).orderBy(asc(users.createdAt)),
   ]);
 
-  const payload = {
+  const payload: BackupPayload = {
     metadata: {
       createdAt: backupDate.toISOString(),
       version: 1,
@@ -68,6 +132,7 @@ export async function createBackupSnapshot(createdBy?: string | null) {
       loanRepayments: repaymentRows,
       expenses: expenseRows,
       fundAdjustments: adjustmentRows,
+      capitalAllocations: allocationRows,
       users: userRows,
     },
   };
@@ -109,7 +174,75 @@ export async function readBackupRecord(id: string) {
   const raw = await readFile(record.storagePath, "utf8");
   return {
     record,
-    payload: JSON.parse(raw),
+    payload: normalizeBackupPayload(JSON.parse(raw)),
+  };
+}
+
+export async function restoreBackupSnapshot(id: string, restoredBy?: string | null) {
+  const snapshot = await readBackupRecord(id);
+  if (!snapshot) {
+    throw new Error("Backup not found");
+  }
+
+  await db.transaction(async (tx) => {
+    await tx.delete(loanRepayments);
+    await tx.delete(contributions);
+    await tx.delete(loans);
+    await tx.delete(fundAdjustments);
+    await tx.delete(expenses);
+    await tx.delete(capitalAllocations);
+    await tx.delete(members);
+    await tx.delete(users);
+    await tx.delete(familySettings);
+
+    if (snapshot.payload.data.familySettings) {
+      await tx.insert(familySettings).values(snapshot.payload.data.familySettings);
+    }
+
+    if (snapshot.payload.data.members.length > 0) {
+      await tx.insert(members).values(snapshot.payload.data.members);
+    }
+
+    if (snapshot.payload.data.users.length > 0) {
+      await tx.insert(users).values(snapshot.payload.data.users);
+    }
+
+    if (snapshot.payload.data.loans.length > 0) {
+      await tx.insert(loans).values(snapshot.payload.data.loans);
+    }
+
+    if (snapshot.payload.data.contributions.length > 0) {
+      await tx.insert(contributions).values(snapshot.payload.data.contributions);
+    }
+
+    if (snapshot.payload.data.loanRepayments.length > 0) {
+      await tx.insert(loanRepayments).values(snapshot.payload.data.loanRepayments);
+    }
+
+    if (snapshot.payload.data.expenses.length > 0) {
+      await tx.insert(expenses).values(snapshot.payload.data.expenses);
+    }
+
+    if (snapshot.payload.data.fundAdjustments.length > 0) {
+      await tx.insert(fundAdjustments).values(snapshot.payload.data.fundAdjustments);
+    }
+
+    if (snapshot.payload.data.capitalAllocations.length > 0) {
+      await tx.insert(capitalAllocations).values(snapshot.payload.data.capitalAllocations);
+    }
+  });
+
+  const backupDate = new Date();
+  const [settings] = await db.select().from(familySettings).limit(1);
+  if (settings?.id) {
+    await db.update(familySettings).set({ backupLastRunAt: backupDate }).where(eq(familySettings.id, settings.id));
+  }
+
+  return {
+    restoredBackupId: snapshot.record.id,
+    restoredAt: backupDate,
+    restoredBy: restoredBy ?? null,
+    fileName: snapshot.record.fileName,
   };
 }
 
