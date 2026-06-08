@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import MobileLayout from "@/components/layout/MobileLayout";
 import {
@@ -125,6 +126,7 @@ function KPICard({ title, value, subtitle, change, trend, icon, gradient, iconBg
 }
 
 export default function Analytics() {
+  const [, setLocation] = useLocation();
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedPeriod, setSelectedPeriod] = useState<"6months" | "12months" | "3months">("6months");
   const [filterMonth, setFilterMonth] = useState<number | null>(null);
@@ -291,8 +293,10 @@ export default function Analytics() {
     const mc = contributions.filter((c) => c.memberId === m.id && c.status === "approved");
     const ml = loans.filter((l) => l.memberId === m.id && l.status === "approved");
     const totalPaid = mc.reduce((s, c) => s + Number(c.amount), 0);
-    const totalBorrowed = ml.reduce((s, l) => s + Number(l.amount), 0) - (memberRepayments[m.id] || 0);
-    return { ...m, totalPaid, totalBorrowed, loanCount: ml.length, contributionCount: mc.length, netPosition: totalPaid - totalBorrowed };
+    const totalLoaned = ml.reduce((s, l) => s + Number(l.amount), 0);
+    const totalRepaid = memberRepayments[m.id] || 0;
+    const totalBorrowed = totalLoaned - totalRepaid;
+    return { ...m, totalPaid, totalBorrowed, totalLoaned, totalRepaid, loanCount: ml.length, contributionCount: mc.length, netPosition: totalPaid - totalBorrowed };
   });
 
   const filteredMemberStats = memberStats.map((m) => {
@@ -763,17 +767,24 @@ export default function Analytics() {
                             </p>
                           </div>
                         </div>
-                        <span className={cn("rounded-xl px-3 py-1.5 text-[10px] font-bold shadow-sm",
-                          m.netPosition >= 0 ? "bg-emerald-50 text-emerald-700 border border-emerald-100" : "bg-amber-50 text-amber-700 border border-amber-100")}>
-                          {m.netPosition >= 0 ? "إيجابي" : "مديونية"}
-                        </span>
+                        <div className="flex flex-col items-end gap-1.5">
+                          <span className={cn("rounded-xl px-3 py-1.5 text-[10px] font-bold shadow-sm",
+                            m.netPosition >= 0 ? "bg-emerald-50 text-emerald-700 border border-emerald-100" : "bg-amber-50 text-amber-700 border border-amber-100")}>
+                            {m.netPosition >= 0 ? "إيجابي" : "مديونية"}
+                          </span>
+                          <button
+                            onClick={() => setLocation(`/members/${m.id}`)}
+                            className="flex items-center gap-1 rounded-xl border border-primary/20 bg-primary/5 px-2.5 py-1 text-[10px] font-bold text-primary hover:bg-primary/10 transition-colors">
+                            <FileSearch className="w-3 h-3" /> تقرير مفصل
+                          </button>
+                        </div>
                       </div>
                       <div className="grid grid-cols-2 gap-2.5">
                         {[
-                          { label: "إجمالي الدفع", value: formatCurrency(m.totalPaid), border: "border-emerald-100", bg: "bg-emerald-50/70", color: "text-emerald-700" },
-                          { label: "مساهمات الفترة", value: formatCurrency(m.filteredContributionsTotal), border: "border-blue-100", bg: "bg-blue-50/70", color: "text-blue-700" },
-                          { label: "السلف القائمة", value: formatCurrency(m.totalBorrowed), border: "border-amber-100", bg: "bg-amber-50/70", color: "text-amber-700" },
-                          { label: "صافي المركز", value: formatCurrency(m.netPosition), border: "border-violet-100", bg: "bg-violet-50/70", color: "text-violet-700" },
+                          { label: "إجمالي المساهمات", value: formatCurrency(m.totalPaid), border: "border-emerald-100", bg: "bg-emerald-50/70", color: "text-emerald-700" },
+                          { label: "إجمالي السلف", value: formatCurrency(m.totalLoaned), border: "border-blue-100", bg: "bg-blue-50/70", color: "text-blue-700" },
+                          { label: "المسدّد من السلف", value: formatCurrency(m.totalRepaid), border: "border-green-100", bg: "bg-green-50/70", color: "text-green-700" },
+                          { label: "الرصيد المتبقي", value: formatCurrency(m.totalBorrowed), border: m.totalBorrowed > 0 ? "border-amber-100" : "border-gray-100", bg: m.totalBorrowed > 0 ? "bg-amber-50/70" : "bg-gray-50/70", color: m.totalBorrowed > 0 ? "text-amber-700" : "text-gray-500" },
                         ].map((s) => (
                           <div key={s.label} className={cn("rounded-xl border p-2.5", s.border, s.bg)}>
                             <p className={cn("text-[9px] font-bold uppercase tracking-wider", s.color)}>{s.label}</p>
