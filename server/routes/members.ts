@@ -8,8 +8,9 @@ export function registerMemberRoutes(app: Express) {
   app.get("/api/members", isAuthenticated, async (req: any, res) => {
     try {
       const members = await storage.getMembers();
-      if (req.user?.role !== 'admin' && req.user?.memberId) {
-        return res.json(members.filter(m => m.id === req.user.memberId));
+      if (req.user?.role !== 'admin') {
+        const ownMemberId = req.user?.memberId;
+        return res.json(ownMemberId ? members.filter(m => m.id === ownMemberId) : []);
       }
       res.json(members);
     } catch (error) {

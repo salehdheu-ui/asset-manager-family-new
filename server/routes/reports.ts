@@ -222,7 +222,7 @@ export function registerReportRoutes(app: Express) {
 
   app.get("/api/reports/member/:id", isAuthenticated, async (req, res) => {
     try {
-      const memberId = req.params.id;
+      const memberId = req.params.id as string;
       const year = Number(req.query.year) || new Date().getFullYear();
 
       const [member, allContributions, memberLoans, allPayments] = await Promise.all([

@@ -20,8 +20,11 @@ export function registerContributionRoutes(app: Express) {
         contributions = await storage.getContributions();
       }
 
-      if (req.user?.role !== 'admin' && req.user?.memberId) {
-        contributions = contributions.filter((c: any) => c.memberId === req.user.memberId);
+      if (req.user?.role !== 'admin') {
+        const ownMemberId = req.user?.memberId;
+        contributions = ownMemberId
+          ? contributions.filter((c: any) => c.memberId === ownMemberId)
+          : [];
       }
 
       res.json(contributions);
@@ -32,7 +35,16 @@ export function registerContributionRoutes(app: Express) {
 
   app.post("/api/contributions", isAuthenticated, async (req, res) => {
     try {
-      const data = insertContributionSchema.parse(req.body);
+      const isAdminUser = req.user?.role === "admin";
+      const data = insertContributionSchema.parse({
+        ...req.body,
+        // الاعتماد المباشر عند الإنشاء حصري للمدير — غير المدير تُسجل مساهمته معلقة دائماً
+        status: isAdminUser ? req.body?.status : "pending_approval",
+      });
+
+      if (!isAdminUser && data.memberId !== req.user?.memberId) {
+        return res.status(403).json({ message: "لا يمكنك تسجيل مساهمة لعضو آخر" });
+      }
 
       const existingContribution = await storage.getContributionByMemberYearMonth(data.memberId, data.year, data.month);
       if (existingContribution) {
@@ -42,6 +54,9 @@ export function registerContributionRoutes(app: Express) {
       }
 
       const contribution = await storage.createContribution(data);
+      if (contribution.status === "approved") {
+        await rebalanceYear(contribution.year);
+      }
       res.status(201).json(contribution);
     } catch (error) {
       if (error instanceof z.ZodError) {

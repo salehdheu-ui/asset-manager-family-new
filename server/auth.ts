@@ -4,12 +4,18 @@ import session from "express-session";
 import connectPg from "connect-pg-simple";
 import type { Express, RequestHandler } from "express";
 import { db } from "./db";
-import { users } from "@shared/schema";
+import { users, type User as AppUser } from "@shared/schema";
 import { eq } from "drizzle-orm";
 
 declare module "express-session" {
   interface SessionData {
     userId: string;
+  }
+}
+
+declare global {
+  namespace Express {
+    interface User extends AppUser {}
   }
 }
 
@@ -270,7 +276,7 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
     if (!user) {
       return res.status(401).json({ message: "غير مصرح" });
     }
-    (req as any).user = user;
+    req.user = user;
     next();
   } catch (error) {
     res.status(500).json({ message: "حدث خطأ" });
@@ -283,12 +289,12 @@ export const isAdmin: RequestHandler = async (req, res, next) => {
   }
 
   try {
-    const existingUser = (req as any).user;
+    const existingUser = req.user;
     const user = existingUser ?? (await db.select().from(users).where(eq(users.id, req.session.userId)).then(rows => rows[0]));
     if (!user || user.role !== "admin") {
       return res.status(403).json({ message: "غير مسموح - صلاحيات المدير مطلوبة" });
     }
-    (req as any).user = user;
+    req.user = user;
     next();
   } catch (error) {
     res.status(500).json({ message: "حدث خطأ" });

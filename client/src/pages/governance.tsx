@@ -20,6 +20,12 @@ export default function Governance() {
   const [activeRole, setActiveRole] = useState<'guardian' | 'custodian' | 'member'>(user?.role === 'admin' ? 'guardian' : 'member');
   const isGuardian = activeRole === 'guardian';
 
+  const { data: members = [] } = useQuery({
+    queryKey: ["members"],
+    queryFn: getMembers,
+    enabled: isGuardian,
+  });
+
   const guardianPowers = [
     "تعيين أو عزل أمين الصندوق",
     "تحديد حدود الإنفاق الشهرية",
@@ -101,12 +107,15 @@ export default function Governance() {
                       </DialogDescription>
                     </DialogHeader>
                     <div className="py-4 space-y-3">
-                      {FAMILY_MEMBERS.filter(m => m.role !== 'guardian').map(m => (
+                      {members.filter(m => m.role !== 'guardian').map(m => (
                         <button key={m.id} className="w-full flex items-center justify-between p-4 border rounded-xl hover:bg-muted/50 transition-colors">
                           <span className="font-bold">{m.name}</span>
                           <span className="text-xs text-muted-foreground">{m.role === 'custodian' ? '(الأمين الحالي)' : ''}</span>
                         </button>
                       ))}
+                      {members.filter(m => m.role !== 'guardian').length === 0 && (
+                        <p className="text-sm text-muted-foreground text-center py-2">لا يوجد أعضاء متاحون للتعيين</p>
+                      )}
                     </div>
                   </DialogContent>
                 </Dialog>

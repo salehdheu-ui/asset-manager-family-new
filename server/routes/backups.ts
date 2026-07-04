@@ -35,7 +35,7 @@ export function registerBackupRoutes(app: Express) {
 
   app.get("/api/backups/:id/download", isAuthenticated, isAdmin, async (req, res) => {
     try {
-      const snapshot = await readBackupRecord(req.params.id);
+      const snapshot = await readBackupRecord(req.params.id as string);
       if (!snapshot) {
         return res.status(404).json({ error: "Backup not found" });
       }
@@ -51,7 +51,7 @@ export function registerBackupRoutes(app: Express) {
 
   app.post("/api/backups/:id/restore", isAuthenticated, isAdmin, async (req, res) => {
     try {
-      const backup = await restoreBackupSnapshot(req.params.id);
+      const backup = await restoreBackupSnapshot(req.params.id as string);
       if (!backup) {
         return res.status(404).json({ error: "Backup not found" });
       }
