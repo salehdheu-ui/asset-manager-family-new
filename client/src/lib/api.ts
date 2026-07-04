@@ -59,9 +59,20 @@ export async function approveContribution(id: string): Promise<Contribution> {
 }
 
 // Loans
-export async function getLoans(): Promise<Loan[]> {
+// السلفة مُثراة من الخادم بالمسدد والمتبقي وحالة السداد الكامل
+export type LoanWithBalance = Loan & { totalPaid: number; remaining: number; settled: boolean };
+
+export async function getLoans(): Promise<LoanWithBalance[]> {
   const res = await fetch("/api/loans", { credentials: "include" });
   if (!res.ok) await parseFetchError(res);
+  return res.json();
+}
+
+export async function updateLoan(
+  id: string,
+  data: Partial<{ title: string; description: string | null; type: string; amount: string; repaymentType: string; repaymentMonths: number | null }>,
+): Promise<Loan> {
+  const res = await apiRequest("PATCH", `/api/loans/${id}`, data);
   return res.json();
 }
 

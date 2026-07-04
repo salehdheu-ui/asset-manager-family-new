@@ -348,13 +348,13 @@ export default function FamilySettings() {
               <span className="text-sm font-medium">الحوكمة</span>
             </Link>
             <Link
-              href="/ledger"
+              href="/audit-log"
               className="bg-card border border-border rounded-2xl p-4 flex flex-col items-center gap-2 hover:border-primary/30 transition-colors"
             >
               <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
                 <Wallet className="w-5 h-5 text-blue-600" />
               </div>
-              <span className="text-sm font-medium">السجل</span>
+              <span className="text-sm font-medium">سجل التدقيق</span>
             </Link>
           </div>
         </div>

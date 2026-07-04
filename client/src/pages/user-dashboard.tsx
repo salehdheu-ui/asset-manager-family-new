@@ -91,7 +91,8 @@ export default function UserDashboard() {
     : [];
 
   const totalContributed = memberContributions.reduce((sum, c) => sum + Number(c.amount), 0);
-  const totalBorrowed = memberLoans.reduce((sum, l) => sum + Number(l.amount), 0);
+  // المعروض هو المتبقي فعلياً — من سدّد سلفه بالكامل يرى صفراً
+  const totalBorrowed = memberLoans.reduce((sum, l) => sum + ((l as any).remaining ?? Number(l.amount)), 0);
 
   return (
     <MobileLayout title="حسابي">
@@ -155,11 +156,14 @@ export default function UserDashboard() {
                 <HandCoins className="w-16 h-16" />
               </div>
               <span className="text-[10px] text-blue-700 font-bold uppercase tracking-wider flex items-center gap-1">
-                <HandCoins className="w-3 h-3" /> السلف
+                <HandCoins className="w-3 h-3" /> المتبقي من السلف
               </span>
               <span className="text-2xl font-bold font-mono text-blue-600">
                 {totalBorrowed.toLocaleString()} <span className="text-xs">ر.ع</span>
               </span>
+              {totalBorrowed === 0 && memberLoans.length > 0 && (
+                <span className="text-[9px] font-bold text-emerald-600">الذمة صفر — كل السلف مسددة ✓</span>
+              )}
             </div>
           </div>
         )}
