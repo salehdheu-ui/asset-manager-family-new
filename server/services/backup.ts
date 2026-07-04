@@ -1,7 +1,7 @@
 import { mkdir, readFile, rm, stat, writeFile } from "fs/promises";
 import path from "path";
 import { db } from "../db";
-import { capitalAllocations, contributions, expenses, familySettings, fundAdjustments, loanPayments, loanRepayments, loans, members, systemBackups } from "@shared/schema";
+import { auditLogs, capitalAllocations, contributions, expenses, familySettings, fundAdjustments, loanPayments, loanRepayments, loans, members, systemBackups } from "@shared/schema";
 import { users } from "@shared/models/auth";
 import { asc, desc, eq } from "drizzle-orm";
 
@@ -41,7 +41,7 @@ export async function createBackupSnapshot(createdBy?: string | null) {
   await ensureBackupDirectory();
 
   const backupDate = new Date();
-  const [settingsRows, memberRows, contributionRows, loanRows, repaymentRows, paymentRows, expenseRows, adjustmentRows, allocationRows, userRows] = await Promise.all([
+  const [settingsRows, memberRows, contributionRows, loanRows, repaymentRows, paymentRows, expenseRows, adjustmentRows, allocationRows, userRows, auditLogRows] = await Promise.all([
     db.select().from(familySettings).limit(1),
     db.select().from(members).orderBy(asc(members.createdAt)),
     db.select().from(contributions).orderBy(asc(contributions.createdAt)),
@@ -63,6 +63,7 @@ export async function createBackupSnapshot(createdBy?: string | null) {
       createdAt: users.createdAt,
       updatedAt: users.updatedAt,
     }).from(users).orderBy(asc(users.createdAt)),
+    db.select().from(auditLogs).orderBy(asc(auditLogs.createdAt)),
   ]);
 
   const payload = {
@@ -81,6 +82,7 @@ export async function createBackupSnapshot(createdBy?: string | null) {
       fundAdjustments: adjustmentRows,
       capitalAllocations: allocationRows,
       users: userRows,
+      auditLogs: auditLogRows,
     },
   };
 
@@ -143,6 +145,7 @@ type BackupPayload = {
     fundAdjustments?: Record<string, unknown>[];
     capitalAllocations?: Record<string, unknown>[];
     users?: Record<string, unknown>[];
+    auditLogs?: Record<string, unknown>[];
   };
 };
 
@@ -156,16 +159,20 @@ export async function restoreBackupSnapshot(id: string) {
   const data = payload.data ?? {};
 
   await db.transaction(async (tx: any) => {
+    // Clear dependent tables first to avoid FK violations (if any)
     await tx.delete(loanPayments);
     await tx.delete(loanRepayments);
     await tx.delete(loans);
     await tx.delete(contributions);
     await tx.delete(expenses);
     await tx.delete(fundAdjustments);
+    await tx.delete(auditLogs);
     await tx.delete(capitalAllocations);
     await tx.delete(members);
     await tx.delete(familySettings);
+    await tx.delete(users);
 
+    // Insert parents first
     const familySettingsRow = Array.isArray(data.familySettings)
       ? data.familySettings[0]
       : data.familySettings;
@@ -175,12 +182,14 @@ export async function restoreBackupSnapshot(id: string) {
     }
 
     if (data.members?.length) await tx.insert(members).values(data.members as never);
+    if (data.users?.length) await tx.insert(users).values(data.users as never);
     if (data.contributions?.length) await tx.insert(contributions).values(data.contributions as never);
     if (data.loans?.length) await tx.insert(loans).values(data.loans as never);
     if (data.loanRepayments?.length) await tx.insert(loanRepayments).values(data.loanRepayments as never);
     if (data.loanPayments?.length) await tx.insert(loanPayments).values(data.loanPayments as never);
     if (data.expenses?.length) await tx.insert(expenses).values(data.expenses as never);
     if (data.fundAdjustments?.length) await tx.insert(fundAdjustments).values(data.fundAdjustments as never);
+    if (data.auditLogs?.length) await tx.insert(auditLogs).values(data.auditLogs as never);
     if (data.capitalAllocations?.length) await tx.insert(capitalAllocations).values(data.capitalAllocations as never);
   });
 

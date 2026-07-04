@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { setupAuth, createDefaultAdmin } from "./auth";
 import { storage } from "./storage";
 import { createBackupSnapshot } from "./services/backup";
+import { migrateWithdrawalsToLoans } from "./migrations/withdrawals-to-loans";
 import {
   registerAdminRoutes,
   registerMemberRoutes,
@@ -25,6 +26,9 @@ export async function registerRoutes(
   
   // Create default admin user if not exists
   await createDefaultAdmin();
+
+  // Run one-time data migrations
+  await migrateWithdrawalsToLoans();
 
   // Register all route modules
   registerAdminRoutes(app);

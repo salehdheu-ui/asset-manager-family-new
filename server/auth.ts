@@ -2,9 +2,10 @@ import "./env";
 import bcrypt from "bcryptjs";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
+import rateLimit from "express-rate-limit";
 import type { Express, RequestHandler } from "express";
 import { db } from "./db";
-import { users, type User as AppUser } from "@shared/schema";
+import { users, type PublicUser } from "@shared/schema";
 import { eq } from "drizzle-orm";
 
 declare module "express-session" {
@@ -13,9 +14,10 @@ declare module "express-session" {
   }
 }
 
+// req.user يُعرَّف بالحقول العامة فقط — كلمة المرور لا تظهر في الأنواع
 declare global {
   namespace Express {
-    interface User extends AppUser {}
+    interface User extends PublicUser {}
   }
 }
 
@@ -24,7 +26,7 @@ export function getSession() {
   const pgStore = connectPg(session);
   const sessionStore = new pgStore({
     conString: process.env.DATABASE_URL,
-    createTableIfMissing: false,
+    createTableIfMissing: true,
     ttl: sessionTtl,
     tableName: "sessions",
   });
@@ -53,8 +55,16 @@ export async function setupAuth(app: Express) {
   app.set("trust proxy", 1);
   app.use(getSession());
 
+  const loginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: "محاولات تسجيل دخول كثيرة، يُرجى المحاولة بعد 15 دقيقة" },
+  });
+
   // Login endpoint
-  app.post("/api/auth/login", async (req, res) => {
+  app.post("/api/auth/login", loginLimiter, async (req, res) => {
     try {
       const { username, password } = req.body;
 

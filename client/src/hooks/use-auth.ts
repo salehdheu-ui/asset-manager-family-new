@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { User } from "@shared/models/auth";
+import type { PublicUser } from "@shared/models/auth";
 
-async function fetchUser(): Promise<User | null> {
+async function fetchUser(): Promise<PublicUser | null> {
   const response = await fetch("/api/auth/user", {
     credentials: "include",
   });
@@ -22,7 +22,7 @@ interface LoginCredentials {
   password: string;
 }
 
-async function login(credentials: LoginCredentials): Promise<User> {
+async function login(credentials: LoginCredentials): Promise<PublicUser> {
   const response = await fetch("/api/auth/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -51,7 +51,7 @@ async function logout(): Promise<void> {
 
 export function useAuth() {
   const queryClient = useQueryClient();
-  const { data: user, isLoading } = useQuery<User | null>({
+  const { data: user, isLoading } = useQuery<PublicUser | null>({
     queryKey: ["/api/auth/user"],
     queryFn: fetchUser,
     retry: false,
@@ -60,7 +60,7 @@ export function useAuth() {
 
   const loginMutation = useMutation({
     mutationFn: login,
-    onSuccess: (data) => {
+    onSuccess: (data: PublicUser) => {
       queryClient.setQueryData(["/api/auth/user"], data);
     },
   });

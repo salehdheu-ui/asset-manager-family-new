@@ -1,8 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import MobileLayout from "@/components/layout/MobileLayout";
-import { getAdminUsers, getMembers, updateUserRole, linkUserToMember, deleteUser, createUser, updateUserPassword, updateUser, getFundAdjustments, createFundAdjustment, resetSystem, lockYearAllocation, resetYearAllocation, getAuditLogs, createLoan, createExpense, getDashboardSummary } from "@/lib/api";
+import { getAdminUsers, getMembers, updateUserRole, linkUserToMember, deleteUser, createUser, updateUserPassword, updateUser, resetSystem, lockYearAllocation, resetYearAllocation } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
-import { Shield, Users, Trash2, UserCheck, Link, Crown, User as UserIcon, Plus, Key, Eye, EyeOff, Wallet, ArrowDownCircle, RotateCcw, AlertTriangle, Lock, History, HandCoins, ReceiptText, Landmark, ChevronLeft } from "lucide-react";
+import { Shield, Users, Trash2, UserCheck, Link, Crown, User as UserIcon, Plus, Key, Eye, EyeOff, RotateCcw, AlertTriangle, Lock, Landmark, ChevronLeft } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
+import type { PublicUser } from "@shared/models/auth";
 
 export default function AdminDashboard() {
   const { toast } = useToast();
@@ -34,26 +35,10 @@ export default function AdminDashboard() {
   const [newUserPassword, setNewUserPassword] = useState("");
   const [showChangePassword, setShowChangePassword] = useState(false);
 
-  const [depositAmount, setDepositAmount] = useState("");
-  const [depositDescription, setDepositDescription] = useState("");
-  const [depositSourceType, setDepositSourceType] = useState<"known" | "unknown">("unknown");
-  const [depositDialogOpen, setDepositDialogOpen] = useState(false);
-  const [loanDialogOpen, setLoanDialogOpen] = useState(false);
-  const [expenseDialogOpen, setExpenseDialogOpen] = useState(false);
-  const [adminLoanMemberId, setAdminLoanMemberId] = useState("");
-  const [adminLoanType, setAdminLoanType] = useState<"urgent" | "standard" | "emergency">("standard");
-  const [adminLoanAmount, setAdminLoanAmount] = useState("");
-  const [adminLoanDescription, setAdminLoanDescription] = useState("");
-  const [adminLoanRepaymentType, setAdminLoanRepaymentType] = useState<"scheduled" | "open">("scheduled");
-  const [adminLoanMonths, setAdminLoanMonths] = useState("12");
-  const [expenseAmount, setExpenseAmount] = useState("");
-  const [expenseDescription, setExpenseDescription] = useState("");
-  const [expenseCategory, setExpenseCategory] = useState<"general" | "emergency" | "charity" | "zakat">("general");
-  const [expenseTitle, setExpenseTitle] = useState("مصروف إداري");
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const [resetConfirmText, setResetConfirmText] = useState("");
 
-  const { data: allUsers = [], isLoading: usersLoading, error } = useQuery({
+  const { data: allUsers = [], isLoading: usersLoading, error } = useQuery<PublicUser[]>({
     queryKey: ["admin-users"],
     queryFn: getAdminUsers,
     enabled: !!user,
@@ -63,76 +48,6 @@ export default function AdminDashboard() {
   const { data: members = [] } = useQuery({
     queryKey: ["members"],
     queryFn: getMembers,
-  });
-
-  const { data: adjustments = [] } = useQuery({
-    queryKey: ["fund-adjustments"],
-    queryFn: getFundAdjustments,
-    enabled: !!user,
-  });
-
-  const { data: auditLogs = [], isLoading: auditLogsLoading, error: auditLogsError } = useQuery({
-    queryKey: ["audit-logs"],
-    queryFn: getAuditLogs,
-    enabled: !!user,
-  });
-
-  const { data: summary } = useQuery({
-    queryKey: ["dashboard-summary"],
-    queryFn: getDashboardSummary,
-    enabled: !!user,
-  });
-
-  const createAdjustmentMutation = useMutation({
-    mutationFn: createFundAdjustment,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["fund-adjustments"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] });
-      toast({ title: "تم تسجيل الإيداع في السجل العام بنجاح" });
-      setDepositAmount("");
-      setDepositDescription("");
-      setDepositSourceType("unknown");
-      setDepositDialogOpen(false);
-    },
-    onError: (error: any) => {
-      toast({ title: "فشلت العملية", description: error?.message || "تعذر تنفيذ العملية", variant: "destructive" });
-    },
-  });
-
-  const createAdminLoanMutation = useMutation({
-    mutationFn: createLoan,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["loans"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] });
-      toast({ title: "تمت إضافة السلفة واعتمادها بنجاح" });
-      setAdminLoanMemberId("");
-      setAdminLoanType("standard");
-      setAdminLoanAmount("");
-      setAdminLoanDescription("");
-      setAdminLoanRepaymentType("scheduled");
-      setAdminLoanMonths("12");
-      setLoanDialogOpen(false);
-    },
-    onError: (error: any) => {
-      toast({ title: "تعذر إضافة السلفة", description: error?.message || "تعذر تنفيذ العملية", variant: "destructive" });
-    },
-  });
-
-  const createAdminExpenseMutation = useMutation({
-    mutationFn: createExpense,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["expenses"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] });
-      toast({ title: "تم تسجيل المصروف بنجاح" });
-      setExpenseAmount("");
-      setExpenseDescription("");
-      setExpenseCategory("general");
-      setExpenseTitle("مصروف إداري");
-      setExpenseDialogOpen(false);
-    },
-    onError: (error: any) => {
-      toast({ title: "تعذر تسجيل المصروف", description: error?.message || "تعذر تنفيذ العملية", variant: "destructive" });
-    },
   });
 
   const createUserMutation = useMutation({
@@ -265,26 +180,6 @@ export default function AdminDashboard() {
     if (!memberId) return "غير مرتبط";
     return members.find(m => m.id === memberId)?.name || "غير معروف";
   };
-
-  const getAuditActionLabel = (action: string) => {
-    if (action === "contribution_approved") return "اعتماد مساهمة";
-    if (action === "contribution_deleted") return "حذف مساهمة";
-    if (action === "settings_updated") return "تعديل الإعدادات";
-    return "عملية إدارية";
-  };
-
-  const flexibleLayer = summary?.layers?.find((layer: any) => layer.id === "flexible");
-  const emergencyLayer = summary?.layers?.find((layer: any) => layer.id === "emergency");
-  const availableFlexible = Number((flexibleLayer as any)?.available ?? flexibleLayer?.amount ?? 0);
-  const availableEmergency = Number((emergencyLayer as any)?.available ?? emergencyLayer?.amount ?? 0);
-  const depositRecords = adjustments.filter((adjustment) => adjustment.type === "deposit");
-  const loanTypeOptions = {
-    urgent: "سلفة عاجلة",
-    standard: "سلفة غير عاجلة",
-    emergency: "سلفة طارئة",
-  };
-  const selectedLoanTitle = loanTypeOptions[adminLoanType];
-  const selectedLoanAvailable = adminLoanType === "emergency" ? availableEmergency : availableFlexible;
 
   return (
     <MobileLayout title="لوحة الإدارة">
@@ -443,64 +338,6 @@ export default function AdminDashboard() {
           <ChevronLeft className="w-5 h-5 mr-auto" />
         </button>
 
-        <div className="space-y-4">
-          <div className="flex items-center justify-between px-1">
-            <h3 className="font-bold text-lg text-primary font-heading flex items-center gap-2">
-              <History className="w-5 h-5" /> سجل التدقيق
-            </h3>
-            <span className="text-[11px] text-muted-foreground">آخر العمليات الحساسة في النظام</span>
-          </div>
-
-          {auditLogsLoading ? (
-            <div className="rounded-3xl border border-border/60 bg-card p-6 text-center">
-              <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-              <p className="text-sm font-medium text-muted-foreground">جاري تحميل سجل التدقيق...</p>
-            </div>
-          ) : auditLogsError ? (
-            <div className="rounded-3xl border border-red-200 bg-red-50 p-6 text-center">
-              <History className="mx-auto mb-3 h-10 w-10 text-red-500" />
-              <p className="font-bold text-red-700">تعذر تحميل سجل التدقيق</p>
-              <p className="mt-1 text-sm text-red-600">حاول تحديث الصفحة أو إعادة المحاولة لاحقًا.</p>
-            </div>
-          ) : auditLogs.length === 0 ? (
-            <div className="rounded-3xl border border-dashed border-border bg-muted/20 p-6 text-center">
-              <p className="text-sm font-medium text-muted-foreground">لا توجد عمليات مسجلة بعد في سجل التدقيق.</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {auditLogs.slice(0, 10).map((log, idx) => (
-                <motion.div
-                  key={log.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.03 }}
-                  className="rounded-[1.5rem] border border-border/60 bg-card p-4 shadow-sm"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-bold text-primary">
-                          {getAuditActionLabel(log.action)}
-                        </span>
-                        <span className="text-[11px] text-muted-foreground">
-                          {log.createdAt ? new Date(log.createdAt).toLocaleString("ar-OM") : ""}
-                        </span>
-                      </div>
-                      <p className="mt-2 text-sm font-bold text-foreground">{log.description}</p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        بواسطة: {log.actorName || "مستخدم إداري"}
-                      </p>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Divider */}
-        <div className="border-t border-border/40 my-2" />
-
         {/* Users List */}
         <div className="space-y-4">
           <div className="flex items-center justify-between px-1">
@@ -531,14 +368,14 @@ export default function AdminDashboard() {
                       />
                     ) : (
                       <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
-                        {(u.firstName?.[0] || (u as any).username?.[0] || "U").toUpperCase()}
+                        {(u.firstName?.[0] || u.username?.[0] || "U").toUpperCase()}
                       </div>
                     )}
                     <div className="flex-1">
                       <h4 className="font-bold text-sm leading-none">
-                        {u.firstName || (u as any).username} {u.lastName}
+                        {u.firstName || u.username} {u.lastName}
                       </h4>
-                      <p className="text-[10px] text-muted-foreground mt-1">@{(u as any).username}</p>
+                      <p className="text-[10px] text-muted-foreground mt-1">@{u.username}</p>
                       <div className="flex items-center gap-2 mt-2">
                         <span className={cn(
                           "text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border flex items-center gap-1",
@@ -638,7 +475,7 @@ export default function AdminDashboard() {
                           }}
                         >
                           <p className="text-sm text-muted-foreground">
-                            تغيير كلمة المرور للمستخدم: <strong>{(u as any).username}</strong>
+                            تغيير كلمة المرور للمستخدم: <strong>{u.username}</strong>
                           </p>
                           <div className="space-y-2">
                             <label className="text-sm font-medium">كلمة المرور الجديدة</label>

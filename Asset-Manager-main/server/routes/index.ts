@@ -1,9 +1,0 @@
-export { registerMemberRoutes } from "./members";
-export { registerContributionRoutes } from "./contributions";
-export { registerLoanRoutes } from "./loans";
-export { registerExpenseRoutes } from "./expenses";
-export { registerSettingsRoutes } from "./settings";
-export { registerBackupRoutes } from "./backups";
-export { registerAdminRoutes } from "./admin";
-export { registerAllocationRoutes } from "./allocation";
-export { registerReportRoutes } from "./reports";

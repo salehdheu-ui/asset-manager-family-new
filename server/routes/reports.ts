@@ -106,7 +106,9 @@ export function registerReportRoutes(app: Express) {
   app.get("/api/reports/members-performance", isAuthenticated, async (req, res) => {
     try {
       const year = Number(req.query.year) || new Date().getFullYear();
-      
+      const page = Math.max(1, Number(req.query.page) || 1);
+      const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 20));
+
       const [members, yearContributions, allYearLoans] = await Promise.all([
         storage.getMembers(),
         storage.getApprovedContributionsByYear(year),
@@ -115,7 +117,7 @@ export function registerReportRoutes(app: Express) {
       
       const yearLoans = allYearLoans.filter(l => l.status === 'approved');
       
-      const memberStats = members.map(m => {
+      const allMemberStats = members.map(m => {
         const memberContributions = yearContributions.filter(c => c.memberId === m.id);
         const memberLoans = yearLoans.filter(l => l.memberId === m.id);
         
@@ -136,14 +138,18 @@ export function registerReportRoutes(app: Express) {
           netBalance: totalContributions - totalLoans
         };
       }).sort((a, b) => b.totalContributions - a.totalContributions);
-      
+
+      const total = allMemberStats.length;
+      const memberStats = allMemberStats.slice((page - 1) * limit, page * limit);
+
       res.json({
         year,
         members: memberStats,
+        pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
         totals: {
           contributions: yearContributions.reduce((sum, c) => sum + Number(c.amount), 0),
           loans: yearLoans.reduce((sum, l) => sum + Number(l.amount), 0),
-          activeMembers: memberStats.filter(m => m.contributionCount > 0).length
+          activeMembers: allMemberStats.filter(m => m.contributionCount > 0).length
         }
       });
     } catch (error) {

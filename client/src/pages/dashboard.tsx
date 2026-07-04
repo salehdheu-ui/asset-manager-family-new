@@ -122,7 +122,7 @@ export default function Dashboard() {
         <div className="space-y-4 pb-4">
           <div className="flex items-center justify-between px-1">
             <h3 className="font-bold text-lg text-primary font-heading">توزيع المحفظة</h3>
-            <span className="text-[10px] text-muted-foreground bg-muted px-3 py-1 rounded-full font-bold uppercase tracking-wider">45/15/20/20</span>
+            <span className="text-[10px] text-muted-foreground bg-muted px-3 py-1 rounded-full font-bold uppercase tracking-wider">{layers.map(l => l.percentage).join('/')}</span>
           </div>
           <div className="grid grid-cols-2 gap-4">
             {layers.map((layer, idx) => (
