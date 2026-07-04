@@ -50,6 +50,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { downloadExcel } from "@/lib/excel";
 import {
   CapitalDistributionChart,
   ContributionsTrendChart,
@@ -325,10 +326,8 @@ export default function Analytics() {
   const exportToExcel = async () => {
     setIsExporting(true);
     try {
-      const XLSX = await import("xlsx");
       const periodLabel = filterMonth ? `${monthNames[filterMonth - 1]} ${selectedYear}` : `سنة ${selectedYear}`;
-      const wb = XLSX.utils.book_new();
-      const summarySheet = XLSX.utils.json_to_sheet([
+      const summaryRows = [
         { المؤشر: "الفترة", القيمة: periodLabel },
         { المؤشر: "إجمالي المساهمات", القيمة: filteredContributionsTotal },
         { المؤشر: "إجمالي السلف", القيمة: filteredLoansTotal },
@@ -339,25 +338,23 @@ export default function Analytics() {
         { المؤشر: "عدد الحركات", القيمة: filteredTransactions.length },
         { المؤشر: "متوسط المساهمة", القيمة: Math.round(averageContribution) },
         { المؤشر: "أعلى مساهم", القيمة: topContributor ? `${topContributor.name} - ${formatCurrency(topContributor.filteredContributionsTotal)}` : "لا يوجد" },
-      ]);
-      const txSheet = XLSX.utils.json_to_sheet(filteredTransactions.map((t) => ({
+      ];
+      const txRows = filteredTransactions.map((t) => ({
         التاريخ: t.date, النوع: getTransactionTypeLabel(t.type), العنوان: t.title,
         المبلغ: t.amount, العضو: t.memberName, الحالة: t.status,
         السنة: t.year, الشهر: t.month ? monthNames[t.month - 1] : "",
-      })));
-      const membersSheet = XLSX.utils.json_to_sheet(filteredMemberStats.map((m, i) => ({
+      }));
+      const memberRows = filteredMemberStats.map((m, i) => ({
         الترتيب: i + 1, الاسم: m.name, الصفة: m.role === "guardian" ? "الوصي" : "عضو",
         إجمالي_المساهمات: m.totalPaid, إجمالي_السلف_القائمة: m.totalBorrowed,
         مساهمات_الفترة: m.filteredContributionsTotal, سلف_الفترة: m.filteredLoansTotal,
         عدد_المساهمات: m.contributionCount, عدد_السلف: m.loanCount, صافي_المركز: m.netPosition,
-      })));
-      summarySheet["!cols"] = [{ wch: 28 }, { wch: 28 }];
-      txSheet["!cols"] = [{ wch: 16 }, { wch: 14 }, { wch: 30 }, { wch: 14 }, { wch: 20 }, { wch: 14 }];
-      membersSheet["!cols"] = [{ wch: 8 }, { wch: 22 }, { wch: 12 }, ...Array(7).fill({ wch: 16 })];
-      XLSX.utils.book_append_sheet(wb, summarySheet, "الملخص");
-      XLSX.utils.book_append_sheet(wb, txSheet, "الحركات");
-      XLSX.utils.book_append_sheet(wb, membersSheet, "الأعضاء");
-      XLSX.writeFile(wb, `تقرير-الصندوق-${selectedYear}${filterMonth ? `-${filterMonth}` : ""}.xlsx`);
+      }));
+      await downloadExcel(`تقرير-الصندوق-${selectedYear}${filterMonth ? `-${filterMonth}` : ""}.xlsx`, [
+        { name: "الملخص", rows: summaryRows, columnWidths: [28, 28] },
+        { name: "الحركات", rows: txRows, columnWidths: [16, 14, 30, 14, 20, 14] },
+        { name: "الأعضاء", rows: memberRows, columnWidths: [8, 22, 12, 16, 16, 16, 16, 16, 16, 16] },
+      ]);
     } finally {
       setIsExporting(false);
     }

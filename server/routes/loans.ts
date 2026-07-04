@@ -4,33 +4,9 @@ import { insertLoanPaymentSchema, insertLoanSchema } from "@shared/schema";
 import { z } from "zod";
 import { isAuthenticated, isAdmin } from "../auth";
 import { rebalanceYear } from "../capital-engine";
+import { buildRepaymentSchedule } from "@shared/finance";
 
 type LoanRecord = Awaited<ReturnType<typeof storage.getLoans>>[number];
-
-// يبني جدول الأقساط بحيث يمتص القسط الأخير فرق التقريب ليطابق المجموع مبلغ السلفة تماماً
-function buildRepaymentSchedule(loan: LoanRecord) {
-  if (loan.repaymentType !== "scheduled" || !loan.repaymentMonths || loan.repaymentMonths <= 0) {
-    return [];
-  }
-
-  const totalAmount = Number(loan.amount);
-  const months = loan.repaymentMonths;
-  const baseInstallment = Math.floor((totalAmount / months) * 1000) / 1000;
-  const lastInstallment = totalAmount - baseInstallment * (months - 1);
-  const approvalDate = loan.approvedAt || loan.createdAt || new Date();
-
-  return Array.from({ length: months }, (_, i) => {
-    const dueDate = new Date(approvalDate);
-    dueDate.setMonth(dueDate.getMonth() + i + 1);
-    return {
-      loanId: loan.id,
-      installmentNumber: i + 1,
-      amount: (i === months - 1 ? lastInstallment : baseInstallment).toFixed(3),
-      dueDate,
-      status: "scheduled" as const,
-    };
-  });
-}
 
 async function createScheduleAndRebalance(loan: LoanRecord) {
   const repayments = buildRepaymentSchedule(loan);

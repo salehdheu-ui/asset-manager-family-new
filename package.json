@@ -3,12 +3,18 @@
   "version": "1.0.0",
   "type": "module",
   "license": "MIT",
+  "overrides": {
+    "exceljs": {
+      "uuid": "^11.1.1"
+    }
+  },
   "scripts": {
     "dev:client": "vite dev --port 5000",
     "dev": "cross-env NODE_ENV=development tsx server/index.ts",
     "build": "tsx script/build.ts",
     "start": "cross-env NODE_ENV=production node dist/index.cjs",
     "check": "tsc",
+    "test": "vitest run",
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
@@ -54,6 +60,7 @@
     "drizzle-orm": "^0.39.3",
     "drizzle-zod": "^0.7.0",
     "embla-carousel-react": "^8.6.0",
+    "exceljs": "^4.4.0",
     "express": "^5.0.1",
     "express-session": "^1.19.0",
     "framer-motion": "^12.23.24",
@@ -79,7 +86,6 @@
     "vaul": "^1.1.2",
     "wouter": "^3.3.5",
     "ws": "^8.18.0",
-    "xlsx": "^0.18.5",
     "zod": "^3.25.76",
     "zod-validation-error": "^3.4.0"
   },
@@ -105,6 +111,7 @@
     "tailwindcss": "^4.1.14",
     "tsx": "^4.20.5",
     "typescript": "5.6.3",
-    "vite": "^7.1.9"
+    "vite": "^7.1.9",
+    "vitest": "^4.1.9"
   }
 }

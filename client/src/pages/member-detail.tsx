@@ -3,6 +3,7 @@ import { useParams, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import MobileLayout from "@/components/layout/MobileLayout";
 import { getMemberReport } from "@/lib/api";
+import { downloadExcel } from "@/lib/excel";
 import {
   User,
   HandCoins,
@@ -47,9 +48,6 @@ export default function MemberDetail() {
     if (!report) return;
     setIsExporting(true);
     try {
-      const XLSX = await import("xlsx");
-      const wb = XLSX.utils.book_new();
-
       const summaryData = [
         { البيان: "الاسم", القيمة: report.member.name },
         { البيان: "الصفة", القيمة: report.member.role === "guardian" ? "الوصي" : "عضو" },
@@ -84,18 +82,11 @@ export default function MemberDetail() {
         ملاحظة: l.description || "",
       }));
 
-      const summarySheet = XLSX.utils.json_to_sheet(summaryData);
-      const contribSheet = XLSX.utils.json_to_sheet(contribData);
-      const loansSheet = XLSX.utils.json_to_sheet(loansData);
-
-      summarySheet["!cols"] = [{ wch: 28 }, { wch: 24 }];
-      contribSheet["!cols"] = [{ wch: 14 }, { wch: 18 }, { wch: 14 }, { wch: 18 }];
-      loansSheet["!cols"] = [{ wch: 22 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 18 }, { wch: 18 }, { wch: 24 }];
-
-      XLSX.utils.book_append_sheet(wb, summarySheet, "ملخص العضو");
-      XLSX.utils.book_append_sheet(wb, contribSheet, "المساهمات");
-      XLSX.utils.book_append_sheet(wb, loansSheet, "السلف");
-      XLSX.writeFile(wb, `تقرير-${report.member.name}-${report.year}.xlsx`);
+      await downloadExcel(`تقرير-${report.member.name}-${report.year}.xlsx`, [
+        { name: "ملخص العضو", rows: summaryData, columnWidths: [28, 24] },
+        { name: "المساهمات", rows: contribData, columnWidths: [14, 18, 14, 18] },
+        { name: "السلف", rows: loansData, columnWidths: [22, 14, 14, 14, 14, 14, 14, 18, 18, 24] },
+      ]);
     } finally {
       setIsExporting(false);
     }

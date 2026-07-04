@@ -1,5 +1,6 @@
 import { db } from "./db";
 import { contributions, loans, expenses, familySettings, capitalAllocations, loanPayments, fundAdjustments } from "@shared/schema";
+import { computeNetAssets, splitAllocation } from "@shared/finance";
 import { eq, and, sql } from "drizzle-orm";
 
 export interface AllocationResult {
@@ -50,7 +51,14 @@ async function computeTotalNetAssets(): Promise<number> {
     .filter(r => approvedLoanIds.has(r.loanId))
     .reduce((sum, r) => sum + Number(r.amount), 0);
 
-  return Math.max(0, totalContribs + totalDeposits - totalWithdrawals - totalLoans + totalRepayments - totalExpenses);
+  return computeNetAssets({
+    contributions: totalContribs,
+    deposits: totalDeposits,
+    withdrawals: totalWithdrawals,
+    loans: totalLoans,
+    repayments: totalRepayments,
+    expenses: totalExpenses,
+  });
 }
 
 async function computeUsedAmounts(year: number) {
@@ -92,10 +100,11 @@ export async function lockYearAllocation(year: number): Promise<AllocationResult
   const netAssets = await computeTotalNetAssets();
   const used = await computeUsedAmounts(year);
 
-  const protectedAmt = netAssets * percents.protected / 100;
-  const emergencyAmt = netAssets * percents.emergency / 100;
-  const flexibleAmt = netAssets * percents.flexible / 100;
-  const growthAmt = netAssets * percents.growth / 100;
+  const split = splitAllocation(netAssets, percents);
+  const protectedAmt = split.protected;
+  const emergencyAmt = split.emergency;
+  const flexibleAmt = split.flexible;
+  const growthAmt = split.growth;
 
   const [existing] = await db.select().from(capitalAllocations)
     .where(eq(capitalAllocations.year, year));
