@@ -170,6 +170,22 @@ export const insertAuditLogSchema = createInsertSchema(auditLogs).omit({ id: tru
 export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
 export type AuditLog = typeof auditLogs.$inferSelect;
 
+// طلبات استعادة كلمة المرور — العضو يطلب، الوصي يصدر كوداً مؤقتاً يرسله له بنفسه
+export const passwordResetRequests = pgTable("password_reset_requests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  username: varchar("username").notNull(),
+  userId: varchar("user_id"),
+  status: text("status").notNull().default("pending"), // 'pending' | 'code_issued' | 'completed' | 'rejected'
+  codeHash: varchar("code_hash"),
+  codeExpiresAt: timestamp("code_expires_at"),
+  attemptsLeft: integer("attempts_left").notNull().default(5),
+  requestedAt: timestamp("requested_at").defaultNow(),
+  resolvedAt: timestamp("resolved_at"),
+  resolvedBy: varchar("resolved_by"),
+});
+
+export type PasswordResetRequest = typeof passwordResetRequests.$inferSelect;
+
 // Fund Adjustments (admin direct deposits/withdrawals)
 export const fundAdjustments = pgTable("fund_adjustments", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

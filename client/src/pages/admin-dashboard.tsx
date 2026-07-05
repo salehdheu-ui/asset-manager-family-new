@@ -1,8 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import MobileLayout from "@/components/layout/MobileLayout";
-import { getAdminUsers, getMembers, updateUserRole, linkUserToMember, deleteUser, createUser, updateUserPassword, updateUser, resetSystem, lockYearAllocation, resetYearAllocation } from "@/lib/api";
+import { getAdminUsers, getMembers, updateUserRole, linkUserToMember, deleteUser, createUser, updateUserPassword, updateUser, resetSystem, lockYearAllocation, resetYearAllocation, getResetRequests, issueResetCode, rejectResetRequest, type ResetRequest } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
-import { Shield, Users, Trash2, UserCheck, Link, Crown, User as UserIcon, Plus, Key, Eye, EyeOff, RotateCcw, AlertTriangle, Lock, Landmark, ChevronLeft } from "lucide-react";
+import { Shield, Users, Trash2, UserCheck, Link, Crown, User as UserIcon, Plus, Key, Eye, EyeOff, RotateCcw, AlertTriangle, Lock, Landmark, ChevronLeft, KeyRound, Copy, Check, X } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -48,6 +48,39 @@ export default function AdminDashboard() {
   const { data: members = [] } = useQuery({
     queryKey: ["members"],
     queryFn: getMembers,
+  });
+
+  const { data: resetRequests = [] } = useQuery<ResetRequest[]>({
+    queryKey: ["reset-requests"],
+    queryFn: getResetRequests,
+    enabled: !!user,
+    refetchInterval: 30000,
+  });
+
+  const [issuedCode, setIssuedCode] = useState<{ username: string; code: string } | null>(null);
+  const [copiedCode, setCopiedCode] = useState(false);
+
+  const issueCodeMutation = useMutation({
+    mutationFn: issueResetCode,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["reset-requests"] });
+      setIssuedCode({ username: data.username, code: data.code });
+      setCopiedCode(false);
+    },
+    onError: (err: any) => {
+      toast({ title: "تعذر إصدار الكود", description: err?.message, variant: "destructive" });
+    },
+  });
+
+  const rejectRequestMutation = useMutation({
+    mutationFn: rejectResetRequest,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["reset-requests"] });
+      toast({ title: "تم رفض الطلب" });
+    },
+    onError: (err: any) => {
+      toast({ title: "تعذر رفض الطلب", description: err?.message, variant: "destructive" });
+    },
   });
 
   const createUserMutation = useMutation({
@@ -197,6 +230,78 @@ export default function AdminDashboard() {
           </div>
           <div className="absolute right-[-20px] top-[-20px] w-40 h-40 bg-white/10 rounded-full blur-3xl" />
         </div>
+
+        {/* طلبات استعادة كلمة المرور */}
+        {resetRequests.length > 0 && (
+          <div className="rounded-[1.5rem] border border-primary/20 bg-primary/5 p-4 space-y-3" data-testid="reset-requests-panel">
+            <div className="flex items-center gap-2 text-primary">
+              <KeyRound className="h-5 w-5" />
+              <span className="font-bold">طلبات استعادة كلمة المرور</span>
+              <span className="mr-auto rounded-full bg-primary/10 px-2 py-0.5 text-xs font-bold">{resetRequests.length}</span>
+            </div>
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
+              أصدر كوداً مؤقتاً وأرسله للعضو مباشرة (واتساب مثلاً). الكود صالح 30 دقيقة ويظهر مرة واحدة.
+            </p>
+            <div className="space-y-2">
+              {resetRequests.map((r) => (
+                <div key={r.id} className="flex items-center justify-between gap-2 rounded-xl border border-border bg-background px-3 py-2" data-testid={`reset-request-${r.username}`}>
+                  <div className="min-w-0">
+                    <div className="text-sm font-bold truncate">{r.username}</div>
+                    <div className="text-[10px] text-muted-foreground">
+                      {r.status === "code_issued" ? "كود صادر — بانتظار العضو" : new Date(r.requestedAt).toLocaleString("ar-OM")}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      onClick={() => issueCodeMutation.mutate(r.id)}
+                      disabled={issueCodeMutation.isPending}
+                      className="rounded-lg bg-primary text-primary-foreground px-3 py-1.5 text-xs font-bold disabled:opacity-50"
+                      data-testid={`button-issue-code-${r.username}`}
+                    >
+                      {r.status === "code_issued" ? "إصدار كود جديد" : "إصدار كود"}
+                    </button>
+                    <button
+                      onClick={() => rejectRequestMutation.mutate(r.id)}
+                      disabled={rejectRequestMutation.isPending}
+                      className="rounded-lg border border-border p-1.5 text-muted-foreground hover:text-red-500"
+                      title="رفض الطلب"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* عرض الكود الصادر مرة واحدة */}
+        <Dialog open={!!issuedCode} onOpenChange={(open) => !open && setIssuedCode(null)}>
+          <DialogContent className="sm:max-w-sm" dir="rtl">
+            <DialogHeader>
+              <DialogTitle className="font-heading">كود الاستعادة للعضو «{issuedCode?.username}»</DialogTitle>
+              <DialogDescription>أرسل هذا الكود للعضو مباشرة. لن يظهر مرة أخرى، وصالح 30 دقيقة.</DialogDescription>
+            </DialogHeader>
+            <div className="py-2 space-y-3">
+              <div className="rounded-2xl border-2 border-dashed border-primary/40 bg-primary/5 py-5 text-center">
+                <span className="text-4xl font-mono font-bold tracking-[0.3em] text-primary" data-testid="issued-code">{issuedCode?.code}</span>
+              </div>
+              <button
+                onClick={() => {
+                  if (issuedCode) {
+                    navigator.clipboard?.writeText(issuedCode.code).catch(() => {});
+                    setCopiedCode(true);
+                    setTimeout(() => setCopiedCode(false), 2000);
+                  }
+                }}
+                className="w-full bg-primary text-primary-foreground py-3 rounded-xl font-bold flex items-center justify-center gap-2"
+                data-testid="button-copy-code"
+              >
+                {copiedCode ? <><Check className="w-4 h-4" /> تم النسخ</> : <><Copy className="w-4 h-4" /> نسخ الكود</>}
+              </button>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           <div className="rounded-[1.5rem] border border-amber-200 bg-amber-50/80 p-4">

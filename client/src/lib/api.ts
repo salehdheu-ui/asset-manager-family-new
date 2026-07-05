@@ -253,6 +253,41 @@ export async function getAdminUsers(): Promise<PublicUser[]> {
   return res.json();
 }
 
+// استعادة كلمة المرور
+export async function forgotPassword(username: string): Promise<{ message: string }> {
+  const res = await apiRequest("POST", "/api/auth/forgot-password", { username });
+  return res.json();
+}
+
+export async function resetPassword(data: { username: string; code: string; newPassword: string }): Promise<{ message: string }> {
+  const res = await apiRequest("POST", "/api/auth/reset-password", data);
+  return res.json();
+}
+
+export interface ResetRequest {
+  id: string;
+  username: string;
+  status: string;
+  requestedAt: string;
+  codeExpiresAt: string | null;
+}
+
+export async function getResetRequests(): Promise<ResetRequest[]> {
+  const res = await fetch("/api/admin/reset-requests", { credentials: "include" });
+  if (!res.ok) await parseFetchError(res);
+  return res.json();
+}
+
+export async function issueResetCode(id: string): Promise<{ code: string; username: string; expiresAt: string; message: string }> {
+  const res = await apiRequest("POST", `/api/admin/reset-requests/${id}/issue`, {});
+  return res.json();
+}
+
+export async function rejectResetRequest(id: string): Promise<{ message: string }> {
+  const res = await apiRequest("POST", `/api/admin/reset-requests/${id}/reject`, {});
+  return res.json();
+}
+
 export interface AuditLogsResponse {
   data: AuditLog[];
   total: number;

@@ -5,7 +5,9 @@ import connectPg from "connect-pg-simple";
 import rateLimit from "express-rate-limit";
 import type { Express, RequestHandler } from "express";
 import { db } from "./db";
+import { randomInt } from "crypto";
 import { users, type PublicUser } from "@shared/schema";
+import { storage } from "./storage";
 import { eq } from "drizzle-orm";
 
 declare module "express-session" {
@@ -139,6 +141,190 @@ export async function setupAuth(app: Express) {
       res.clearCookie("connect.sid");
       res.json({ message: "تم تسجيل الخروج بنجاح" });
     });
+  });
+
+  // ============= استعادة كلمة المرور =============
+  // العضو يطلب الاستعادة — الوصي يصدر كوداً مؤقتاً يرسله للعضو بنفسه (واتساب مثلاً)
+  const resetRequestLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 5,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: "طلبات كثيرة، يُرجى المحاولة بعد 15 دقيقة" },
+  });
+
+  // طلب استعادة — رسالة موحّدة دائماً حتى لا يُكشف وجود اسم المستخدم
+  app.post("/api/auth/forgot-password", resetRequestLimiter, async (req, res) => {
+    try {
+      const username = String(req.body?.username ?? "").trim();
+      const genericMessage = "إن كان اسم المستخدم صحيحاً، فسيصلك الوصي بكود الاستعادة قريباً.";
+      if (!username) {
+        return res.status(400).json({ message: "اسم المستخدم مطلوب" });
+      }
+
+      const [user] = await db.select().from(users).where(eq(users.username, username));
+      if (user) {
+        // تجنّب تكديس الطلبات — إن وُجد طلب معلّق فعّال نكتفي به
+        const existing = await storage.getPendingResetRequests();
+        const already = existing.find((r) => r.username === username && r.status === "pending");
+        if (!already) {
+          await storage.createResetRequest(username, user.id);
+        }
+      }
+      // نرد بنفس الرسالة في كل الحالات
+      res.json({ message: genericMessage });
+    } catch (error) {
+      console.error("Forgot password error:", error);
+      res.status(500).json({ message: "حدث خطأ" });
+    }
+  });
+
+  // إتمام الاستعادة بالكود الذي أصدره الوصي + كلمة مرور جديدة يعيّنها العضو بنفسه
+  app.post("/api/auth/reset-password", resetRequestLimiter, async (req, res) => {
+    try {
+      const username = String(req.body?.username ?? "").trim();
+      const code = String(req.body?.code ?? "").trim();
+      const newPassword = String(req.body?.newPassword ?? "");
+
+      if (!username || !code || !newPassword) {
+        return res.status(400).json({ message: "اسم المستخدم والكود وكلمة المرور الجديدة مطلوبة" });
+      }
+      if (newPassword.length < 8) {
+        return res.status(400).json({ message: "كلمة المرور الجديدة يجب أن تكون 8 أحرف على الأقل" });
+      }
+
+      const request = await storage.getActiveResetRequestByUsername(username);
+      if (!request || !request.codeHash || !request.codeExpiresAt) {
+        return res.status(400).json({ message: "لا يوجد طلب استعادة فعّال لهذا المستخدم — اطلب كوداً جديداً من الوصي" });
+      }
+      if (new Date(request.codeExpiresAt).getTime() < Date.now()) {
+        await storage.updateResetRequest(request.id, { status: "pending", codeHash: null, codeExpiresAt: null });
+        return res.status(400).json({ message: "انتهت صلاحية الكود — اطلب كوداً جديداً من الوصي" });
+      }
+      if (request.attemptsLeft <= 0) {
+        return res.status(400).json({ message: "استُنفدت محاولات إدخال الكود — اطلب كوداً جديداً من الوصي" });
+      }
+
+      const valid = await bcrypt.compare(code, request.codeHash);
+      if (!valid) {
+        await storage.updateResetRequest(request.id, { attemptsLeft: request.attemptsLeft - 1 });
+        return res.status(400).json({ message: `الكود غير صحيح. المحاولات المتبقية: ${request.attemptsLeft - 1}` });
+      }
+
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      await db.update(users).set({ password: hashedPassword, updatedAt: new Date() }).where(eq(users.username, username));
+      await storage.updateResetRequest(request.id, {
+        status: "completed",
+        codeHash: null,
+        codeExpiresAt: null,
+        resolvedAt: new Date(),
+      });
+
+      await storage.createAuditLog({
+        action: "password_reset_completed",
+        entityType: "user",
+        entityId: request.userId,
+        actorUserId: request.userId,
+        actorName: username,
+        description: `أكمل ${username} استعادة كلمة المرور بكود من الوصي`,
+        metadata: { username },
+      });
+
+      res.json({ message: "تم تعيين كلمة المرور الجديدة بنجاح — يمكنك تسجيل الدخول الآن" });
+    } catch (error) {
+      console.error("Reset password error:", error);
+      res.status(500).json({ message: "حدث خطأ أثناء استعادة كلمة المرور" });
+    }
+  });
+
+  // الوصي: قائمة طلبات الاستعادة المعلّقة
+  app.get("/api/admin/reset-requests", isAdmin, async (_req, res) => {
+    try {
+      const requests = await storage.getPendingResetRequests();
+      res.json(requests.map((r) => ({
+        id: r.id,
+        username: r.username,
+        status: r.status,
+        requestedAt: r.requestedAt,
+        codeExpiresAt: r.codeExpiresAt,
+      })));
+    } catch (error) {
+      res.status(500).json({ message: "تعذر تحميل طلبات الاستعادة" });
+    }
+  });
+
+  // الوصي: إصدار كود مؤقت — يظهر الكود مرة واحدة فقط ليرسله الوصي للعضو
+  app.post("/api/admin/reset-requests/:id/issue", isAdmin, async (req: any, res) => {
+    try {
+      const request = await storage.getResetRequest(req.params.id as string);
+      if (!request) {
+        return res.status(404).json({ message: "الطلب غير موجود" });
+      }
+      if (request.status === "completed" || request.status === "rejected") {
+        return res.status(400).json({ message: "هذا الطلب مُغلق بالفعل" });
+      }
+
+      const code = String(randomInt(0, 1_000_000)).padStart(6, "0");
+      const codeHash = await bcrypt.hash(code, 10);
+      const codeExpiresAt = new Date(Date.now() + 30 * 60 * 1000); // 30 دقيقة
+
+      await storage.updateResetRequest(request.id, {
+        status: "code_issued",
+        codeHash,
+        codeExpiresAt,
+        attemptsLeft: 5,
+      });
+
+      await storage.createAuditLog({
+        action: "password_reset_code_issued",
+        entityType: "user",
+        entityId: request.userId,
+        actorUserId: req.user?.id ?? null,
+        actorName: req.user?.username ?? "مشرف",
+        description: `أصدر الوصي كود استعادة كلمة مرور للمستخدم ${request.username}`,
+        metadata: { username: request.username },
+      });
+
+      // الكود يُرجَع مرة واحدة فقط — لا يُخزَّن نصاً في أي مكان
+      res.json({
+        code,
+        username: request.username,
+        expiresAt: codeExpiresAt,
+        message: "أرسل هذا الكود للعضو مباشرة (واتساب مثلاً). صالح 30 دقيقة ولن يظهر مرة أخرى.",
+      });
+    } catch (error) {
+      console.error("Issue reset code error:", error);
+      res.status(500).json({ message: "تعذر إصدار الكود" });
+    }
+  });
+
+  // الوصي: رفض طلب استعادة
+  app.post("/api/admin/reset-requests/:id/reject", isAdmin, async (req: any, res) => {
+    try {
+      const request = await storage.getResetRequest(req.params.id as string);
+      if (!request) {
+        return res.status(404).json({ message: "الطلب غير موجود" });
+      }
+      await storage.updateResetRequest(request.id, {
+        status: "rejected",
+        codeHash: null,
+        codeExpiresAt: null,
+        resolvedAt: new Date(),
+        resolvedBy: req.user?.id ?? null,
+      });
+      await storage.createAuditLog({
+        action: "password_reset_rejected",
+        entityType: "user",
+        entityId: request.userId,
+        actorUserId: req.user?.id ?? null,
+        actorName: req.user?.username ?? "مشرف",
+        description: `رفض الوصي طلب استعادة كلمة مرور للمستخدم ${request.username}`,
+        metadata: { username: request.username },
+      });
+      res.json({ message: "تم رفض الطلب" });
+    } catch (error) {
+      res.status(500).json({ message: "تعذر رفض الطلب" });
+    }
   });
 
   // Get current user

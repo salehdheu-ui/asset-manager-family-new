@@ -9,7 +9,8 @@ import {
   type FundAdjustment, type InsertFundAdjustment, fundAdjustments,
   type AuditLog, type InsertAuditLog, auditLogs,
   capitalAllocations,
-  systemBackups
+  systemBackups,
+  type PasswordResetRequest, passwordResetRequests
 } from "@shared/schema";
 import { users } from "@shared/models/auth";
 import { db } from "./db";
@@ -71,6 +72,13 @@ export interface IStorage {
   // Audit Logs
   getAuditLogs(page?: number, limit?: number): Promise<{ data: AuditLog[]; total: number; page: number; limit: number; totalPages: number }>;
   createAuditLog(log: InsertAuditLog): Promise<AuditLog>;
+
+  // Password Reset Requests
+  createResetRequest(username: string, userId: string | null): Promise<PasswordResetRequest>;
+  getPendingResetRequests(): Promise<PasswordResetRequest[]>;
+  getResetRequest(id: string): Promise<PasswordResetRequest | undefined>;
+  getActiveResetRequestByUsername(username: string): Promise<PasswordResetRequest | undefined>;
+  updateResetRequest(id: string, data: Partial<PasswordResetRequest>): Promise<PasswordResetRequest | undefined>;
 
   // System Reset
   resetSystemData(): Promise<void>;
@@ -319,6 +327,35 @@ export class DatabaseStorage implements IStorage {
         : null,
     }).returning();
     return created;
+  }
+
+  async createResetRequest(username: string, userId: string | null): Promise<PasswordResetRequest> {
+    const [created] = await db.insert(passwordResetRequests).values({ username, userId }).returning();
+    return created;
+  }
+
+  async getPendingResetRequests(): Promise<PasswordResetRequest[]> {
+    return db.select().from(passwordResetRequests)
+      .where(sql`${passwordResetRequests.status} in ('pending', 'code_issued')`)
+      .orderBy(desc(passwordResetRequests.requestedAt));
+  }
+
+  async getResetRequest(id: string): Promise<PasswordResetRequest | undefined> {
+    const [row] = await db.select().from(passwordResetRequests).where(eq(passwordResetRequests.id, id)).limit(1);
+    return row;
+  }
+
+  async getActiveResetRequestByUsername(username: string): Promise<PasswordResetRequest | undefined> {
+    const [row] = await db.select().from(passwordResetRequests)
+      .where(and(eq(passwordResetRequests.username, username), eq(passwordResetRequests.status, "code_issued")))
+      .orderBy(desc(passwordResetRequests.requestedAt))
+      .limit(1);
+    return row;
+  }
+
+  async updateResetRequest(id: string, data: Partial<PasswordResetRequest>): Promise<PasswordResetRequest | undefined> {
+    const [updated] = await db.update(passwordResetRequests).set(data).where(eq(passwordResetRequests.id, id)).returning();
+    return updated;
   }
 
   async resetSystemData(): Promise<void> {

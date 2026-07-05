@@ -5,6 +5,7 @@ import { useLocation } from "wouter";
 import { useEffect, useState } from "react";
 import pattern from "@assets/generated_images/subtle_islamic_geometric_pattern_background_texture.png";
 import logo from "@assets/generated_images/minimalist_family_fund_logo_symbol.png";
+import ForgotPasswordDialog from "@/components/ForgotPasswordDialog";
 
 export default function Auth() {
   const { user, isLoading, login, isLoggingIn, loginError } = useAuth();
@@ -13,6 +14,7 @@ export default function Auth() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [forgotOpen, setForgotOpen] = useState(false);
 
   useEffect(() => {
     if (!isLoading && user) {
@@ -180,6 +182,15 @@ export default function Auth() {
                     </>
                   )}
                 </button>
+
+                <button
+                  type="button"
+                  onClick={() => setForgotOpen(true)}
+                  className="w-full text-sm text-muted-foreground hover:text-primary transition-colors"
+                  data-testid="link-forgot-password"
+                >
+                  نسيت كلمة المرور؟
+                </button>
               </form>
             </motion.div>
           </motion.div>
@@ -192,6 +203,8 @@ export default function Auth() {
           </p>
         </footer>
       </div>
+
+      <ForgotPasswordDialog open={forgotOpen} onOpenChange={setForgotOpen} initialUsername={username} />
     </div>
   );
 }
