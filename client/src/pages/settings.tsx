@@ -1,15 +1,48 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import MobileLayout from "@/components/layout/MobileLayout";
-import { applyBackupRetention, createBackup, getBackups, getMembers, getSettings, restoreBackup, updateSettings } from "@/lib/api";
-import { Home, Users, ChevronLeft, Shield, Wallet, DatabaseBackup, CalendarClock, Archive, Download } from "lucide-react";
+import { applyBackupRetention, createBackup, getBackups, getBackupSummary, getMembers, getSettings, importBackup, restoreBackup, updateSettings, type BackupContentSummary, type RestoreResult } from "@/lib/api";
+import { Home, Users, ChevronLeft, Shield, Wallet, DatabaseBackup, CalendarClock, Archive, Download, Upload, ShieldCheck } from "lucide-react";
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import type { FamilySettings as FamilySettingsType, Member, SystemBackup } from "@shared/schema";
+
+const COUNT_LABELS: Record<string, string> = {
+  members: "الأعضاء",
+  users: "الحسابات",
+  contributions: "المساهمات",
+  loans: "السلف",
+  loanRepayments: "الأقساط",
+  loanPayments: "دفعات السداد",
+  expenses: "المصروفات",
+  fundAdjustments: "الإيداعات المباشرة",
+  capitalAllocations: "تخصيصات رأس المال",
+  auditLogs: "سجلات التدقيق",
+};
+
+const LEVEL_LABELS: Record<string, string> = {
+  snapshot: "نسخة",
+  "pre-restore": "نسخة أمان",
+  imported: "مستوردة",
+};
+
+function invalidateEverything(queryClient: ReturnType<typeof useQueryClient>) {
+  queryClient.invalidateQueries();
+}
 
 export default function FamilySettings() {
   const { toast } = useToast();
@@ -70,20 +103,21 @@ export default function FamilySettings() {
     },
   });
 
-  const restoreBackupMutation = useMutation<SystemBackup, Error, string>({
+  const [restoreTarget, setRestoreTarget] = useState<SystemBackup | null>(null);
+  const [restoreSummary, setRestoreSummary] = useState<BackupContentSummary | null>(null);
+  const [importPayload, setImportPayload] = useState<{ payload: unknown; fileName: string; counts: Record<string, number> } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const restoreBackupMutation = useMutation<RestoreResult, Error, string>({
     mutationFn: restoreBackup,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["backups"] });
-      queryClient.invalidateQueries({ queryKey: ["settings"] });
-      queryClient.invalidateQueries({ queryKey: ["members"] });
-      queryClient.invalidateQueries({ queryKey: ["loans"] });
-      queryClient.invalidateQueries({ queryKey: ["contributions"] });
-      queryClient.invalidateQueries({ queryKey: ["expenses"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
-      queryClient.invalidateQueries({ queryKey: ["reports"] });
-      queryClient.invalidateQueries({ queryKey: ["analytics"] });
-      queryClient.invalidateQueries({ queryKey: ["allocation"] });
-      toast({ title: "تمت استعادة النسخة الاحتياطية" });
+      invalidateEverything(queryClient);
+      setRestoreTarget(null);
+      setRestoreSummary(null);
+      toast({
+        title: "تمت استعادة النسخة الاحتياطية",
+        description: "أُنشئت نسخة أمان تلقائية من الوضع السابق قبل الاستعادة — يمكنك التراجع عبرها.",
+      });
     },
     onError: (error) => {
       toast({
@@ -93,6 +127,58 @@ export default function FamilySettings() {
       });
     },
   });
+
+  const importBackupMutation = useMutation<RestoreResult, Error, unknown>({
+    mutationFn: importBackup,
+    onSuccess: () => {
+      invalidateEverything(queryClient);
+      setImportPayload(null);
+      toast({
+        title: "تمت الاستعادة من الملف المستورد",
+        description: "أُنشئت نسخة أمان تلقائية من الوضع السابق، وحُفظ الملف المستورد ضمن سجل النسخ.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "تعذر استيراد النسخة",
+        description: (error as Error).message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const openRestoreDialog = async (backup: SystemBackup) => {
+    setRestoreTarget(backup);
+    setRestoreSummary(null);
+    try {
+      setRestoreSummary(await getBackupSummary(backup.id));
+    } catch {
+      // الملخص إثرائي — التأكيد يبقى ممكناً بدونه
+    }
+  };
+
+  const handleImportFile = async (file: File) => {
+    if (file.size > 9 * 1024 * 1024) {
+      toast({ title: "الملف كبير جداً", description: "الحد الأقصى للاستيراد 9 ميغابايت", variant: "destructive" });
+      return;
+    }
+    try {
+      const text = await file.text();
+      const payload = JSON.parse(text);
+      if (!payload?.metadata?.version || !payload?.data) {
+        toast({ title: "الملف ليس نسخة احتياطية صالحة", description: "اختر ملف JSON مُصدَّراً من هذا النظام", variant: "destructive" });
+        return;
+      }
+      const counts: Record<string, number> = {};
+      for (const key of Object.keys(COUNT_LABELS)) {
+        const value = payload.data[key];
+        counts[key] = Array.isArray(value) ? value.length : 0;
+      }
+      setImportPayload({ payload, fileName: file.name, counts });
+    } catch {
+      toast({ title: "تعذر قراءة الملف", description: "الملف تالف أو ليس بصيغة JSON", variant: "destructive" });
+    }
+  };
 
   const createBackupMutation = useMutation<SystemBackup, Error>({
     mutationFn: createBackup,
@@ -212,13 +298,37 @@ export default function FamilySettings() {
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <Button onClick={() => createBackupMutation.mutate()} disabled={createBackupMutation.isPending || !backupEnabled} className="rounded-xl">
+            <Button onClick={() => createBackupMutation.mutate()} disabled={createBackupMutation.isPending} className="rounded-xl" data-testid="button-create-backup">
               {createBackupMutation.isPending ? "جاري إنشاء النسخة..." : "إنشاء نسخة الآن"}
             </Button>
             <Button variant="outline" onClick={() => retentionMutation.mutate()} disabled={retentionMutation.isPending || !backupEnabled} className="rounded-xl">
               {retentionMutation.isPending ? "جاري التنظيف..." : "تنظيف النسخ القديمة"}
             </Button>
           </div>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".json,application/json"
+            className="hidden"
+            data-testid="input-import-backup"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleImportFile(file);
+              e.target.value = "";
+            }}
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="w-full rounded-xl border border-dashed border-primary/30 bg-primary/5 px-4 py-3 text-sm font-bold text-primary hover:bg-primary/10 transition-colors flex items-center justify-center gap-2"
+            data-testid="button-import-backup"
+          >
+            <Upload className="w-4 h-4" />
+            استيراد نسخة من ملف (استعادة كاملة)
+          </button>
+          <p className="text-[11px] text-muted-foreground leading-relaxed -mt-2 px-1">
+            نزّل نسخة دورياً واحفظها خارج الخادم (جهازك أو سحابة خاصة). عند أي كارثة تفقد فيها الخادم نفسه، هذا الملف هو طريق الاستعادة الوحيد.
+          </p>
 
           <div className="rounded-xl bg-muted/30 p-4 space-y-3">
             <div className="flex items-center justify-between gap-2">
@@ -233,8 +343,13 @@ export default function FamilySettings() {
                   <div key={backup.id} className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background px-3 py-2">
                     <div className="min-w-0">
                       <div className="truncate text-sm font-medium">{backup.fileName}</div>
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-xs text-muted-foreground flex items-center gap-2">
                         {new Date(backup.backupDate).toLocaleString("ar-OM")}
+                        {backup.backupLevel !== "snapshot" && (
+                          <span className={backup.backupLevel === "pre-restore" ? "text-amber-600 font-bold" : "text-blue-600 font-bold"}>
+                            {LEVEL_LABELS[backup.backupLevel] ?? backup.backupLevel}
+                          </span>
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
@@ -260,13 +375,10 @@ export default function FamilySettings() {
                         size="sm"
                         className="rounded-lg"
                         disabled={restoreBackupMutation.isPending}
-                        onClick={() => {
-                          const confirmed = window.confirm("هل تريد استعادة هذه النسخة الاحتياطية؟ سيتم استبدال البيانات الحالية.");
-                          if (!confirmed) return;
-                          restoreBackupMutation.mutate(backup.id);
-                        }}
+                        data-testid={`button-restore-${backup.id}`}
+                        onClick={() => openRestoreDialog(backup)}
                       >
-                        {restoreBackupMutation.isPending ? "..." : "استعادة"}
+                        استعادة
                       </Button>
                     </div>
                   </div>
@@ -274,6 +386,98 @@ export default function FamilySettings() {
               )}
             </div>
           </div>
+
+          {/* حوار تأكيد الاستعادة مع ملخص المحتوى */}
+          <AlertDialog open={!!restoreTarget} onOpenChange={(open) => { if (!open) { setRestoreTarget(null); setRestoreSummary(null); } }}>
+            <AlertDialogContent dir="rtl">
+              <AlertDialogHeader>
+                <AlertDialogTitle className="font-heading">استعادة النسخة الاحتياطية؟</AlertDialogTitle>
+                <AlertDialogDescription asChild>
+                  <div className="space-y-3">
+                    <p>
+                      ستُستبدل كل البيانات الحالية بمحتوى النسخة
+                      «{restoreTarget?.fileName}» المؤرخة {restoreTarget ? new Date(restoreTarget.backupDate).toLocaleString("ar-OM") : ""}.
+                    </p>
+                    {restoreSummary ? (
+                      <div className="rounded-xl bg-muted/40 p-3 grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                        {Object.entries(restoreSummary.counts).map(([key, count]) => (
+                          <div key={key} className="flex justify-between gap-2">
+                            <span>{COUNT_LABELS[key] ?? key}</span>
+                            <span className="font-mono font-bold">{count}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs">جارٍ قراءة محتوى النسخة...</p>
+                    )}
+                    <p className="flex items-center gap-2 text-emerald-700 text-xs font-bold">
+                      <ShieldCheck className="w-4 h-4 shrink-0" />
+                      ستُنشأ نسخة أمان تلقائية من وضعك الحالي قبل الاستعادة — يمكنك التراجع عبرها إن أخطأت.
+                    </p>
+                  </div>
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>تراجع</AlertDialogCancel>
+                <AlertDialogAction
+                  data-testid="button-confirm-restore"
+                  disabled={restoreBackupMutation.isPending}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (restoreTarget) restoreBackupMutation.mutate(restoreTarget.id);
+                  }}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  {restoreBackupMutation.isPending ? "جارٍ الاستعادة..." : "استعادة الآن"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          {/* حوار تأكيد الاستيراد من ملف */}
+          <AlertDialog open={!!importPayload} onOpenChange={(open) => !open && setImportPayload(null)}>
+            <AlertDialogContent dir="rtl">
+              <AlertDialogHeader>
+                <AlertDialogTitle className="font-heading">استعادة كاملة من الملف المستورد؟</AlertDialogTitle>
+                <AlertDialogDescription asChild>
+                  <div className="space-y-3">
+                    <p>سيحل محتوى الملف «{importPayload?.fileName}» محل كل بيانات النظام الحالية.</p>
+                    {importPayload && (
+                      <div className="rounded-xl bg-muted/40 p-3 grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                        {Object.entries(importPayload.counts).map(([key, count]) => (
+                          <div key={key} className="flex justify-between gap-2">
+                            <span>{COUNT_LABELS[key] ?? key}</span>
+                            <span className="font-mono font-bold">{count}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <p className="flex items-center gap-2 text-emerald-700 text-xs font-bold">
+                      <ShieldCheck className="w-4 h-4 shrink-0" />
+                      ستُنشأ نسخة أمان تلقائية من وضعك الحالي، وسيُحفظ الملف المستورد ضمن سجل النسخ للتتبع.
+                    </p>
+                    <p className="text-xs text-amber-700">
+                      تنبيه: إذا كانت حسابات الدخول في الملف مختلفة فستحتاج للدخول من جديد بحساب من داخل النسخة المستعادة.
+                    </p>
+                  </div>
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>تراجع</AlertDialogCancel>
+                <AlertDialogAction
+                  data-testid="button-confirm-import"
+                  disabled={importBackupMutation.isPending}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (importPayload) importBackupMutation.mutate(importPayload.payload);
+                  }}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  {importBackupMutation.isPending ? "جارٍ الاستعادة..." : "استعادة من الملف"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
 
         <div className="space-y-4">

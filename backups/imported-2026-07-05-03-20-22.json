@@ -1,0 +1,228 @@
+{
+  "data": {
+    "loans": [
+      {
+        "id": "4f46aa1e-0034-4a77-ab75-cc155915427a",
+        "type": "standard",
+        "title": "سلفة محمد",
+        "amount": "30.000",
+        "status": "approved",
+        "memberId": "3efcc608-9229-41f2-a165-40de7a04335e",
+        "createdAt": "2026-07-04T21:37:33.103Z",
+        "approvedAt": null,
+        "description": null,
+        "repaymentType": "open",
+        "repaymentMonths": null
+      }
+    ],
+    "users": [
+      {
+        "id": "9a040ffb-c34f-46f9-b9f1-55b9d9cab166",
+        "role": "admin",
+        "email": null,
+        "lastName": "العام",
+        "memberId": null,
+        "password": "$2b$10$9vDiaJ.Rx4Btyo0fI6FlLOoP.MjvDiY6M7ZrX9nRgjK9Oj10DzmGi",
+        "username": "admin",
+        "createdAt": "2026-07-04T20:22:55.214Z",
+        "firstName": "المدير",
+        "updatedAt": "2026-07-04T20:22:55.214Z",
+        "profileImageUrl": null
+      },
+      {
+        "id": "7a11d03d-3d33-4673-9f7b-20bb15e81f01",
+        "role": "user",
+        "email": null,
+        "lastName": null,
+        "memberId": "3efcc608-9229-41f2-a165-40de7a04335e",
+        "password": "$2b$10$pCyPbKvvvKLD2taViSH.K.Yt1zOdHqPEth35A6xa5Q1SjFVpDgfO.",
+        "username": "mohammed",
+        "createdAt": "2026-07-04T20:37:22.918Z",
+        "firstName": null,
+        "updatedAt": "2026-07-04T20:37:22.918Z",
+        "profileImageUrl": null
+      }
+    ],
+    "members": [
+      {
+        "id": "3efcc608-9229-41f2-a165-40de7a04335e",
+        "name": "محمد",
+        "role": "member",
+        "avatar": null,
+        "createdAt": "2026-07-04T20:35:54.183Z"
+      },
+      {
+        "id": "37ab178c-724a-46de-a3d4-45489328f132",
+        "name": "خالد",
+        "role": "member",
+        "avatar": null,
+        "createdAt": "2026-07-04T20:35:54.183Z"
+      },
+      {
+        "id": "a8e0c53b-5415-4477-81a8-86167c179ed1",
+        "name": "سالم",
+        "role": "custodian",
+        "avatar": null,
+        "createdAt": "2026-07-04T20:35:54.183Z"
+      },
+      {
+        "id": "0b6983e2-a4cb-4bc1-8b21-f9d2d6976b47",
+        "name": "غانم",
+        "role": "member",
+        "avatar": null,
+        "createdAt": "2026-07-05T03:16:38.625Z"
+      }
+    ],
+    "expenses": [],
+    "auditLogs": [
+      {
+        "id": "def69c89-57a3-488b-b350-52ebc5416db7",
+        "action": "custodian_assigned",
+        "entityId": "a8e0c53b-5415-4477-81a8-86167c179ed1",
+        "metadata": {
+          "newCustodianId": "a8e0c53b-5415-4477-81a8-86167c179ed1",
+          "newCustodianName": "سالم",
+          "previousCustodianId": "37ab178c-724a-46de-a3d4-45489328f132",
+          "previousCustodianName": "خالد"
+        },
+        "actorName": "admin",
+        "createdAt": "2026-07-04T20:36:57.449Z",
+        "entityType": "member",
+        "actorUserId": "9a040ffb-c34f-46f9-b9f1-55b9d9cab166",
+        "description": "تم تعيين سالم أميناً للصندوق بدلاً من خالد"
+      },
+      {
+        "id": "a1b43abe-5003-4c3a-96b1-85bd6899e40f",
+        "action": "emergency_mode_enabled",
+        "entityId": "ab909f2a-7a21-4404-bc42-ea7296549b59",
+        "metadata": {
+          "emergencyMode": true
+        },
+        "actorName": "admin",
+        "createdAt": "2026-07-04T20:37:02.088Z",
+        "entityType": "family_settings",
+        "actorUserId": "9a040ffb-c34f-46f9-b9f1-55b9d9cab166",
+        "description": "تم تفعيل وضع الطوارئ — جُمّدت العمليات المالية للأعضاء"
+      },
+      {
+        "id": "a79fe099-5ce6-4cb5-8329-7bb5b8ecbc89",
+        "action": "emergency_mode_disabled",
+        "entityId": "ab909f2a-7a21-4404-bc42-ea7296549b59",
+        "metadata": {
+          "emergencyMode": false
+        },
+        "actorName": "admin",
+        "createdAt": "2026-07-04T20:37:32.612Z",
+        "entityType": "family_settings",
+        "actorUserId": "9a040ffb-c34f-46f9-b9f1-55b9d9cab166",
+        "description": "تم إلغاء وضع الطوارئ — عادت العمليات المالية للعمل"
+      },
+      {
+        "id": "e33443a5-3cc7-419c-8b27-21a5668fd17f",
+        "action": "loan_deleted",
+        "entityId": "38f2afef-2f7c-4a9e-894c-d6a89d65addd",
+        "metadata": {
+          "title": "سلفة خالد",
+          "amount": "50.000",
+          "status": "approved",
+          "memberId": "37ab178c-724a-46de-a3d4-45489328f132",
+          "memberName": "خالد",
+          "paymentsDeleted": 0,
+          "totalPaidBeforeDeletion": "0.000"
+        },
+        "actorName": "admin",
+        "createdAt": "2026-07-04T21:39:36.335Z",
+        "entityType": "loan",
+        "actorUserId": "9a040ffb-c34f-46f9-b9f1-55b9d9cab166",
+        "description": "تم حذف سلفة خالد (سلفة خالد) بمبلغ 50.000 ر.ع"
+      },
+      {
+        "id": "3d8503ab-e8c7-4fe5-9d9f-6875568c0e56",
+        "action": "backup_created",
+        "entityId": "8879aaa5-658c-42df-954f-9a927565be35",
+        "metadata": {
+          "fileName": "backup-2026-07-05-03-16-38.json",
+          "sizeBytes": 6224
+        },
+        "actorName": "admin",
+        "createdAt": "2026-07-05T03:16:38.515Z",
+        "entityType": "system_backup",
+        "actorUserId": "9a040ffb-c34f-46f9-b9f1-55b9d9cab166",
+        "description": "تم إنشاء نسخة احتياطية يدوية (backup-2026-07-05-03-16-38.json)"
+      },
+      {
+        "id": "de7f327a-ce20-48fb-84d8-916ae0a9046a",
+        "action": "backup_exported",
+        "entityId": "8879aaa5-658c-42df-954f-9a927565be35",
+        "metadata": {
+          "fileName": "backup-2026-07-05-03-16-38.json"
+        },
+        "actorName": "admin",
+        "createdAt": "2026-07-05T03:16:38.551Z",
+        "entityType": "system_backup",
+        "actorUserId": "9a040ffb-c34f-46f9-b9f1-55b9d9cab166",
+        "description": "تم تصدير النسخة الاحتياطية (backup-2026-07-05-03-16-38.json) خارج النظام"
+      }
+    ],
+    "loanPayments": [
+      {
+        "id": "76a74262-9438-4309-b200-50c5c4015d0f",
+        "note": "سداد كامل",
+        "amount": "30.000",
+        "loanId": "4f46aa1e-0034-4a77-ab75-cc155915427a",
+        "paidAt": "2026-07-04T21:37:33.166Z",
+        "createdBy": "9a040ffb-c34f-46f9-b9f1-55b9d9cab166"
+      }
+    ],
+    "contributions": [
+      {
+        "id": "b6331eb7-1507-4128-bd85-28115e8dfc92",
+        "year": 2026,
+        "month": 7,
+        "amount": "10.000",
+        "status": "pending_approval",
+        "memberId": "3efcc608-9229-41f2-a165-40de7a04335e",
+        "createdAt": "2026-07-04T20:37:32.629Z",
+        "approvedAt": null
+      }
+    ],
+    "familySettings": {
+      "id": "ab909f2a-7a21-4404-bc42-ea7296549b59",
+      "currency": "ر.ع",
+      "familyName": "صندوق العائلة",
+      "backupEnabled": false,
+      "emergencyMode": false,
+      "growthPercent": 20,
+      "backupKeepDays": 7,
+      "backupLastRunAt": "2026-07-05T03:18:01.688Z",
+      "flexiblePercent": 20,
+      "backupKeepMonths": 12,
+      "emergencyPercent": 15,
+      "protectedPercent": 45,
+      "backupKeepWeeksPerMonth": 4
+    },
+    "loanRepayments": [],
+    "fundAdjustments": [],
+    "capitalAllocations": [
+      {
+        "id": "a1afa5de-abd3-434b-b4fc-04454fb8149e",
+        "year": 2026,
+        "resetAt": null,
+        "resetBy": null,
+        "lockedAt": "2026-07-04T20:23:55.277Z",
+        "netAssets": "0.000",
+        "growthUsed": "0.000",
+        "flexibleUsed": "0.000",
+        "growthAmount": "0.000",
+        "emergencyUsed": "0.000",
+        "flexibleAmount": "0.000",
+        "emergencyAmount": "0.000",
+        "protectedAmount": "0.000"
+      }
+    ]
+  },
+  "metadata": {
+    "version": 1,
+    "createdAt": "2026-07-05T03:20:03.836Z"
+  }
+}

@@ -1,4 +1,6 @@
 import { mkdir, readFile, rm, stat, writeFile } from "fs/promises";
+import { randomUUID } from "crypto";
+import bcrypt from "bcryptjs";
 import path from "path";
 import { db } from "../db";
 import { auditLogs, capitalAllocations, contributions, expenses, familySettings, fundAdjustments, loanPayments, loanRepayments, loans, members, systemBackups } from "@shared/schema";
@@ -34,10 +36,25 @@ async function ensureBackupDirectory() {
 }
 
 export async function listBackups() {
-  return db.select().from(systemBackups).orderBy(desc(systemBackups.backupDate));
+  // بدون الحمولة الكاملة — القائمة تحتاج البيانات الوصفية فقط
+  return db.select({
+    id: systemBackups.id,
+    fileName: systemBackups.fileName,
+    storagePath: systemBackups.storagePath,
+    backupDate: systemBackups.backupDate,
+    backupLevel: systemBackups.backupLevel,
+    year: systemBackups.year,
+    month: systemBackups.month,
+    weekOfMonth: systemBackups.weekOfMonth,
+    isMonthEndSnapshot: systemBackups.isMonthEndSnapshot,
+    sizeBytes: systemBackups.sizeBytes,
+    createdBy: systemBackups.createdBy,
+  }).from(systemBackups).orderBy(desc(systemBackups.backupDate));
 }
 
-export async function createBackupSnapshot(createdBy?: string | null) {
+export type BackupLevel = "snapshot" | "pre-restore" | "imported";
+
+export async function createBackupSnapshot(createdBy?: string | null, backupLevel: BackupLevel = "snapshot") {
   await ensureBackupDirectory();
 
   const backupDate = new Date();
@@ -51,18 +68,8 @@ export async function createBackupSnapshot(createdBy?: string | null) {
     db.select().from(expenses).orderBy(asc(expenses.createdAt)),
     db.select().from(fundAdjustments).orderBy(asc(fundAdjustments.createdAt)),
     db.select().from(capitalAllocations).orderBy(asc(capitalAllocations.year)),
-    db.select({
-      id: users.id,
-      username: users.username,
-      email: users.email,
-      firstName: users.firstName,
-      lastName: users.lastName,
-      profileImageUrl: users.profileImageUrl,
-      role: users.role,
-      memberId: users.memberId,
-      createdAt: users.createdAt,
-      updatedAt: users.updatedAt,
-    }).from(users).orderBy(asc(users.createdAt)),
+    // تشمل كلمة المرور (مشفرة bcrypt) — بدونها تستحيل استعادة الحسابات بعد كارثة
+    db.select().from(users).orderBy(asc(users.createdAt)),
     db.select().from(auditLogs).orderBy(asc(auditLogs.createdAt)),
   ]);
 
@@ -86,7 +93,8 @@ export async function createBackupSnapshot(createdBy?: string | null) {
     },
   };
 
-  const fileName = `backup-${backupDate.getFullYear()}-${pad(backupDate.getMonth() + 1)}-${pad(backupDate.getDate())}-${pad(backupDate.getHours())}-${pad(backupDate.getMinutes())}-${pad(backupDate.getSeconds())}.json`;
+  const prefix = backupLevel === "pre-restore" ? "safety" : "backup";
+  const fileName = `${prefix}-${backupDate.getFullYear()}-${pad(backupDate.getMonth() + 1)}-${pad(backupDate.getDate())}-${pad(backupDate.getHours())}-${pad(backupDate.getMinutes())}-${pad(backupDate.getSeconds())}.json`;
   const storagePath = path.join(backupRoot, fileName);
   const content = JSON.stringify(payload, null, 2);
 
@@ -97,7 +105,7 @@ export async function createBackupSnapshot(createdBy?: string | null) {
     fileName,
     storagePath,
     backupDate,
-    backupLevel: "snapshot",
+    backupLevel,
     year: backupDate.getFullYear(),
     month: backupDate.getMonth() + 1,
     weekOfMonth: getWeekOfMonth(backupDate),
@@ -134,6 +142,7 @@ export async function readBackupRecord(id: string) {
 }
 
 type BackupPayload = {
+  metadata?: { createdAt?: string; version?: number };
   data?: {
     familySettings?: Array<Record<string, unknown> | null> | Record<string, unknown> | null;
     members?: Record<string, unknown>[];
@@ -149,14 +158,107 @@ type BackupPayload = {
   };
 };
 
-export async function restoreBackupSnapshot(id: string) {
-  const snapshot = await readBackupRecord(id);
-  if (!snapshot) {
-    return undefined;
-  }
+export interface BackupSummary {
+  createdAt: string | null;
+  version: number | null;
+  counts: Record<string, number>;
+}
 
-  const payload = snapshot.payload as BackupPayload;
+// ملخص محتوى النسخة — يُعرض للوصي قبل تأكيد الاستعادة
+export function summarizeBackupPayload(payload: unknown): BackupSummary {
+  const p = payload as BackupPayload;
+  const data = p?.data ?? {};
+  const countOf = (v: unknown) => (Array.isArray(v) ? v.length : 0);
+  return {
+    createdAt: p?.metadata?.createdAt ?? null,
+    version: p?.metadata?.version ?? null,
+    counts: {
+      members: countOf(data.members),
+      users: countOf(data.users),
+      contributions: countOf(data.contributions),
+      loans: countOf(data.loans),
+      loanRepayments: countOf(data.loanRepayments),
+      loanPayments: countOf(data.loanPayments),
+      expenses: countOf(data.expenses),
+      fundAdjustments: countOf(data.fundAdjustments),
+      capitalAllocations: countOf(data.capitalAllocations),
+      auditLogs: countOf(data.auditLogs),
+    },
+  };
+}
+
+const ARRAY_KEYS = [
+  "members", "users", "contributions", "loans", "loanRepayments",
+  "loanPayments", "expenses", "fundAdjustments", "capitalAllocations", "auditLogs",
+] as const;
+
+// فحص سلامة ملف النسخة قبل قبول استعادته — يرفض الملفات التالفة أو الغريبة
+export function validateBackupPayload(payload: unknown): { valid: boolean; reason?: string } {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    return { valid: false, reason: "الملف ليس نسخة احتياطية صالحة (البنية الأساسية مفقودة)" };
+  }
+  const p = payload as BackupPayload;
+  if (!p.metadata || typeof p.metadata.version !== "number") {
+    return { valid: false, reason: "الملف لا يحتوي على ترويسة نسخة احتياطية (metadata.version)" };
+  }
+  if (p.metadata.version !== 1) {
+    return { valid: false, reason: `إصدار النسخة (${p.metadata.version}) غير مدعوم` };
+  }
+  if (!p.data || typeof p.data !== "object") {
+    return { valid: false, reason: "الملف لا يحتوي على قسم البيانات" };
+  }
+  for (const key of ARRAY_KEYS) {
+    const value = (p.data as Record<string, unknown>)[key];
+    if (value !== undefined && !Array.isArray(value)) {
+      return { valid: false, reason: `قسم ${key} تالف في الملف` };
+    }
+  }
+  if (!Array.isArray(p.data.members) || p.data.members.length === 0) {
+    return { valid: false, reason: "الملف لا يحتوي على أي أعضاء — رفضت الاستعادة حمايةً من مسح البيانات" };
+  }
+  if (!Array.isArray(p.data.users) || p.data.users.length === 0) {
+    return { valid: false, reason: "الملف لا يحتوي على أي مستخدمين — الاستعادة ستقفل النظام بالكامل" };
+  }
+  return { valid: true };
+}
+
+// التواريخ داخل ملف النسخة نصوص ISO — تُعاد كائنات Date قبل الإدراج وإلا رفضتها قاعدة البيانات
+const DATE_FIELDS = new Set([
+  "createdAt", "updatedAt", "approvedAt", "paidAt", "dueDate",
+  "lockedAt", "resetAt", "backupLastRunAt", "backupDate", "expire",
+]);
+
+function reviveDates<T extends Record<string, unknown>>(row: T): T {
+  const out: Record<string, unknown> = { ...row };
+  for (const [key, value] of Object.entries(out)) {
+    if (DATE_FIELDS.has(key) && typeof value === "string") {
+      const parsed = new Date(value);
+      out[key] = Number.isNaN(parsed.getTime()) ? null : parsed;
+    }
+  }
+  return out as T;
+}
+
+function reviveRows(rows: Record<string, unknown>[] | undefined) {
+  return (rows ?? []).map(reviveDates);
+}
+
+async function restoreFromPayload(payload: BackupPayload): Promise<{ lockedAccounts: number }> {
   const data = payload.data ?? {};
+
+  // النسخ القديمة كانت تُصدَّر بلا كلمات مرور — تُدرج بكلمة عشوائية مقفلة ويعاد ضبطها من لوحة الإدارة
+  let lockedAccounts = 0;
+  let placeholderHash: string | null = null;
+  const userRows: Record<string, unknown>[] = [];
+  for (const row of data.users ?? []) {
+    if (typeof row.password === "string" && row.password.length > 0) {
+      userRows.push(row);
+    } else {
+      placeholderHash = placeholderHash ?? (await bcrypt.hash(randomUUID(), 10));
+      userRows.push({ ...row, password: placeholderHash });
+      lockedAccounts += 1;
+    }
+  }
 
   await db.transaction(async (tx: any) => {
     // Clear dependent tables first to avoid FK violations (if any)
@@ -178,22 +280,90 @@ export async function restoreBackupSnapshot(id: string) {
       : data.familySettings;
 
     if (familySettingsRow && typeof familySettingsRow === "object") {
-      await tx.insert(familySettings).values(familySettingsRow as Record<string, unknown>);
+      await tx.insert(familySettings).values(reviveDates(familySettingsRow as Record<string, unknown>));
     }
 
-    if (data.members?.length) await tx.insert(members).values(data.members as never);
-    if (data.users?.length) await tx.insert(users).values(data.users as never);
-    if (data.contributions?.length) await tx.insert(contributions).values(data.contributions as never);
-    if (data.loans?.length) await tx.insert(loans).values(data.loans as never);
-    if (data.loanRepayments?.length) await tx.insert(loanRepayments).values(data.loanRepayments as never);
-    if (data.loanPayments?.length) await tx.insert(loanPayments).values(data.loanPayments as never);
-    if (data.expenses?.length) await tx.insert(expenses).values(data.expenses as never);
-    if (data.fundAdjustments?.length) await tx.insert(fundAdjustments).values(data.fundAdjustments as never);
-    if (data.auditLogs?.length) await tx.insert(auditLogs).values(data.auditLogs as never);
-    if (data.capitalAllocations?.length) await tx.insert(capitalAllocations).values(data.capitalAllocations as never);
+    if (data.members?.length) await tx.insert(members).values(reviveRows(data.members) as never);
+    if (userRows.length) await tx.insert(users).values(reviveRows(userRows) as never);
+    if (data.contributions?.length) await tx.insert(contributions).values(reviveRows(data.contributions) as never);
+    if (data.loans?.length) await tx.insert(loans).values(reviveRows(data.loans) as never);
+    if (data.loanRepayments?.length) await tx.insert(loanRepayments).values(reviveRows(data.loanRepayments) as never);
+    if (data.loanPayments?.length) await tx.insert(loanPayments).values(reviveRows(data.loanPayments) as never);
+    if (data.expenses?.length) await tx.insert(expenses).values(reviveRows(data.expenses) as never);
+    if (data.fundAdjustments?.length) await tx.insert(fundAdjustments).values(reviveRows(data.fundAdjustments) as never);
+    if (data.auditLogs?.length) await tx.insert(auditLogs).values(reviveRows(data.auditLogs) as never);
+    if (data.capitalAllocations?.length) await tx.insert(capitalAllocations).values(reviveRows(data.capitalAllocations) as never);
   });
 
-  return snapshot.record;
+  return { lockedAccounts };
+}
+
+export async function restoreBackupSnapshot(id: string, actorId?: string | null) {
+  const snapshot = await readBackupRecord(id);
+  if (!snapshot) {
+    return undefined;
+  }
+
+  const payload = snapshot.payload as BackupPayload;
+  const validation = validateBackupPayload(payload);
+  if (!validation.valid) {
+    throw new Error(validation.reason);
+  }
+
+  // نسخة أمان تلقائية من الوضع الحالي قبل المسح — تتيح التراجع عن استعادة خاطئة
+  const safetySnapshot = await createBackupSnapshot(actorId ?? null, "pre-restore");
+
+  const { lockedAccounts } = await restoreFromPayload(payload);
+
+  return {
+    record: snapshot.record,
+    safetySnapshotId: safetySnapshot.id,
+    summary: summarizeBackupPayload(payload),
+    lockedAccounts,
+  };
+}
+
+// استيراد نسخة من ملف خارجي (مُنزَّل سابقاً) — طريق النجاة عند فقدان الخادم بالكامل
+export async function importBackupPayload(payload: unknown, actorId?: string | null) {
+  const validation = validateBackupPayload(payload);
+  if (!validation.valid) {
+    throw new Error(validation.reason);
+  }
+
+  // نسخة أمان من الوضع الحالي أولاً
+  const safetySnapshot = await createBackupSnapshot(actorId ?? null, "pre-restore");
+
+  // خزّن الملف المستورد نفسه كسجل نسخة للتتبع
+  const backupDate = new Date();
+  await ensureBackupDirectory();
+  const fileName = `imported-${backupDate.getFullYear()}-${pad(backupDate.getMonth() + 1)}-${pad(backupDate.getDate())}-${pad(backupDate.getHours())}-${pad(backupDate.getMinutes())}-${pad(backupDate.getSeconds())}.json`;
+  const storagePath = path.join(backupRoot, fileName);
+  const content = JSON.stringify(payload, null, 2);
+  await writeFile(storagePath, content, "utf8");
+  const fileStats = await stat(storagePath);
+
+  const [importedRecord] = await db.insert(systemBackups).values({
+    fileName,
+    storagePath,
+    backupDate,
+    backupLevel: "imported",
+    year: backupDate.getFullYear(),
+    month: backupDate.getMonth() + 1,
+    weekOfMonth: getWeekOfMonth(backupDate),
+    isMonthEndSnapshot: false,
+    sizeBytes: fileStats.size,
+    createdBy: actorId ?? null,
+    payload: payload as Record<string, unknown>,
+  }).returning();
+
+  const { lockedAccounts } = await restoreFromPayload(payload as BackupPayload);
+
+  return {
+    record: importedRecord,
+    safetySnapshotId: safetySnapshot.id,
+    summary: summarizeBackupPayload(payload),
+    lockedAccounts,
+  };
 }
 
 export async function applyRetentionPolicy() {

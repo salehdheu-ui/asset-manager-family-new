@@ -166,8 +166,34 @@ export async function applyBackupRetention(): Promise<{ kept: number; deleted: n
   return res.json();
 }
 
-export async function restoreBackup(id: string): Promise<SystemBackup> {
+export interface BackupContentSummary {
+  fileName: string;
+  backupDate: string;
+  backupLevel: string;
+  createdAt: string | null;
+  version: number | null;
+  counts: Record<string, number>;
+}
+
+export interface RestoreResult {
+  record: SystemBackup;
+  safetySnapshotId: string;
+  summary: { createdAt: string | null; version: number | null; counts: Record<string, number> };
+}
+
+export async function getBackupSummary(id: string): Promise<BackupContentSummary> {
+  const res = await fetch(`/api/backups/${id}/summary`, { credentials: "include" });
+  if (!res.ok) await parseFetchError(res);
+  return res.json();
+}
+
+export async function restoreBackup(id: string): Promise<RestoreResult> {
   const res = await apiRequest("POST", `/api/backups/${id}/restore`, {});
+  return res.json();
+}
+
+export async function importBackup(payload: unknown): Promise<RestoreResult> {
+  const res = await apiRequest("POST", "/api/backups/import", payload);
   return res.json();
 }
 

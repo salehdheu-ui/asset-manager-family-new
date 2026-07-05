@@ -14,6 +14,8 @@ declare module "http" {
 
 app.use(
   express.json({
+    // حد مرتفع ليسمح باستيراد ملفات النسخ الاحتياطية الكاملة
+    limit: "10mb",
     verify: (req, _res, buf) => {
       req.rawBody = buf;
     },

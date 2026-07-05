@@ -1,0 +1,192 @@
+{
+  "metadata": {
+    "createdAt": "2026-07-05T03:16:38.479Z",
+    "version": 1
+  },
+  "data": {
+    "familySettings": {
+      "id": "ab909f2a-7a21-4404-bc42-ea7296549b59",
+      "familyName": "صندوق العائلة",
+      "currency": "ر.ع",
+      "protectedPercent": 45,
+      "emergencyPercent": 15,
+      "flexiblePercent": 20,
+      "growthPercent": 20,
+      "emergencyMode": false,
+      "backupEnabled": false,
+      "backupKeepDays": 7,
+      "backupKeepWeeksPerMonth": 4,
+      "backupKeepMonths": 12,
+      "backupLastRunAt": null
+    },
+    "members": [
+      {
+        "id": "3efcc608-9229-41f2-a165-40de7a04335e",
+        "name": "محمد",
+        "role": "member",
+        "avatar": null,
+        "createdAt": "2026-07-04T20:35:54.183Z"
+      },
+      {
+        "id": "37ab178c-724a-46de-a3d4-45489328f132",
+        "name": "خالد",
+        "role": "member",
+        "avatar": null,
+        "createdAt": "2026-07-04T20:35:54.183Z"
+      },
+      {
+        "id": "a8e0c53b-5415-4477-81a8-86167c179ed1",
+        "name": "سالم",
+        "role": "custodian",
+        "avatar": null,
+        "createdAt": "2026-07-04T20:35:54.183Z"
+      }
+    ],
+    "contributions": [
+      {
+        "id": "b6331eb7-1507-4128-bd85-28115e8dfc92",
+        "memberId": "3efcc608-9229-41f2-a165-40de7a04335e",
+        "year": 2026,
+        "month": 7,
+        "amount": "10.000",
+        "status": "pending_approval",
+        "createdAt": "2026-07-04T20:37:32.629Z",
+        "approvedAt": null
+      }
+    ],
+    "loans": [
+      {
+        "id": "4f46aa1e-0034-4a77-ab75-cc155915427a",
+        "memberId": "3efcc608-9229-41f2-a165-40de7a04335e",
+        "type": "standard",
+        "title": "سلفة محمد",
+        "description": null,
+        "amount": "30.000",
+        "status": "approved",
+        "repaymentType": "open",
+        "repaymentMonths": null,
+        "createdAt": "2026-07-04T21:37:33.103Z",
+        "approvedAt": null
+      }
+    ],
+    "loanRepayments": [],
+    "loanPayments": [
+      {
+        "id": "76a74262-9438-4309-b200-50c5c4015d0f",
+        "loanId": "4f46aa1e-0034-4a77-ab75-cc155915427a",
+        "amount": "30.000",
+        "note": "سداد كامل",
+        "paidAt": "2026-07-04T21:37:33.166Z",
+        "createdBy": "9a040ffb-c34f-46f9-b9f1-55b9d9cab166"
+      }
+    ],
+    "expenses": [],
+    "fundAdjustments": [],
+    "capitalAllocations": [
+      {
+        "id": "a1afa5de-abd3-434b-b4fc-04454fb8149e",
+        "year": 2026,
+        "netAssets": "0.000",
+        "protectedAmount": "0.000",
+        "emergencyAmount": "0.000",
+        "flexibleAmount": "0.000",
+        "growthAmount": "0.000",
+        "flexibleUsed": "0.000",
+        "growthUsed": "0.000",
+        "emergencyUsed": "0.000",
+        "lockedAt": "2026-07-04T20:23:55.277Z",
+        "resetAt": null,
+        "resetBy": null
+      }
+    ],
+    "users": [
+      {
+        "id": "9a040ffb-c34f-46f9-b9f1-55b9d9cab166",
+        "username": "admin",
+        "email": null,
+        "firstName": "المدير",
+        "lastName": "العام",
+        "profileImageUrl": null,
+        "role": "admin",
+        "memberId": null,
+        "createdAt": "2026-07-04T20:22:55.214Z",
+        "updatedAt": "2026-07-04T20:22:55.214Z"
+      },
+      {
+        "id": "7a11d03d-3d33-4673-9f7b-20bb15e81f01",
+        "username": "mohammed",
+        "email": null,
+        "firstName": null,
+        "lastName": null,
+        "profileImageUrl": null,
+        "role": "user",
+        "memberId": "3efcc608-9229-41f2-a165-40de7a04335e",
+        "createdAt": "2026-07-04T20:37:22.918Z",
+        "updatedAt": "2026-07-04T20:37:22.918Z"
+      }
+    ],
+    "auditLogs": [
+      {
+        "id": "def69c89-57a3-488b-b350-52ebc5416db7",
+        "action": "custodian_assigned",
+        "entityType": "member",
+        "entityId": "a8e0c53b-5415-4477-81a8-86167c179ed1",
+        "actorUserId": "9a040ffb-c34f-46f9-b9f1-55b9d9cab166",
+        "actorName": "admin",
+        "description": "تم تعيين سالم أميناً للصندوق بدلاً من خالد",
+        "metadata": {
+          "newCustodianId": "a8e0c53b-5415-4477-81a8-86167c179ed1",
+          "newCustodianName": "سالم",
+          "previousCustodianId": "37ab178c-724a-46de-a3d4-45489328f132",
+          "previousCustodianName": "خالد"
+        },
+        "createdAt": "2026-07-04T20:36:57.449Z"
+      },
+      {
+        "id": "a1b43abe-5003-4c3a-96b1-85bd6899e40f",
+        "action": "emergency_mode_enabled",
+        "entityType": "family_settings",
+        "entityId": "ab909f2a-7a21-4404-bc42-ea7296549b59",
+        "actorUserId": "9a040ffb-c34f-46f9-b9f1-55b9d9cab166",
+        "actorName": "admin",
+        "description": "تم تفعيل وضع الطوارئ — جُمّدت العمليات المالية للأعضاء",
+        "metadata": {
+          "emergencyMode": true
+        },
+        "createdAt": "2026-07-04T20:37:02.088Z"
+      },
+      {
+        "id": "a79fe099-5ce6-4cb5-8329-7bb5b8ecbc89",
+        "action": "emergency_mode_disabled",
+        "entityType": "family_settings",
+        "entityId": "ab909f2a-7a21-4404-bc42-ea7296549b59",
+        "actorUserId": "9a040ffb-c34f-46f9-b9f1-55b9d9cab166",
+        "actorName": "admin",
+        "description": "تم إلغاء وضع الطوارئ — عادت العمليات المالية للعمل",
+        "metadata": {
+          "emergencyMode": false
+        },
+        "createdAt": "2026-07-04T20:37:32.612Z"
+      },
+      {
+        "id": "e33443a5-3cc7-419c-8b27-21a5668fd17f",
+        "action": "loan_deleted",
+        "entityType": "loan",
+        "entityId": "38f2afef-2f7c-4a9e-894c-d6a89d65addd",
+        "actorUserId": "9a040ffb-c34f-46f9-b9f1-55b9d9cab166",
+        "actorName": "admin",
+        "description": "تم حذف سلفة خالد (سلفة خالد) بمبلغ 50.000 ر.ع",
+        "metadata": {
+          "title": "سلفة خالد",
+          "amount": "50.000",
+          "status": "approved",
+          "memberId": "37ab178c-724a-46de-a3d4-45489328f132",
+          "memberName": "خالد",
+          "paymentsDeleted": 0,
+          "totalPaidBeforeDeletion": "0.000"
+        },
+        "createdAt": "2026-07-04T21:39:36.335Z"
+      }
+    ]
+  }
+}
