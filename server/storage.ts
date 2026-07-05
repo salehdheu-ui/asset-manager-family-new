@@ -38,8 +38,10 @@ export interface IStorage {
   getLoans(): Promise<Loan[]>;
   getLoansByMember(memberId: string): Promise<Loan[]>;
   getLoansByYear(year: number): Promise<Loan[]>;
+  getLoan(id: string): Promise<Loan | undefined>;
   createLoan(loan: InsertLoan): Promise<Loan>;
   updateLoanStatus(id: string, status: string): Promise<Loan | undefined>;
+  updateLoan(id: string, data: Partial<InsertLoan>): Promise<Loan | undefined>;
   deleteLoan(id: string): Promise<void>;
 
   // Loan Repayments
@@ -165,6 +167,16 @@ export class DatabaseStorage implements IStorage {
 
   async getLoansByMember(memberId: string): Promise<Loan[]> {
     return await db.select().from(loans).where(eq(loans.memberId, memberId));
+  }
+
+  async getLoan(id: string): Promise<Loan | undefined> {
+    const [loan] = await db.select().from(loans).where(eq(loans.id, id)).limit(1);
+    return loan;
+  }
+
+  async updateLoan(id: string, data: Partial<InsertLoan>): Promise<Loan | undefined> {
+    const [updated] = await db.update(loans).set(data).where(eq(loans.id, id)).returning();
+    return updated;
   }
 
   async getLoansByYear(year: number): Promise<Loan[]> {

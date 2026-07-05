@@ -5,6 +5,7 @@ import { z } from "zod";
 import { isAuthenticated, isAdmin } from "../auth";
 import { blockMembersDuringEmergency } from "../emergency";
 import { rebalanceYear } from "../capital-engine";
+import { zodErrorResponse } from "../validation";
 
 export function registerContributionRoutes(app: Express) {
   app.get("/api/contributions", isAuthenticated, async (req: any, res) => {
@@ -61,7 +62,7 @@ export function registerContributionRoutes(app: Express) {
       res.status(201).json(contribution);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        res.status(400).json({ message: "بيانات المساهمة غير مكتملة أو غير صحيحة", error: error.errors });
+        res.status(400).json(zodErrorResponse(error));
       } else {
         res.status(500).json({ message: "تعذر إنشاء المساهمة حاليًا، حاول مرة أخرى" });
       }

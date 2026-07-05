@@ -6,6 +6,7 @@ import { isAuthenticated, isAdmin } from "../auth";
 import { blockMembersDuringEmergency } from "../emergency";
 import { rebalanceYear } from "../capital-engine";
 import { buildRepaymentSchedule } from "@shared/finance";
+import { zodErrorResponse } from "../validation";
 
 type LoanRecord = Awaited<ReturnType<typeof storage.getLoans>>[number];
 
@@ -31,7 +32,25 @@ export function registerLoanRoutes(app: Express) {
         loans = ownMemberId ? loans.filter((l: any) => l.memberId === ownMemberId) : [];
       }
 
-      res.json(loans);
+      // إثراء كل سلفة بالمسدد والمتبقي وحالة السداد الكامل
+      const allPayments = await storage.getAllLoanPayments();
+      const paidByLoan = new Map<string, number>();
+      for (const payment of allPayments) {
+        paidByLoan.set(payment.loanId, (paidByLoan.get(payment.loanId) ?? 0) + Number(payment.amount));
+      }
+
+      const enriched = loans.map((loan: any) => {
+        const totalPaid = paidByLoan.get(loan.id) ?? 0;
+        const remaining = Math.max(0, Number(loan.amount) - totalPaid);
+        return {
+          ...loan,
+          totalPaid: Number(totalPaid.toFixed(3)),
+          remaining: Number(remaining.toFixed(3)),
+          settled: loan.status === "approved" && remaining <= 0.0005,
+        };
+      });
+
+      res.json(enriched);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch loans" });
     }
@@ -59,7 +78,7 @@ export function registerLoanRoutes(app: Express) {
       res.status(201).json(loan);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        res.status(400).json({ error: error.errors });
+        res.status(400).json(zodErrorResponse(error));
       } else {
         console.error(error);
         res.status(500).json({ error: "Failed to create loan" });
@@ -77,7 +96,7 @@ export function registerLoanRoutes(app: Express) {
 
       // التحقق المالي عند الاعتماد فقط
       if (status === 'approved') {
-        const existingLoan = await storage.getLoans().then(ls => ls.find(l => l.id === loanId));
+        const existingLoan = await storage.getLoan(loanId);
         if (!existingLoan) {
           return res.status(404).json({ error: "Loan not found" });
         }
@@ -99,8 +118,99 @@ export function registerLoanRoutes(app: Express) {
     }
   });
 
-  app.delete("/api/loans/:id", isAuthenticated, async (_req, res) => {
-    return res.status(403).json({ error: "تم تعطيل الحذف النهائي حفاظاً على البيانات" });
+  // تعديل بيانات السلفة — صلاحية الوصي فقط، مع توثيق كامل في سجل التدقيق
+  app.patch("/api/loans/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const loanId = req.params.id as string;
+      const loan = await storage.getLoan(loanId);
+      if (!loan) {
+        return res.status(404).json({ error: "السلفة غير موجودة" });
+      }
+
+      const editSchema = z.object({
+        title: z.string().min(1).optional(),
+        description: z.string().nullable().optional(),
+        type: z.enum(["urgent", "standard", "emergency"]).optional(),
+        amount: z.string().refine((v) => Number(v) > 0, "المبلغ يجب أن يكون أكبر من صفر").optional(),
+        repaymentType: z.enum(["scheduled", "open"]).optional(),
+        repaymentMonths: z.number().int().min(1).max(120).nullable().optional(),
+      });
+      const data = editSchema.parse(req.body);
+
+      // المبلغ وخطة السداد لا يعدَّلان إلا والسلفة معلقة — بعد الاعتماد تكون الأقساط قد أُنشئت
+      if (loan.status !== "pending" && (data.amount !== undefined || data.repaymentType !== undefined || data.repaymentMonths !== undefined)) {
+        return res.status(400).json({ error: "لا يمكن تعديل المبلغ أو خطة السداد بعد اعتماد السلفة — احذفها وأنشئها من جديد إذا لزم" });
+      }
+
+      const updated = await storage.updateLoan(loanId, data);
+      const member = await storage.getMember(loan.memberId);
+
+      await storage.createAuditLog({
+        action: "loan_updated",
+        entityType: "loan",
+        entityId: loanId,
+        actorUserId: req.user?.id ?? null,
+        actorName: req.user?.username ?? req.user?.firstName ?? "مشرف",
+        description: `تم تعديل سلفة ${member?.name ?? "عضو غير معروف"} (${loan.title})`,
+        metadata: {
+          memberId: loan.memberId,
+          changedFields: Object.keys(data),
+          before: { title: loan.title, description: loan.description, type: loan.type, amount: loan.amount, repaymentType: loan.repaymentType, repaymentMonths: loan.repaymentMonths },
+          after: data,
+        },
+      });
+
+      res.json(updated);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "بيانات التعديل غير صحيحة" });
+      } else {
+        res.status(500).json({ error: "تعذر تعديل السلفة" });
+      }
+    }
+  });
+
+  // حذف سلفة — صلاحية الوصي فقط، يحذف أقساطها وسدادها معها ويعيد حساب التخصيص
+  app.delete("/api/loans/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const loanId = req.params.id as string;
+      const loan = await storage.getLoan(loanId);
+      if (!loan) {
+        return res.status(404).json({ error: "السلفة غير موجودة" });
+      }
+
+      const member = await storage.getMember(loan.memberId);
+      const payments = await storage.getLoanPayments(loanId);
+      const totalPaid = payments.reduce((sum, p) => sum + Number(p.amount), 0);
+
+      await storage.deleteLoan(loanId);
+
+      await storage.createAuditLog({
+        action: "loan_deleted",
+        entityType: "loan",
+        entityId: loanId,
+        actorUserId: req.user?.id ?? null,
+        actorName: req.user?.username ?? req.user?.firstName ?? "مشرف",
+        description: `تم حذف سلفة ${member?.name ?? "عضو غير معروف"} (${loan.title}) بمبلغ ${loan.amount} ر.ع`,
+        metadata: {
+          memberId: loan.memberId,
+          memberName: member?.name ?? null,
+          title: loan.title,
+          amount: loan.amount,
+          status: loan.status,
+          totalPaidBeforeDeletion: totalPaid.toFixed(3),
+          paymentsDeleted: payments.length,
+        },
+      });
+
+      const loanYear = (loan.approvedAt || loan.createdAt || new Date()).getFullYear();
+      await rebalanceYear(loanYear);
+
+      res.status(204).send();
+    } catch (error) {
+      console.error("Delete loan error:", error);
+      res.status(500).json({ error: "تعذر حذف السلفة" });
+    }
   });
 
   // Loan Repayments
@@ -109,8 +219,7 @@ export function registerLoanRoutes(app: Express) {
       const loanId = req.params.id as string;
       // التحقق من ملكية السلفة أو صلاحية المدير
       if (req.user?.role !== 'admin') {
-        const allLoans = await storage.getLoans();
-        const loan = allLoans.find(l => l.id === loanId);
+        const loan = await storage.getLoan(loanId);
         if (!loan) {
           return res.status(404).json({ error: "السلفة غير موجودة" });
         }
@@ -150,8 +259,7 @@ export function registerLoanRoutes(app: Express) {
     try {
       const loanId = req.params.id as string;
       if (req.user?.role !== 'admin') {
-        const allLoans = await storage.getLoans();
-        const loan = allLoans.find(l => l.id === loanId);
+        const loan = await storage.getLoan(loanId);
         if (!loan) {
           return res.status(404).json({ error: "السلفة غير موجودة" });
         }
@@ -169,8 +277,7 @@ export function registerLoanRoutes(app: Express) {
   app.post("/api/loans/:id/payments", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const loanId = req.params.id as string;
-      const allLoans = await storage.getLoans();
-      const loan = allLoans.find(l => l.id === loanId);
+      const loan = await storage.getLoan(loanId);
       if (!loan) {
         return res.status(404).json({ error: "Loan not found" });
       }
@@ -198,7 +305,7 @@ export function registerLoanRoutes(app: Express) {
       res.status(201).json(payment);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        res.status(400).json({ error: error.errors });
+        res.status(400).json(zodErrorResponse(error));
       } else {
         res.status(500).json({ error: "Failed to create loan payment" });
       }

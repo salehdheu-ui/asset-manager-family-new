@@ -59,9 +59,20 @@ export async function approveContribution(id: string): Promise<Contribution> {
 }
 
 // Loans
-export async function getLoans(): Promise<Loan[]> {
+// السلفة مُثراة من الخادم بالمسدد والمتبقي وحالة السداد الكامل
+export type LoanWithBalance = Loan & { totalPaid: number; remaining: number; settled: boolean };
+
+export async function getLoans(): Promise<LoanWithBalance[]> {
   const res = await fetch("/api/loans", { credentials: "include" });
   if (!res.ok) await parseFetchError(res);
+  return res.json();
+}
+
+export async function updateLoan(
+  id: string,
+  data: Partial<{ title: string; description: string | null; type: string; amount: string; repaymentType: string; repaymentMonths: number | null }>,
+): Promise<Loan> {
+  const res = await apiRequest("PATCH", `/api/loans/${id}`, data);
   return res.json();
 }
 
@@ -155,8 +166,34 @@ export async function applyBackupRetention(): Promise<{ kept: number; deleted: n
   return res.json();
 }
 
-export async function restoreBackup(id: string): Promise<SystemBackup> {
+export interface BackupContentSummary {
+  fileName: string;
+  backupDate: string;
+  backupLevel: string;
+  createdAt: string | null;
+  version: number | null;
+  counts: Record<string, number>;
+}
+
+export interface RestoreResult {
+  record: SystemBackup;
+  safetySnapshotId: string;
+  summary: { createdAt: string | null; version: number | null; counts: Record<string, number> };
+}
+
+export async function getBackupSummary(id: string): Promise<BackupContentSummary> {
+  const res = await fetch(`/api/backups/${id}/summary`, { credentials: "include" });
+  if (!res.ok) await parseFetchError(res);
+  return res.json();
+}
+
+export async function restoreBackup(id: string): Promise<RestoreResult> {
   const res = await apiRequest("POST", `/api/backups/${id}/restore`, {});
+  return res.json();
+}
+
+export async function importBackup(payload: unknown): Promise<RestoreResult> {
+  const res = await apiRequest("POST", "/api/backups/import", payload);
   return res.json();
 }
 

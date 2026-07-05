@@ -6,3 +6,5 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
+# النسخ الاحتياطية المحلية — لا تُرفع أبداً للمستودع
+backups/

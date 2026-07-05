@@ -4,6 +4,7 @@ import { insertExpenseSchema } from "@shared/schema";
 import { z } from "zod";
 import { isAuthenticated, isAdmin } from "../auth";
 import { rebalanceYear } from "../capital-engine";
+import { zodErrorResponse } from "../validation";
 
 export function registerExpenseRoutes(app: Express) {
   app.get("/api/expenses", isAuthenticated, async (req, res) => {
@@ -25,7 +26,7 @@ export function registerExpenseRoutes(app: Express) {
       res.status(201).json(expense);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        res.status(400).json({ error: error.errors });
+        res.status(400).json(zodErrorResponse(error));
       } else {
         res.status(500).json({ error: "Failed to create expense" });
       }

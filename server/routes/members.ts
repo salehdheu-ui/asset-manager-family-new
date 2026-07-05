@@ -3,6 +3,7 @@ import { storage } from "../storage";
 import { insertMemberSchema } from "@shared/schema";
 import { z } from "zod";
 import { isAuthenticated, isAdmin } from "../auth";
+import { zodErrorResponse } from "../validation";
 
 export function registerMemberRoutes(app: Express) {
   app.get("/api/members", isAuthenticated, async (req: any, res) => {
@@ -25,7 +26,7 @@ export function registerMemberRoutes(app: Express) {
       res.status(201).json(member);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        res.status(400).json({ error: error.errors });
+        res.status(400).json(zodErrorResponse(error));
       } else {
         res.status(500).json({ error: "Failed to create member" });
       }

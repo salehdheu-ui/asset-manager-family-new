@@ -8,6 +8,7 @@ import { users } from "@shared/models/auth";
 import { eq } from "drizzle-orm";
 import { rebalanceYear } from "../capital-engine";
 import { computeDashboardSummary } from "../services/dashboard";
+import { zodErrorResponse } from "../validation";
 
 export function registerAdminRoutes(app: Express) {
   // ============= User Profile =============
@@ -99,8 +100,9 @@ export function registerAdminRoutes(app: Express) {
 
   app.get("/api/audit-logs", isAuthenticated, async (_req, res) => {
     try {
-      const logs = await storage.getAuditLogs();
-      res.json(logs);
+      // الصفحة العامة تتوقع مصفوفة مباشرة — نعيد أحدث 100 سجل
+      const result = await storage.getAuditLogs(1, 100);
+      res.json(result.data);
     } catch (error) {
       res.status(500).json({ message: "تعذر تحميل سجل التدقيق" });
     }
@@ -132,7 +134,7 @@ export function registerAdminRoutes(app: Express) {
     } catch (error: unknown) {
       if (error instanceof z.ZodError) {
         const zodError = error as z.ZodError;
-        res.status(400).json({ message: "بيانات العملية غير صحيحة", error: zodError.errors });
+        res.status(400).json(zodErrorResponse(zodError));
       } else {
         res.status(500).json({ message: "تعذر تنفيذ العملية المباشرة" });
       }

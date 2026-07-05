@@ -1,9 +1,20 @@
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import MobileLayout from "@/components/layout/MobileLayout";
-import { getLoans, getMembers, createLoan, updateLoanStatus, deleteLoan, getLoanRepayments, markRepaymentPaid, getDashboardSummary, getLoanPayments, createLoanPayment } from "@/lib/api";
+import { getLoans, getMembers, createLoan, updateLoan, updateLoanStatus, deleteLoan, getLoanRepayments, markRepaymentPaid, getDashboardSummary, getLoanPayments, createLoanPayment } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
-import { HandCoins, Clock, AlertCircle, CheckCircle2, History, UserCheck, Trash2, X, Calendar, ChevronDown, ChevronUp, RotateCcw } from "lucide-react";
+import { HandCoins, Clock, AlertCircle, CheckCircle2, History, UserCheck, Trash2, X, Calendar, ChevronDown, ChevronUp, RotateCcw, Pencil, BarChart3 } from "lucide-react";
+import { Link } from "wouter";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -52,6 +63,9 @@ export default function Loans() {
   const [loanRepaymentTypes, setLoanRepaymentTypes] = useState<Record<string, string>>({});
   const [paymentAmounts, setPaymentAmounts] = useState<Record<string, string>>({});
   const [paymentNotes, setPaymentNotes] = useState<Record<string, string>>({});
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
+  const [editTarget, setEditTarget] = useState<any | null>(null);
+  const [editForm, setEditForm] = useState<{ title: string; description: string; type: string; amount: string; repaymentMonths: string }>({ title: "", description: "", type: "standard", amount: "", repaymentMonths: "12" });
   
   const { data: allLoans = [], isLoading: loansLoading } = useQuery({
     queryKey: ["loans"],
@@ -118,7 +132,8 @@ export default function Loans() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["loans"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] });
-      toast({ title: "تم حذف السجل" });
+      setDeleteTarget(null);
+      toast({ title: "تم حذف سجل السلفة", description: "وُثّق الحذف في سجل التدقيق." });
     },
     onError: (error) => {
       toast({
@@ -126,6 +141,19 @@ export default function Loans() {
         description: extractErrorMessage(error),
         variant: "destructive",
       });
+    },
+  });
+
+  const editMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Parameters<typeof updateLoan>[1] }) => updateLoan(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["loans"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] });
+      setEditTarget(null);
+      toast({ title: "تم تعديل السلفة", description: "وُثّق التعديل في سجل التدقيق." });
+    },
+    onError: (error) => {
+      toast({ title: "تعذّر التعديل", description: extractErrorMessage(error), variant: "destructive" });
     },
   });
 
@@ -188,12 +216,18 @@ export default function Loans() {
 
   const flexibleLayer = summary?.layers?.find(l => l.id === "flexible");
   const availableCapital = (flexibleLayer as any)?.available ?? flexibleLayer?.amount ?? 0;
+
+  // السلف المسددة بالكامل تُفصل عن المنطقة النشطة — تفاصيلها تبقى في التقارير
+  const settledLoans = loans.filter(l => l.settled);
+  const activeLoans = loans.filter(l => !l.settled);
+
   const approvedLoans = loans.filter(l => l.status === "approved");
+  const approvedActiveLoans = activeLoans.filter(l => l.status === "approved");
   const totalLoanAmount = approvedLoans.reduce((sum, loan) => sum + Number(loan.amount), 0);
-  const totalPaidAmount = Object.values(payments).flat().reduce((sum, payment) => sum + Number(payment.amount), 0);
-  const totalRemainingAmount = Math.max(totalLoanAmount - totalPaidAmount, 0);
-  const openLoansCount = approvedLoans.filter(loan => loan.repaymentType === "open").length;
-  const scheduledLoansCount = approvedLoans.filter(loan => loan.repaymentType !== "open").length;
+  const totalPaidAmount = approvedLoans.reduce((sum, loan) => sum + (loan.totalPaid ?? 0), 0);
+  const totalRemainingAmount = approvedLoans.reduce((sum, loan) => sum + (loan.remaining ?? 0), 0);
+  const openLoansCount = approvedActiveLoans.filter(loan => loan.repaymentType === "open").length;
+  const scheduledLoansCount = approvedActiveLoans.filter(loan => loan.repaymentType !== "open").length;
 
   useEffect(() => {
     let cancelled = false;
@@ -465,15 +499,23 @@ export default function Loans() {
               </div>
               
               <div className="space-y-3">
-                {loans.length === 0 ? (
+                {activeLoans.length === 0 ? (
                   <div className="text-center py-12 bg-muted/20 rounded-3xl border border-dashed border-border">
-                    <p className="text-sm text-muted-foreground font-medium">لا توجد طلبات قائمة حالياً</p>
+                    {settledLoans.length > 0 ? (
+                      <div className="space-y-1">
+                        <CheckCircle2 className="w-8 h-8 mx-auto text-emerald-500" />
+                        <p className="text-sm font-bold text-emerald-700">لا توجد سلف قائمة — الذمة صفر ✓</p>
+                        <p className="text-[11px] text-muted-foreground">كل السلف السابقة مسددة بالكامل، وتفاصيلها محفوظة في التقارير</p>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground font-medium">لا توجد طلبات قائمة حالياً</p>
+                    )}
                   </div>
                 ) : (
-                  loans.map((loan) => {
+                  activeLoans.map((loan) => {
                     const loanPayments = payments[loan.id] || [];
-                    const paidTotal = loanPayments.reduce((sum, payment) => sum + Number(payment.amount), 0);
-                    const remainingTotal = Math.max(Number(loan.amount) - paidTotal, 0);
+                    const paidTotal = loan.totalPaid ?? loanPayments.reduce((sum, payment) => sum + Number(payment.amount), 0);
+                    const remainingTotal = loan.remaining ?? Math.max(Number(loan.amount) - paidTotal, 0);
                     return (
                     <motion.div
                       key={loan.id}
@@ -700,22 +742,177 @@ export default function Loans() {
                         )}
                       </AnimatePresence>
 
-                      {loan.status !== 'pending' && (
-                        <button 
-                          data-testid={`button-delete-${loan.id}`}
-                          onClick={() => deleteMutation.mutate(loan.id)}
-                          disabled={deleteMutation.isPending}
-                          className="w-full text-[10px] text-muted-foreground flex items-center justify-center gap-1 pt-2 border-t border-border/40 hover:text-red-500 transition-colors disabled:opacity-50"
-                        >
-                          <Trash2 className="w-3 h-3" /> حذف السجل
-                        </button>
+                      {isGuardian && (
+                        <div className="flex gap-2 pt-2 border-t border-border/40">
+                          <button
+                            data-testid={`button-edit-${loan.id}`}
+                            onClick={() => {
+                              setEditTarget(loan);
+                              setEditForm({
+                                title: loan.title,
+                                description: loan.description ?? "",
+                                type: loan.type,
+                                amount: String(loan.amount),
+                                repaymentMonths: String(loan.repaymentMonths ?? 12),
+                              });
+                            }}
+                            className="flex-1 text-[10px] text-muted-foreground flex items-center justify-center gap-1 py-1 hover:text-primary transition-colors"
+                          >
+                            <Pencil className="w-3 h-3" /> تعديل
+                          </button>
+                          <button
+                            data-testid={`button-delete-${loan.id}`}
+                            onClick={() => setDeleteTarget({ id: loan.id, title: loan.title })}
+                            disabled={deleteMutation.isPending}
+                            className="flex-1 text-[10px] text-muted-foreground flex items-center justify-center gap-1 py-1 hover:text-red-500 transition-colors disabled:opacity-50"
+                          >
+                            <Trash2 className="w-3 h-3" /> حذف السجل
+                          </button>
+                        </div>
                       )}
                     </motion.div>
                     );
                   })
                 )}
               </div>
+
+              {settledLoans.length > 0 && activeLoans.length > 0 && (
+                <Link
+                  href="/analytics"
+                  className="block bg-emerald-50/60 border border-emerald-200/60 rounded-2xl p-4 hover:border-emerald-300 transition-colors"
+                  data-testid="link-settled-loans"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center">
+                        <CheckCircle2 className="w-4.5 h-4.5 text-emerald-600" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-emerald-800">{settledLoans.length} سلفة مسددة بالكامل</p>
+                        <p className="text-[10px] text-emerald-700/70">انتقلت من القائمة النشطة — التفاصيل الكاملة في التقارير</p>
+                      </div>
+                    </div>
+                    <BarChart3 className="w-4 h-4 text-emerald-600/50" />
+                  </div>
+                </Link>
+              )}
             </div>
+
+            {/* تأكيد حذف السلفة */}
+            <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+              <AlertDialogContent dir="rtl">
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="font-heading">حذف سجل السلفة؟</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    سيتم حذف سلفة «{deleteTarget?.title}» مع كل أقساطها ودفعات سدادها نهائياً، وإعادة حساب تخصيص رأس المال. تُوثَّق هذه العملية باسمك في سجل التدقيق.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>تراجع</AlertDialogCancel>
+                  <AlertDialogAction
+                    data-testid="button-confirm-delete-loan"
+                    disabled={deleteMutation.isPending}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (deleteTarget) deleteMutation.mutate(deleteTarget.id);
+                    }}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    {deleteMutation.isPending ? "جارٍ الحذف..." : "حذف نهائي"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+
+            {/* تعديل السلفة */}
+            <Dialog open={!!editTarget} onOpenChange={(open) => !open && setEditTarget(null)}>
+              <DialogContent className="sm:max-w-md" dir="rtl">
+                <DialogHeader>
+                  <DialogTitle className="font-heading">تعديل السلفة</DialogTitle>
+                  <DialogDescription>
+                    {editTarget?.status === "pending"
+                      ? "السلفة معلقة — يمكن تعديل كل الحقول بما فيها المبلغ وخطة السداد."
+                      : "السلفة معتمدة — يمكن تعديل العنوان والملاحظة والنوع فقط (المبلغ وخطة السداد مقفلان بعد إنشاء الأقساط)."}
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="py-2 space-y-3">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold">عنوان السلفة</label>
+                    <input
+                      value={editForm.title}
+                      onChange={(e) => setEditForm((p) => ({ ...p, title: e.target.value }))}
+                      className="w-full p-3 border border-border rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/40"
+                      data-testid="input-edit-title"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold">الملاحظة</label>
+                    <textarea
+                      value={editForm.description}
+                      onChange={(e) => setEditForm((p) => ({ ...p, description: e.target.value }))}
+                      rows={2}
+                      className="w-full p-3 border border-border rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/40 resize-none"
+                      data-testid="input-edit-description"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold">النوع</label>
+                    <select
+                      value={editForm.type}
+                      onChange={(e) => setEditForm((p) => ({ ...p, type: e.target.value }))}
+                      className="w-full p-3 border border-border rounded-xl text-sm bg-background outline-none"
+                    >
+                      <option value="urgent">سلفة عاجلة</option>
+                      <option value="standard">سلفة غير عاجلة</option>
+                      <option value="emergency">قرض طارئ</option>
+                    </select>
+                  </div>
+                  {editTarget?.status === "pending" && (
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold">المبلغ (ر.ع)</label>
+                        <input
+                          type="number"
+                          value={editForm.amount}
+                          onChange={(e) => setEditForm((p) => ({ ...p, amount: e.target.value }))}
+                          className="w-full p-3 border border-border rounded-xl text-sm font-mono outline-none focus:ring-2 focus:ring-primary/40"
+                          data-testid="input-edit-amount"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold">أشهر السداد</label>
+                        <input
+                          type="number"
+                          value={editForm.repaymentMonths}
+                          onChange={(e) => setEditForm((p) => ({ ...p, repaymentMonths: e.target.value }))}
+                          className="w-full p-3 border border-border rounded-xl text-sm font-mono outline-none focus:ring-2 focus:ring-primary/40"
+                        />
+                      </div>
+                    </div>
+                  )}
+                  <button
+                    onClick={() => {
+                      if (!editTarget) return;
+                      const base: Parameters<typeof updateLoan>[1] = {
+                        title: editForm.title.trim(),
+                        description: editForm.description.trim() || null,
+                        type: editForm.type,
+                      };
+                      if (editTarget.status === "pending") {
+                        base.amount = editForm.amount;
+                        base.repaymentMonths = editTarget.repaymentType === "scheduled" ? Number(editForm.repaymentMonths) : null;
+                      }
+                      editMutation.mutate({ id: editTarget.id, data: base });
+                    }}
+                    disabled={editMutation.isPending || !editForm.title.trim()}
+                    className="w-full bg-primary text-primary-foreground py-3 rounded-2xl font-bold text-sm disabled:opacity-50"
+                    data-testid="button-save-edit"
+                  >
+                    {editMutation.isPending ? "جارٍ الحفظ..." : "حفظ التعديلات"}
+                  </button>
+                </div>
+              </DialogContent>
+            </Dialog>
           </>
         )}
       </div>

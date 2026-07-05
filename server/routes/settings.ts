@@ -3,6 +3,7 @@ import { storage } from "../storage";
 import { insertFamilySettingsSchema } from "@shared/schema";
 import { z } from "zod";
 import { isAuthenticated, isAdmin } from "../auth";
+import { zodErrorResponse } from "../validation";
 
 export function registerSettingsRoutes(app: Express) {
   app.get("/api/settings", isAuthenticated, async (req, res) => {
@@ -55,7 +56,7 @@ export function registerSettingsRoutes(app: Express) {
       res.json(settings);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "بيانات الإعدادات غير صحيحة", error: error.errors });
+        return res.status(400).json(zodErrorResponse(error));
       }
       res.status(500).json({ message: "تعذر تحديث الإعدادات حاليًا" });
     }

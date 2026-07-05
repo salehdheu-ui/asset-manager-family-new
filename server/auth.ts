@@ -21,6 +21,12 @@ declare global {
   }
 }
 
+declare module "express-serve-static-core" {
+  interface Request {
+    user?: Express.User;
+  }
+}
+
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
   const pgStore = connectPg(session);
@@ -61,6 +67,14 @@ export async function setupAuth(app: Express) {
     standardHeaders: true,
     legacyHeaders: false,
     message: { message: "محاولات تسجيل دخول كثيرة، يُرجى المحاولة بعد 15 دقيقة" },
+  });
+
+  const adminWriteLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 30,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: "عمليات إدارية كثيرة خلال فترة قصيرة، يُرجى المحاولة لاحقاً" },
   });
 
   // Login endpoint
@@ -158,7 +172,7 @@ export async function setupAuth(app: Express) {
   });
 
   // Admin: Create user
-  app.post("/api/admin/users", isAdmin, async (req, res) => {
+  app.post("/api/admin/users", adminWriteLimiter, isAdmin, async (req, res) => {
     try {
       const { username, password, firstName, lastName, email, role, memberId } = req.body;
 
@@ -199,7 +213,7 @@ export async function setupAuth(app: Express) {
   });
 
   // Admin: Update user password
-  app.put("/api/admin/users/:id/password", isAdmin, async (req, res) => {
+  app.put("/api/admin/users/:id/password", adminWriteLimiter, isAdmin, async (req, res) => {
     try {
       const { id } = req.params;
       const { password } = req.body;
