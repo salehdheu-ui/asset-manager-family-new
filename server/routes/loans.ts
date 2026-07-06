@@ -5,10 +5,25 @@ import { z } from "zod";
 import { isAuthenticated, isAdmin } from "../auth";
 import { blockMembersDuringEmergency } from "../emergency";
 import { rebalanceYear } from "../capital-engine";
-import { buildRepaymentSchedule } from "@shared/finance";
+import { buildRepaymentSchedule, LOAN_VOTE_THRESHOLD } from "@shared/finance";
 import { zodErrorResponse } from "../validation";
 
 type LoanRecord = Awaited<ReturnType<typeof storage.getLoans>>[number];
+
+// السلف فوق حد التصويت تتطلب موافقة العائلة: 3 موافقين على الأقل (أو كل المؤهلين إن كانوا أقل) وأغلبية الموافقين
+async function getVoteTally(loan: LoanRecord) {
+  const votes = await storage.getLoanVotes(loan.id);
+  const approve = votes.filter(v => v.vote === "approve").length;
+  const reject = votes.filter(v => v.vote === "reject").length;
+  const eligible = await storage.countEligibleVoters(loan.memberId);
+  const required = Math.max(1, Math.min(3, eligible));
+  const passed = approve >= required && approve > reject;
+  return { votes, approve, reject, eligible, required, passed };
+}
+
+function needsFamilyVote(loan: { amount: string | number }) {
+  return Number(loan.amount) > LOAN_VOTE_THRESHOLD;
+}
 
 async function createScheduleAndRebalance(loan: LoanRecord) {
   const repayments = buildRepaymentSchedule(loan);
@@ -69,6 +84,13 @@ export function registerLoanRoutes(app: Express) {
         return res.status(403).json({ error: "لا يمكنك طلب سلفة لعضو آخر" });
       }
 
+      // إغلاق ثغرة الاعتماد المباشر: السلفة الكبيرة لا تُنشأ معتمدة — تمر بالتصويت أولاً
+      if (data.status === "approved" && needsFamilyVote(data)) {
+        return res.status(400).json({
+          error: `السلف التي تتجاوز ${LOAN_VOTE_THRESHOLD.toLocaleString()} ر.ع تتطلب تصويت العائلة — أنشئها كطلب معلق ثم اعتمدها بعد اكتمال التصويت`,
+        });
+      }
+
       const loan = await storage.createLoan(data);
 
       if (loan.status === "approved") {
@@ -99,6 +121,27 @@ export function registerLoanRoutes(app: Express) {
         const existingLoan = await storage.getLoan(loanId);
         if (!existingLoan) {
           return res.status(404).json({ error: "Loan not found" });
+        }
+
+        // بوابة تصويت العائلة للسلف الكبيرة
+        if (needsFamilyVote(existingLoan)) {
+          const tally = await getVoteTally(existingLoan);
+          if (!tally.passed) {
+            return res.status(400).json({
+              error: `هذه السلفة تتطلب تصويت العائلة قبل الاعتماد — الموافقون: ${tally.approve}/${tally.required} المطلوبين (الرافضون: ${tally.reject})`,
+              voteTally: { approve: tally.approve, reject: tally.reject, required: tally.required, eligible: tally.eligible },
+            });
+          }
+
+          await storage.createAuditLog({
+            action: "loan_vote_passed",
+            entityType: "loan",
+            entityId: existingLoan.id,
+            actorUserId: req.user?.id ?? null,
+            actorName: req.user?.username ?? "مشرف",
+            description: `اكتمل تصويت العائلة على سلفة كبيرة (${Number(existingLoan.amount).toLocaleString()} ر.ع) — موافقون: ${tally.approve}، رافضون: ${tally.reject}`,
+            metadata: { loanId: existingLoan.id, approve: tally.approve, reject: tally.reject, required: tally.required },
+          });
         }
       }
 
@@ -210,6 +253,77 @@ export function registerLoanRoutes(app: Express) {
     } catch (error) {
       console.error("Delete loan error:", error);
       res.status(500).json({ error: "تعذر حذف السلفة" });
+    }
+  });
+
+  // نتيجة التصويت على سلفة كبيرة — الأعداد للجميع، الأسماء للوصي فقط
+  app.get("/api/loans/:id/votes", isAuthenticated, async (req, res) => {
+    try {
+      const loan = await storage.getLoan(req.params.id as string);
+      if (!loan) {
+        return res.status(404).json({ error: "السلفة غير موجودة" });
+      }
+      const tally = await getVoteTally(loan);
+      const myVote = tally.votes.find(v => v.userId === req.user?.id)?.vote ?? null;
+      res.json({
+        required: tally.required,
+        eligible: tally.eligible,
+        approve: tally.approve,
+        reject: tally.reject,
+        passed: tally.passed,
+        myVote,
+        threshold: LOAN_VOTE_THRESHOLD,
+        canVote:
+          !!req.user?.memberId &&
+          req.user.memberId !== loan.memberId &&
+          loan.status === "pending" &&
+          needsFamilyVote(loan),
+        voters: req.user?.role === "admin"
+          ? tally.votes.map(v => ({ name: v.voterName, vote: v.vote }))
+          : undefined,
+      });
+    } catch (error) {
+      res.status(500).json({ error: "تعذر جلب نتيجة التصويت" });
+    }
+  });
+
+  // الإدلاء بصوت — لكل مستخدم مرتبط بعضوية صوت واحد، وصاحب السلفة لا يصوت لنفسه
+  app.post("/api/loans/:id/vote", isAuthenticated, async (req, res) => {
+    try {
+      const vote = String(req.body?.vote ?? "");
+      if (!["approve", "reject"].includes(vote)) {
+        return res.status(400).json({ error: "قيمة التصويت غير صحيحة" });
+      }
+
+      const loan = await storage.getLoan(req.params.id as string);
+      if (!loan) {
+        return res.status(404).json({ error: "السلفة غير موجودة" });
+      }
+      if (loan.status !== "pending") {
+        return res.status(400).json({ error: "التصويت متاح على الطلبات المعلقة فقط" });
+      }
+      if (!needsFamilyVote(loan)) {
+        return res.status(400).json({ error: `هذه السلفة لا تتطلب تصويتاً (الحد ${LOAN_VOTE_THRESHOLD.toLocaleString()} ر.ع)` });
+      }
+      if (!req.user?.memberId) {
+        return res.status(403).json({ error: "التصويت متاح لحسابات الأعضاء المرتبطة بعضوية فقط" });
+      }
+      if (req.user.memberId === loan.memberId) {
+        return res.status(403).json({ error: "لا يمكنك التصويت على سلفتك" });
+      }
+
+      await storage.castLoanVote({
+        loanId: loan.id,
+        userId: req.user.id,
+        voterName: req.user.username ?? req.user.firstName ?? "عضو",
+        vote,
+      });
+
+      const tally = await getVoteTally(loan);
+      res.json({ approve: tally.approve, reject: tally.reject, required: tally.required, passed: tally.passed, myVote: vote });
+    } catch (error) {
+      console.error("Cast vote error:", error);
+      res.status(500).json({ error: "تعذر تسجيل الصوت" });
     }
   });
 

@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import MobileLayout from "@/components/layout/MobileLayout";
-import { getAdminUsers, getMembers, updateUserRole, linkUserToMember, deleteUser, createUser, updateUserPassword, updateUser, resetSystem, lockYearAllocation, resetYearAllocation, getResetRequests, issueResetCode, rejectResetRequest, type ResetRequest } from "@/lib/api";
+import { getAdminUsers, getMembers, updateUserRole, linkUserToMember, deleteUser, createUser, updateUserPassword, updateUser, resetSystem, lockYearAllocation, resetYearAllocation, getResetRequests, issueResetCode, rejectResetRequest, getAlerts, type ResetRequest, type SystemAlert } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
 import { Shield, Users, Trash2, UserCheck, Link, Crown, User as UserIcon, Plus, Key, Eye, EyeOff, RotateCcw, AlertTriangle, Lock, Landmark, ChevronLeft, KeyRound, Copy, Check, X } from "lucide-react";
 import { motion } from "framer-motion";
@@ -55,6 +55,13 @@ export default function AdminDashboard() {
     queryFn: getResetRequests,
     enabled: !!user,
     refetchInterval: 30000,
+  });
+
+  const { data: alerts = [] } = useQuery<SystemAlert[]>({
+    queryKey: ["admin-alerts"],
+    queryFn: getAlerts,
+    enabled: !!user,
+    refetchInterval: 60000,
   });
 
   const [issuedCode, setIssuedCode] = useState<{ username: string; code: string } | null>(null);
@@ -230,6 +237,31 @@ export default function AdminDashboard() {
           </div>
           <div className="absolute right-[-20px] top-[-20px] w-40 h-40 bg-white/10 rounded-full blur-3xl" />
         </div>
+
+        {/* بطاقة «يحتاج انتباهك» — تنبيهات تشغيلية ذكية */}
+        {alerts.length > 0 && (
+          <div className="rounded-[1.5rem] border border-border bg-card p-4 space-y-3" data-testid="alerts-card">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              <span className="font-bold">يحتاج انتباهك</span>
+              <span className="mr-auto rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700">{alerts.length}</span>
+            </div>
+            <div className="space-y-2">
+              {alerts.map((alert, idx) => (
+                <div key={idx} className="flex items-start gap-3 rounded-xl border border-border/60 bg-background px-3 py-2.5">
+                  <span className={cn(
+                    "mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full",
+                    alert.severity === "high" ? "bg-red-500" : alert.severity === "medium" ? "bg-amber-500" : "bg-blue-400",
+                  )} />
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold leading-tight">{alert.title}</p>
+                    <p className="mt-0.5 text-[11px] text-muted-foreground leading-relaxed">{alert.detail}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* طلبات استعادة كلمة المرور */}
         {resetRequests.length > 0 && (

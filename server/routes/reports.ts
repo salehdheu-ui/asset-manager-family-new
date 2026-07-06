@@ -1,9 +1,212 @@
 import type { Express } from "express";
 import { storage } from "../storage";
-import { isAuthenticated } from "../auth";
+import { isAuthenticated, isAdmin } from "../auth";
 import { computeDashboardSummary } from "../services/dashboard";
+import { computeCommitmentScore, projectCashflow } from "@shared/finance";
+import { rebalanceYear } from "../capital-engine";
 
 export function registerReportRoutes(app: Express) {
+  // درجة الالتزام لكل عضو — انتظام المساهمات 60٪ + سلوك السداد 40٪
+  app.get("/api/reports/commitment-scores", isAuthenticated, isAdmin, async (_req, res) => {
+    try {
+      const [members, contributions, loans, payments, repayments] = await Promise.all([
+        storage.getMembers(),
+        storage.getContributions(),
+        storage.getLoans(),
+        storage.getAllLoanPayments(),
+        storage.getAllLoanRepayments(),
+      ]);
+
+      const now = new Date();
+      const windowMonths = 12;
+      const windowStart = new Date(now.getFullYear(), now.getMonth() - (windowMonths - 1), 1);
+
+      const scores = members.map((member) => {
+        const memberContribs = contributions.filter(
+          (c) => c.memberId === member.id && c.status === "approved" &&
+            new Date(c.year, c.month - 1, 1) >= windowStart,
+        );
+        const contributedMonths = new Set(memberContribs.map((c) => `${c.year}-${c.month}`)).size;
+
+        const memberLoans = loans.filter((l) => l.memberId === member.id && l.status === "approved");
+        const loanIds = new Set(memberLoans.map((l) => l.id));
+        const totalBorrowed = memberLoans.reduce((s, l) => s + Number(l.amount), 0);
+        const totalRepaid = payments.filter((p) => loanIds.has(p.loanId)).reduce((s, p) => s + Number(p.amount), 0);
+        const overdueInstallments = repayments.filter(
+          (r) => loanIds.has(r.loanId) && r.status === "scheduled" && r.dueDate && new Date(r.dueDate) < now,
+        ).length;
+
+        return {
+          memberId: member.id,
+          name: member.name,
+          score: computeCommitmentScore({ monthsConsidered: windowMonths, contributedMonths, totalBorrowed, totalRepaid, overdueInstallments }),
+          contributedMonths,
+          windowMonths,
+          totalBorrowed: Number(totalBorrowed.toFixed(3)),
+          totalRepaid: Number(totalRepaid.toFixed(3)),
+          overdueInstallments,
+        };
+      });
+
+      res.json(scores.sort((a, b) => b.score - a.score));
+    } catch (error) {
+      console.error("Commitment scores error:", error);
+      res.status(500).json({ error: "تعذر حساب درجات الالتزام" });
+    }
+  });
+
+  // إسقاط السيولة للأشهر الستة القادمة
+  app.get("/api/reports/cashflow-forecast", isAuthenticated, async (_req, res) => {
+    try {
+      const [summary, contributions, repayments] = await Promise.all([
+        computeDashboardSummary(),
+        storage.getContributions(),
+        storage.getAllLoanRepayments(),
+      ]);
+
+      // متوسط المساهمات المعتمدة لآخر 6 أشهر مكتملة
+      const now = new Date();
+      const monthTotals = new Map<string, number>();
+      for (const c of contributions) {
+        if (c.status !== "approved") continue;
+        const key = `${c.year}-${String(c.month).padStart(2, "0")}`;
+        monthTotals.set(key, (monthTotals.get(key) ?? 0) + Number(c.amount));
+      }
+      const past6: number[] = [];
+      for (let i = 1; i <= 6; i++) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        past6.push(monthTotals.get(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`) ?? 0);
+      }
+      const nonZero = past6.filter((v) => v > 0);
+      const avgMonthlyContributions = nonZero.length > 0 ? nonZero.reduce((a, b) => a + b, 0) / nonZero.length : 0;
+
+      // الأقساط المجدولة حسب شهر استحقاقها
+      const scheduledByMonth: Record<string, number> = {};
+      for (const r of repayments) {
+        if (r.status !== "scheduled" || !r.dueDate) continue;
+        const d = new Date(r.dueDate);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+        scheduledByMonth[key] = (scheduledByMonth[key] ?? 0) + Number(r.amount);
+      }
+
+      const months: string[] = [];
+      for (let i = 1; i <= 6; i++) {
+        const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+        months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+      }
+
+      const forecast = projectCashflow({
+        startBalance: summary.netCapital,
+        avgMonthlyContributions,
+        scheduledByMonth,
+        months,
+      });
+
+      res.json({
+        currentBalance: summary.netCapital,
+        avgMonthlyContributions: Number(avgMonthlyContributions.toFixed(3)),
+        forecast,
+        note: "الإسقاط مبني على متوسط المساهمات المعتمدة لآخر 6 أشهر والأقساط المجدولة — السلف والمصروفات المستقبلية غير المعروفة ليست محسوبة",
+      });
+    } catch (error) {
+      console.error("Cashflow forecast error:", error);
+      res.status(500).json({ error: "تعذر حساب إسقاط السيولة" });
+    }
+  });
+
+  // بطاقة «يحتاج انتباهك» — تنبيهات تشغيلية للوصي
+  app.get("/api/reports/alerts", isAuthenticated, isAdmin, async (_req, res) => {
+    try {
+      const now = new Date();
+      const [members, contributions, loans, repayments, auditResult] = await Promise.all([
+        storage.getMembers(),
+        storage.getContributions(),
+        storage.getLoans(),
+        storage.getAllLoanRepayments(),
+        storage.getAuditLogs(1, 50),
+      ]);
+      const allocation = await rebalanceYear(now.getFullYear());
+
+      const alerts: Array<{ severity: "high" | "medium" | "info"; title: string; detail: string }> = [];
+      const memberName = (id: string) => members.find((m) => m.id === id)?.name ?? "عضو";
+      const approvedLoanIds = new Set(loans.filter((l) => l.status === "approved").map((l) => l.id));
+
+      // أقساط متأخرة
+      const overdue = repayments.filter((r) => approvedLoanIds.has(r.loanId) && r.status === "scheduled" && r.dueDate && new Date(r.dueDate) < now);
+      if (overdue.length > 0) {
+        const total = overdue.reduce((s, r) => s + Number(r.amount), 0);
+        const names = Array.from(new Set(overdue.map((r) => {
+          const loan = loans.find((l) => l.id === r.loanId);
+          return loan ? memberName(loan.memberId) : "عضو";
+        })));
+        alerts.push({
+          severity: "high",
+          title: `${overdue.length} قسطاً تجاوز استحقاقه (${total.toFixed(3)} ر.ع)`,
+          detail: `الأعضاء: ${names.join("، ")}`,
+        });
+      }
+
+      // طلبات سلف معلقة قديمة
+      const staleLoans = loans.filter((l) => l.status === "pending" && l.createdAt && (now.getTime() - new Date(l.createdAt).getTime()) > 7 * 24 * 3600 * 1000);
+      if (staleLoans.length > 0) {
+        alerts.push({
+          severity: "medium",
+          title: `${staleLoans.length} طلب سلفة معلق منذ أكثر من أسبوع`,
+          detail: staleLoans.map((l) => `${memberName(l.memberId)} (${Number(l.amount).toLocaleString()} ر.ع)`).join("، "),
+        });
+      }
+
+      // أعضاء منقطعون عن المساهمة 3 أشهر
+      const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+      const inactive = members.filter((m) => {
+        const latest = contributions
+          .filter((c) => c.memberId === m.id)
+          .map((c) => new Date(c.year, c.month - 1, 1))
+          .sort((a, b) => b.getTime() - a.getTime())[0];
+        return !latest || latest < threeMonthsAgo;
+      });
+      if (inactive.length > 0) {
+        alerts.push({
+          severity: "medium",
+          title: `${inactive.length} عضواً بلا مساهمة منذ 3 أشهر أو أكثر`,
+          detail: inactive.map((m) => m.name).join("، "),
+        });
+      }
+
+      // استنفاد طبقات رأس المال
+      if (allocation.flexible.amount > 0 && allocation.flexible.used / allocation.flexible.amount > 0.8) {
+        alerts.push({
+          severity: "high",
+          title: "رأس المال المرن اقترب من الاستنفاد",
+          detail: `المستخدم ${((allocation.flexible.used / allocation.flexible.amount) * 100).toFixed(0)}٪ — المتاح ${allocation.flexible.available.toFixed(3)} ر.ع فقط`,
+        });
+      }
+      if (allocation.emergency.amount > 0 && allocation.emergency.used / allocation.emergency.amount > 0.5) {
+        alerts.push({
+          severity: "medium",
+          title: "احتياطي الطوارئ استُهلك أكثر من نصفه",
+          detail: `المتاح ${allocation.emergency.available.toFixed(3)} ر.ع من أصل ${allocation.emergency.amount.toFixed(3)}`,
+        });
+      }
+
+      // أخطاء نظام حديثة (آخر 7 أيام)
+      const weekAgo = now.getTime() - 7 * 24 * 3600 * 1000;
+      const systemErrors = auditResult.data.filter((l) => l.action === "system_error" && new Date(l.createdAt).getTime() > weekAgo);
+      if (systemErrors.length > 0) {
+        alerts.push({
+          severity: "high",
+          title: `${systemErrors.length} خطأ نظام خلال الأسبوع الأخير`,
+          detail: systemErrors[0].description,
+        });
+      }
+
+      res.json(alerts);
+    } catch (error) {
+      console.error("Alerts error:", error);
+      res.status(500).json({ error: "تعذر تحميل التنبيهات" });
+    }
+  });
+
   app.get("/api/reports/monthly", isAuthenticated, async (req, res) => {
     try {
       const year = Number(req.query.year) || new Date().getFullYear();

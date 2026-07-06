@@ -253,6 +253,73 @@ export async function getAdminUsers(): Promise<PublicUser[]> {
   return res.json();
 }
 
+// التحليلات الذكية
+export interface CommitmentScore {
+  memberId: string;
+  name: string;
+  score: number;
+  contributedMonths: number;
+  windowMonths: number;
+  totalBorrowed: number;
+  totalRepaid: number;
+  overdueInstallments: number;
+}
+
+export async function getCommitmentScores(): Promise<CommitmentScore[]> {
+  const res = await fetch("/api/reports/commitment-scores", { credentials: "include" });
+  if (!res.ok) await parseFetchError(res);
+  return res.json();
+}
+
+export interface CashflowForecast {
+  currentBalance: number;
+  avgMonthlyContributions: number;
+  forecast: Array<{ month: string; expectedContributions: number; scheduledRepayments: number; projectedBalance: number }>;
+  note: string;
+}
+
+export async function getCashflowForecast(): Promise<CashflowForecast> {
+  const res = await fetch("/api/reports/cashflow-forecast", { credentials: "include" });
+  if (!res.ok) await parseFetchError(res);
+  return res.json();
+}
+
+export interface SystemAlert {
+  severity: "high" | "medium" | "info";
+  title: string;
+  detail: string;
+}
+
+export async function getAlerts(): Promise<SystemAlert[]> {
+  const res = await fetch("/api/reports/alerts", { credentials: "include" });
+  if (!res.ok) await parseFetchError(res);
+  return res.json();
+}
+
+// تصويت العائلة على السلف الكبيرة
+export interface LoanVoteTally {
+  required: number;
+  eligible: number;
+  approve: number;
+  reject: number;
+  passed: boolean;
+  myVote: string | null;
+  threshold: number;
+  canVote: boolean;
+  voters?: Array<{ name: string; vote: string }>;
+}
+
+export async function getLoanVotes(loanId: string): Promise<LoanVoteTally> {
+  const res = await fetch(`/api/loans/${loanId}/votes`, { credentials: "include" });
+  if (!res.ok) await parseFetchError(res);
+  return res.json();
+}
+
+export async function castLoanVote(loanId: string, vote: "approve" | "reject"): Promise<{ approve: number; reject: number; required: number; passed: boolean; myVote: string }> {
+  const res = await apiRequest("POST", `/api/loans/${loanId}/vote`, { vote });
+  return res.json();
+}
+
 // استعادة كلمة المرور
 export async function forgotPassword(username: string): Promise<{ message: string }> {
   const res = await apiRequest("POST", "/api/auth/forgot-password", { username });

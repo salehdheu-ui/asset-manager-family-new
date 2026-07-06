@@ -24,6 +24,7 @@ const UserDashboard = lazy(() => import("@/pages/user-dashboard"));
 const FundOps = lazy(() => import("@/pages/fund-ops"));
 const MemberDetail = lazy(() => import("@/pages/member-detail"));
 const AuditLog = lazy(() => import("@/pages/audit-log"));
+const AnnualReport = lazy(() => import("@/pages/annual-report"));
 
 function PageLoader() {
   return (
@@ -68,6 +69,7 @@ function Router() {
         <Route path="/members/:id">{() => <ProtectedRoute component={MemberDetail} />}</Route>
         <Route path="/profile">{() => <ProtectedRoute component={UserDashboard} />}</Route>
         <Route path="/audit-log">{() => <ProtectedRoute component={AuditLog} />}</Route>
+        <Route path="/annual-report">{() => <AdminRoute component={AnnualReport} />}</Route>
         <Route component={NotFound} />
       </Switch>
     </Suspense>

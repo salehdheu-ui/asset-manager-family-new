@@ -10,7 +10,8 @@ import {
   type AuditLog, type InsertAuditLog, auditLogs,
   capitalAllocations,
   systemBackups,
-  type PasswordResetRequest, passwordResetRequests
+  type PasswordResetRequest, passwordResetRequests,
+  type LoanVote, loanVotes
 } from "@shared/schema";
 import { users } from "@shared/models/auth";
 import { db } from "./db";
@@ -72,6 +73,11 @@ export interface IStorage {
   // Audit Logs
   getAuditLogs(page?: number, limit?: number): Promise<{ data: AuditLog[]; total: number; page: number; limit: number; totalPages: number }>;
   createAuditLog(log: InsertAuditLog): Promise<AuditLog>;
+
+  // Loan Votes (تصويت العائلة على السلف الكبيرة)
+  getLoanVotes(loanId: string): Promise<LoanVote[]>;
+  castLoanVote(data: { loanId: string; userId: string; voterName: string; vote: string }): Promise<LoanVote>;
+  countEligibleVoters(excludeMemberId?: string | null): Promise<number>;
 
   // Password Reset Requests
   createResetRequest(username: string, userId: string | null): Promise<PasswordResetRequest>;
@@ -215,9 +221,31 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteLoan(id: string): Promise<void> {
+    await db.delete(loanVotes).where(eq(loanVotes.loanId, id));
     await db.delete(loanPayments).where(eq(loanPayments.loanId, id));
     await db.delete(loanRepayments).where(eq(loanRepayments.loanId, id));
     await db.delete(loans).where(eq(loans.id, id));
+  }
+
+  async getLoanVotes(loanId: string): Promise<LoanVote[]> {
+    return db.select().from(loanVotes).where(eq(loanVotes.loanId, loanId)).orderBy(desc(loanVotes.createdAt));
+  }
+
+  async castLoanVote(data: { loanId: string; userId: string; voterName: string; vote: string }): Promise<LoanVote> {
+    const [vote] = await db.insert(loanVotes)
+      .values(data)
+      .onConflictDoUpdate({
+        target: [loanVotes.loanId, loanVotes.userId],
+        set: { vote: data.vote, voterName: data.voterName, createdAt: new Date() },
+      })
+      .returning();
+    return vote;
+  }
+
+  async countEligibleVoters(excludeMemberId?: string | null): Promise<number> {
+    const rows = await db.select({ memberId: users.memberId }).from(users);
+    const unique = new Set(rows.map(r => r.memberId).filter((m): m is string => !!m && m !== excludeMemberId));
+    return unique.size;
   }
 
   // Loan Repayments

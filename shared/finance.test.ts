@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   availableInLayer,
   buildRepaymentSchedule,
+  computeCommitmentScore,
   computeNetAssets,
+  projectCashflow,
   splitAllocation,
 } from "./finance";
 
@@ -81,5 +83,39 @@ describe("availableInLayer", () => {
   it("يحسب المتاح ولا يسمح بقيمة سالبة عند تجاوز الاستخدام", () => {
     expect(availableInLayer(200, 80)).toBe(120);
     expect(availableInLayer(200, 250)).toBe(0);
+  });
+});
+
+describe("computeCommitmentScore", () => {
+  it("عضو مثالي: مساهمات كاملة وسداد كامل = 100", () => {
+    expect(computeCommitmentScore({ monthsConsidered: 12, contributedMonths: 12, totalBorrowed: 500, totalRepaid: 500, overdueInstallments: 0 })).toBe(100);
+  });
+
+  it("من لا سلف عليه لا يُعاقب على جزء السداد", () => {
+    expect(computeCommitmentScore({ monthsConsidered: 12, contributedMonths: 6, totalBorrowed: 0, totalRepaid: 0, overdueInstallments: 0 })).toBe(70); // 30 + 40
+  });
+
+  it("الأقساط المتأخرة تخصم من درجة السداد", () => {
+    const clean = computeCommitmentScore({ monthsConsidered: 12, contributedMonths: 12, totalBorrowed: 100, totalRepaid: 100, overdueInstallments: 0 });
+    const late = computeCommitmentScore({ monthsConsidered: 12, contributedMonths: 12, totalBorrowed: 100, totalRepaid: 100, overdueInstallments: 2 });
+    expect(clean - late).toBe(4); // خصم 0.10 × 40
+  });
+
+  it("الدرجة محصورة بين 0 و100", () => {
+    expect(computeCommitmentScore({ monthsConsidered: 12, contributedMonths: 0, totalBorrowed: 100, totalRepaid: 0, overdueInstallments: 20 })).toBe(0);
+  });
+});
+
+describe("projectCashflow", () => {
+  it("يراكم الرصيد شهراً بشهر من المساهمات والأقساط المجدولة", () => {
+    const result = projectCashflow({
+      startBalance: 1000,
+      avgMonthlyContributions: 100,
+      scheduledByMonth: { "2026-08": 50 },
+      months: ["2026-07", "2026-08"],
+    });
+    expect(result[0].projectedBalance).toBe(1100);
+    expect(result[1].projectedBalance).toBe(1250);
+    expect(result[1].scheduledRepayments).toBe(50);
   });
 });

@@ -120,7 +120,34 @@ export async function createBackupSnapshot(createdBy?: string | null, backupLeve
     await db.update(familySettings).set({ backupLastRunAt: backupDate }).where(eq(familySettings.id, settings.id));
   }
 
+  // دفع خارجي اختياري — لا يُعطل النسخة إن فشل
+  void pushBackupExternal(fileName, payload);
+
   return record;
+}
+
+// رفع النسخة تلقائياً لوجهة خارجية (Google Apps Script / أي Webhook) عبر متغير البيئة BACKUP_PUSH_URL
+// حتى لا يعتمد أمان البيانات على وجود الخادم نفسه
+async function pushBackupExternal(fileName: string, payload: unknown) {
+  const url = process.env.BACKUP_PUSH_URL;
+  if (!url) return;
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(process.env.BACKUP_PUSH_SECRET ? { "x-backup-secret": process.env.BACKUP_PUSH_SECRET } : {}),
+      },
+      body: JSON.stringify({ fileName, sentAt: new Date().toISOString(), payload }),
+    });
+    if (!response.ok) {
+      console.error(`[external-backup] الوجهة ردت بحالة ${response.status} للنسخة ${fileName}`);
+    } else {
+      console.log(`[external-backup] رُفعت النسخة ${fileName} للوجهة الخارجية بنجاح`);
+    }
+  } catch (error) {
+    console.error("[external-backup] تعذر رفع النسخة للوجهة الخارجية:", error);
+  }
 }
 
 export async function readBackupRecord(id: string) {
