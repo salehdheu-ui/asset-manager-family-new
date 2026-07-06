@@ -82,3 +82,54 @@ export function splitAllocation(netAssets: number, percents: AllocationPercents)
 export function availableInLayer(allocated: number, used: number): number {
   return Math.max(0, allocated - used);
 }
+
+// السلفة التي تتجاوز هذا المبلغ (ر.ع) تتطلب تصويت العائلة قبل اعتماد الوصي
+export const LOAN_VOTE_THRESHOLD = 2000;
+
+export interface CommitmentInput {
+  monthsConsidered: number;   // نافذة الحساب (عادة 12 شهراً)
+  contributedMonths: number;  // أشهر ساهم فيها فعلاً (معتمدة)
+  totalBorrowed: number;      // إجمالي سلفه المعتمدة
+  totalRepaid: number;        // إجمالي ما سدده
+  overdueInstallments: number; // أقساط تجاوزت استحقاقها دون سداد
+}
+
+// درجة الالتزام من 100: انتظام المساهمات 60٪ + سلوك السداد 40٪ (خصم 5 نقاط لكل قسط متأخر بحد أقصى 40٪)
+export function computeCommitmentScore(input: CommitmentInput): number {
+  const contribution = input.monthsConsidered > 0
+    ? Math.min(1, input.contributedMonths / input.monthsConsidered)
+    : 1;
+  const repaymentBase = input.totalBorrowed > 0
+    ? Math.min(1, input.totalRepaid / input.totalBorrowed)
+    : 1; // من لا سلف عليه لا يُعاقب
+  const penalty = Math.min(0.4, input.overdueInstallments * 0.05);
+  const score = contribution * 60 + Math.max(0, repaymentBase - penalty) * 40;
+  return Math.round(Math.min(100, Math.max(0, score)));
+}
+
+export interface ForecastMonth {
+  month: string;               // "2026-08"
+  expectedContributions: number;
+  scheduledRepayments: number;
+  projectedBalance: number;
+}
+
+// إسقاط السيولة: الرصيد الحالي + متوسط المساهمات الشهرية + الأقساط المجدولة المستحقة في كل شهر
+export function projectCashflow(opts: {
+  startBalance: number;
+  avgMonthlyContributions: number;
+  scheduledByMonth: Record<string, number>;
+  months: string[];
+}): ForecastMonth[] {
+  let balance = opts.startBalance;
+  return opts.months.map((month) => {
+    const repayments = opts.scheduledByMonth[month] ?? 0;
+    balance += opts.avgMonthlyContributions + repayments;
+    return {
+      month,
+      expectedContributions: Number(opts.avgMonthlyContributions.toFixed(3)),
+      scheduledRepayments: Number(repayments.toFixed(3)),
+      projectedBalance: Number(balance.toFixed(3)),
+    };
+  });
+}

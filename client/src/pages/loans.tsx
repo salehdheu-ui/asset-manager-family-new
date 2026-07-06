@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import MobileLayout from "@/components/layout/MobileLayout";
-import { getLoans, getMembers, createLoan, updateLoan, updateLoanStatus, deleteLoan, getLoanRepayments, markRepaymentPaid, getDashboardSummary, getLoanPayments, createLoanPayment } from "@/lib/api";
+import { getLoans, getMembers, createLoan, updateLoan, updateLoanStatus, deleteLoan, getLoanRepayments, markRepaymentPaid, getDashboardSummary, getLoanPayments, createLoanPayment, getCommitmentScores, getLoanVotes, castLoanVote } from "@/lib/api";
+import { LOAN_VOTE_THRESHOLD } from "@shared/finance";
 import { useAuth } from "@/hooks/use-auth";
-import { HandCoins, Clock, AlertCircle, CheckCircle2, History, UserCheck, Trash2, X, Calendar, ChevronDown, ChevronUp, RotateCcw, Pencil, BarChart3 } from "lucide-react";
+import { HandCoins, Clock, AlertCircle, CheckCircle2, History, UserCheck, Trash2, X, Calendar, ChevronDown, ChevronUp, RotateCcw, Pencil, BarChart3, Vote, ThumbsUp, ThumbsDown, Gauge } from "lucide-react";
 import { Link } from "wouter";
 import {
   AlertDialog,
@@ -46,6 +47,82 @@ function extractErrorMessage(error: unknown): string {
   return "حدث خطأ غير متوقع";
 }
 
+// صندوق تصويت العائلة على السلف الكبيرة
+function LoanVoteBox({ loanId }: { loanId: string }) {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const { data: tally } = useQuery({
+    queryKey: ["loan-votes", loanId],
+    queryFn: () => getLoanVotes(loanId),
+  });
+
+  const voteMutation = useMutation({
+    mutationFn: (vote: "approve" | "reject") => castLoanVote(loanId, vote),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["loan-votes", loanId] });
+      toast({ title: "سُجّل صوتك" });
+    },
+    onError: (error) => {
+      toast({ title: "تعذر التصويت", description: extractErrorMessage(error), variant: "destructive" });
+    },
+  });
+
+  if (!tally) return null;
+
+  return (
+    <div className="rounded-2xl border border-violet-200 bg-violet-50/60 p-3 space-y-2" data-testid={`vote-box-${loanId}`}>
+      <div className="flex items-center gap-2 text-violet-700">
+        <Vote className="w-4 h-4" />
+        <span className="text-[11px] font-bold">سلفة كبيرة — تتطلب تصويت العائلة</span>
+        {tally.passed && (
+          <span className="mr-auto rounded-full bg-emerald-100 px-2 py-0.5 text-[9px] font-bold text-emerald-700">اكتمل النصاب ✓</span>
+        )}
+      </div>
+      <div className="flex items-center justify-between text-[10px] font-bold">
+        <span className="text-emerald-700">موافقون: {tally.approve} / {tally.required} المطلوبين</span>
+        <span className="text-red-600">رافضون: {tally.reject}</span>
+      </div>
+      <div className="h-1.5 rounded-full bg-violet-100 overflow-hidden">
+        <div
+          className="h-full rounded-full bg-emerald-500 transition-all"
+          style={{ width: `${Math.min(100, (tally.approve / Math.max(1, tally.required)) * 100)}%` }}
+        />
+      </div>
+      {tally.canVote && (
+        <div className="flex gap-2 pt-1">
+          <button
+            onClick={() => voteMutation.mutate("approve")}
+            disabled={voteMutation.isPending}
+            className={cn(
+              "flex-1 py-2 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50",
+              tally.myVote === "approve" ? "bg-emerald-600 text-white" : "bg-emerald-100 text-emerald-700 hover:bg-emerald-200",
+            )}
+            data-testid={`button-vote-approve-${loanId}`}
+          >
+            <ThumbsUp className="w-3.5 h-3.5" /> {tally.myVote === "approve" ? "صوتّ بالموافقة" : "أوافق"}
+          </button>
+          <button
+            onClick={() => voteMutation.mutate("reject")}
+            disabled={voteMutation.isPending}
+            className={cn(
+              "flex-1 py-2 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50",
+              tally.myVote === "reject" ? "bg-red-600 text-white" : "bg-red-100 text-red-700 hover:bg-red-200",
+            )}
+            data-testid={`button-vote-reject-${loanId}`}
+          >
+            <ThumbsDown className="w-3.5 h-3.5" /> {tally.myVote === "reject" ? "صوتّ بالرفض" : "أرفض"}
+          </button>
+        </div>
+      )}
+      {tally.voters && tally.voters.length > 0 && (
+        <p className="text-[9px] text-muted-foreground pt-1">
+          {tally.voters.map((v) => `${v.name} (${v.vote === "approve" ? "موافق" : "رافض"})`).join("، ")}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export default function Loans() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -85,6 +162,13 @@ export default function Loans() {
     queryKey: ["dashboard-summary"],
     queryFn: getDashboardSummary,
   });
+
+  const { data: commitmentScores = [] } = useQuery({
+    queryKey: ["commitment-scores"],
+    queryFn: getCommitmentScores,
+    enabled: isGuardian,
+  });
+  const scoreOf = (memberId: string) => commitmentScores.find((s) => s.memberId === memberId);
 
   const createMutation = useMutation({
     mutationFn: createLoan,
@@ -576,6 +660,29 @@ export default function Loans() {
                                 <p className="text-[10px] font-mono font-bold text-amber-600">{remainingTotal.toFixed(3)}</p>
                               </div>
                             </div>
+                          )}
+                        </div>
+                      )}
+
+                      {loan.status === 'pending' && Number(loan.amount) > LOAN_VOTE_THRESHOLD && (
+                        <LoanVoteBox loanId={loan.id} />
+                      )}
+
+                      {isGuardian && loan.status === 'pending' && scoreOf(loan.memberId) && (
+                        <div className="flex items-center gap-2 rounded-xl bg-muted/30 border border-border/40 px-3 py-2" data-testid={`score-badge-${loan.id}`}>
+                          <Gauge className="w-4 h-4 text-primary shrink-0" />
+                          <span className="text-[10px] font-bold text-muted-foreground">درجة التزام الطالب:</span>
+                          <span className={cn(
+                            "text-sm font-mono font-bold",
+                            (scoreOf(loan.memberId)?.score ?? 0) >= 80 ? "text-emerald-600" :
+                            (scoreOf(loan.memberId)?.score ?? 0) >= 50 ? "text-amber-600" : "text-red-600",
+                          )}>
+                            {scoreOf(loan.memberId)?.score}/100
+                          </span>
+                          {(scoreOf(loan.memberId)?.overdueInstallments ?? 0) > 0 && (
+                            <span className="mr-auto text-[9px] font-bold text-red-600">
+                              {scoreOf(loan.memberId)?.overdueInstallments} قسط متأخر
+                            </span>
                           )}
                         </div>
                       )}

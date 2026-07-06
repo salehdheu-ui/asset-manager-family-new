@@ -170,6 +170,20 @@ export const insertAuditLogSchema = createInsertSchema(auditLogs).omit({ id: tru
 export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
 export type AuditLog = typeof auditLogs.$inferSelect;
 
+// تصويت العائلة على السلف الكبيرة (فوق حد التصويت) — صوت واحد لكل مستخدم لكل سلفة
+export const loanVotes = pgTable("loan_votes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  loanId: varchar("loan_id").notNull().references(() => loans.id),
+  userId: varchar("user_id").notNull(),
+  voterName: text("voter_name").notNull(),
+  vote: text("vote").notNull(), // 'approve' | 'reject'
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  loanUserUnique: uniqueIndex("loan_votes_loan_user_unique").on(table.loanId, table.userId),
+}));
+
+export type LoanVote = typeof loanVotes.$inferSelect;
+
 // طلبات استعادة كلمة المرور — العضو يطلب، الوصي يصدر كوداً مؤقتاً يرسله له بنفسه
 export const passwordResetRequests = pgTable("password_reset_requests", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

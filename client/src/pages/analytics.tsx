@@ -55,7 +55,10 @@ import {
   CapitalDistributionChart,
   ContributionsTrendChart,
   MemberComparisonChart,
+  CashflowForecastChart,
 } from "@/components/charts";
+import { getCashflowForecast } from "@/lib/api";
+import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 
 type TransactionType = "contribution" | "loan" | "expense";
@@ -128,6 +131,8 @@ function KPICard({ title, value, subtitle, change, trend, icon, gradient, iconBg
 
 export default function Analytics() {
   const [, setLocation] = useLocation();
+  const { user: authUser } = useAuth();
+  const isAdmin = authUser?.role === "admin";
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedPeriod, setSelectedPeriod] = useState<"6months" | "12months" | "3months">("6months");
   const [filterMonth, setFilterMonth] = useState<number | null>(null);
@@ -158,6 +163,10 @@ export default function Analytics() {
   const { data: membersChartData, isLoading: membersChartLoading } = useQuery({
     queryKey: ["chart-data", "members-comparison"],
     queryFn: () => getChartData("members-comparison"),
+  });
+  const { data: cashflowForecast, isLoading: forecastLoading } = useQuery({
+    queryKey: ["cashflow-forecast"],
+    queryFn: getCashflowForecast,
   });
   const { data: yearlyReport } = useQuery({
     queryKey: ["yearly-report", selectedYear],
@@ -537,8 +546,9 @@ export default function Analytics() {
           <div className="space-y-4">
             <CapitalDistributionChart data={capitalDistributionData} loading={summaryLoading || capitalChartLoading} delay={0} />
             <ContributionsTrendChart data={contributionsChartData?.data || []} loading={contributionsChartLoading} delay={1} />
+            <CashflowForecastChart data={cashflowForecast} loading={forecastLoading} delay={2} />
           </div>
-          <MemberComparisonChart data={membersChartData?.data || []} loading={membersChartLoading} delay={2} limit={5} />
+          <MemberComparisonChart data={membersChartData?.data || []} loading={membersChartLoading} delay={3} limit={5} />
         </div>
 
         {/* ── Yearly report ── */}
@@ -686,12 +696,23 @@ export default function Analytics() {
                       {monthNames.map((m, i) => <option key={i + 1} value={i + 1}>{m}</option>)}
                     </select>
                   </div>
-                  <div className="flex items-end">
+                  <div className="flex items-end gap-2">
                     <Button onClick={exportToExcel} disabled={isExporting}
-                      className="h-11 w-full rounded-2xl gap-2 bg-gradient-to-r from-primary to-emerald-600 px-6 text-sm font-bold text-white shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all">
+                      className="h-11 flex-1 rounded-2xl gap-2 bg-gradient-to-r from-primary to-emerald-600 px-6 text-sm font-bold text-white shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all">
                       <FileSpreadsheet className="h-4 w-4" />
                       {isExporting ? "جاري التجهيز..." : "تنزيل Excel"}
                     </Button>
+                    {isAdmin && (
+                      <Button
+                        onClick={() => setLocation("/annual-report")}
+                        variant="outline"
+                        className="h-11 rounded-2xl gap-2 px-4 text-sm font-bold"
+                        data-testid="button-annual-report"
+                      >
+                        <Calendar className="h-4 w-4" />
+                        التقرير السنوي
+                      </Button>
+                    )}
                   </div>
                 </div>
               </motion.div>
