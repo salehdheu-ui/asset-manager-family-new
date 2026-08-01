@@ -4,7 +4,11 @@ import {
   buildRepaymentSchedule,
   computeCommitmentScore,
   computeNetAssets,
+  dueMonthsInYear,
+  isInstallmentLate,
+  isMonthDue,
   projectCashflow,
+  recentDueMonths,
   splitAllocation,
 } from "./finance";
 
@@ -103,6 +107,45 @@ describe("computeCommitmentScore", () => {
 
   it("الدرجة محصورة بين 0 و100", () => {
     expect(computeCommitmentScore({ monthsConsidered: 12, contributedMonths: 0, totalBorrowed: 100, totalRepaid: 0, overdueInstallments: 20 })).toBe(0);
+  });
+});
+
+describe("مهلة يوم 26 من الشهر", () => {
+  it("الشهر غير مستحق يوم 26 نفسه، ويصبح مستحقاً في 27", () => {
+    expect(isMonthDue(2026, 8, new Date(2026, 7, 26, 23, 0))).toBe(false);
+    expect(isMonthDue(2026, 8, new Date(2026, 7, 27, 0, 30))).toBe(true);
+  });
+
+  it("الشهر الجاري لا يُحتسب في أشهر السنة المستحقة قبل مرور مهلته", () => {
+    expect(dueMonthsInYear(2026, new Date(2026, 7, 10))).toBe(7);  // أغسطس لم يستحق بعد
+    expect(dueMonthsInYear(2026, new Date(2026, 7, 27))).toBe(8);  // أغسطس استحق
+    expect(dueMonthsInYear(2025, new Date(2026, 7, 10))).toBe(12); // سنة ماضية
+    expect(dueMonthsInYear(2027, new Date(2026, 7, 10))).toBe(0);  // سنة قادمة
+  });
+
+  it("نافذة الأشهر المستحقة تتراجع شهراً كاملاً قبل يوم 26", () => {
+    const before = recentDueMonths(new Date(2026, 7, 10), 3);
+    expect(before[0]).toEqual({ year: 2026, month: 7 });
+    const after = recentDueMonths(new Date(2026, 7, 27), 3);
+    expect(after[0]).toEqual({ year: 2026, month: 8 });
+    expect(after).toHaveLength(3);
+  });
+
+  it("نافذة الأشهر تعبر رأس السنة بشكل صحيح", () => {
+    const months = recentDueMonths(new Date(2026, 0, 10), 2); // يناير قبل المهلة
+    expect(months).toEqual([{ year: 2025, month: 12 }, { year: 2025, month: 11 }]);
+  });
+
+  it("القسط لا يُعد متأخراً قبل مرور مهلة شهره", () => {
+    const due = new Date(2026, 7, 5); // مستحق 5 أغسطس
+    expect(isInstallmentLate(due, new Date(2026, 7, 20))).toBe(false); // قبل 26
+    expect(isInstallmentLate(due, new Date(2026, 7, 27))).toBe(true);  // بعد 26
+  });
+
+  it("القسط المستحق بعد يوم 26 يُحسب من تاريخه هو", () => {
+    const due = new Date(2026, 7, 28); // مستحق 28 أغسطس
+    expect(isInstallmentLate(due, new Date(2026, 7, 27))).toBe(false);
+    expect(isInstallmentLate(due, new Date(2026, 7, 29))).toBe(true);
   });
 });
 

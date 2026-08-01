@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { storage } from "../storage";
 import { isAuthenticated, isAdmin } from "../auth";
 import { computeDashboardSummary } from "../services/dashboard";
-import { computeCommitmentScore, projectCashflow } from "@shared/finance";
+import { computeCommitmentScore, projectCashflow, dueMonthsInYear, isInstallmentLate, recentDueMonths, MONTHLY_DUE_DAY } from "@shared/finance";
 import { rebalanceYear } from "../capital-engine";
 
 export function registerReportRoutes(app: Express) {
@@ -18,13 +18,14 @@ export function registerReportRoutes(app: Express) {
       ]);
 
       const now = new Date();
-      const windowMonths = 12;
-      const windowStart = new Date(now.getFullYear(), now.getMonth() - (windowMonths - 1), 1);
+      // النافذة تشمل آخر 12 شهراً مضت مهلتها فقط — الشهر الجاري لا يُحاسَب عليه قبل يوم 26
+      const dueWindow = recentDueMonths(now, 12);
+      const dueKeys = new Set(dueWindow.map((d) => `${d.year}-${d.month}`));
+      const windowMonths = dueWindow.length;
 
       const scores = members.map((member) => {
         const memberContribs = contributions.filter(
-          (c) => c.memberId === member.id && c.status === "approved" &&
-            new Date(c.year, c.month - 1, 1) >= windowStart,
+          (c) => c.memberId === member.id && c.status === "approved" && dueKeys.has(`${c.year}-${c.month}`),
         );
         const contributedMonths = new Set(memberContribs.map((c) => `${c.year}-${c.month}`)).size;
 
@@ -33,7 +34,7 @@ export function registerReportRoutes(app: Express) {
         const totalBorrowed = memberLoans.reduce((s, l) => s + Number(l.amount), 0);
         const totalRepaid = payments.filter((p) => loanIds.has(p.loanId)).reduce((s, p) => s + Number(p.amount), 0);
         const overdueInstallments = repayments.filter(
-          (r) => loanIds.has(r.loanId) && r.status === "scheduled" && r.dueDate && new Date(r.dueDate) < now,
+          (r) => loanIds.has(r.loanId) && r.status === "scheduled" && r.dueDate && isInstallmentLate(r.dueDate, now),
         ).length;
 
         return {
@@ -258,8 +259,8 @@ export function registerReportRoutes(app: Express) {
       const memberName = (id: string) => members.find((m) => m.id === id)?.name ?? "عضو";
       const approvedLoanIds = new Set(loans.filter((l) => l.status === "approved").map((l) => l.id));
 
-      // أقساط متأخرة
-      const overdue = repayments.filter((r) => approvedLoanIds.has(r.loanId) && r.status === "scheduled" && r.dueDate && new Date(r.dueDate) < now);
+      // أقساط متأخرة — بعد مرور مهلة يوم 26 من شهر الاستحقاق
+      const overdue = repayments.filter((r) => approvedLoanIds.has(r.loanId) && r.status === "scheduled" && r.dueDate && isInstallmentLate(r.dueDate, now));
       if (overdue.length > 0) {
         const total = overdue.reduce((s, r) => s + Number(r.amount), 0);
         const names = Array.from(new Set(overdue.map((r) => {
@@ -268,8 +269,8 @@ export function registerReportRoutes(app: Express) {
         })));
         alerts.push({
           severity: "high",
-          title: `${overdue.length} قسطاً تجاوز استحقاقه (${total.toFixed(3)} ر.ع)`,
-          detail: `الأعضاء: ${names.join("، ")}`,
+          title: `${overdue.length} قسطاً تجاوز مهلته (${total.toFixed(3)} ر.ع)`,
+          detail: `الأعضاء: ${names.join("، ")} — المهلة حتى ${MONTHLY_DUE_DAY} من شهر الاستحقاق`,
         });
       }
 
@@ -283,8 +284,10 @@ export function registerReportRoutes(app: Express) {
         });
       }
 
-      // أعضاء منقطعون عن المساهمة 3 أشهر
-      const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+      // أعضاء منقطعون عن المساهمة 3 أشهر — تُحسب من الأشهر التي مضت مهلتها فقط
+      const lastThreeDue = recentDueMonths(now, 3);
+      const oldestDue = lastThreeDue[lastThreeDue.length - 1];
+      const threeMonthsAgo = new Date(oldestDue.year, oldestDue.month - 1, 1);
       const inactive = members.filter((m) => {
         const latest = contributions
           .filter((c) => c.memberId === m.id)
@@ -446,7 +449,9 @@ export function registerReportRoutes(app: Express) {
       ]);
       
       const yearLoans = allYearLoans.filter(l => l.status === 'approved');
-      
+      // نسبة الالتزام تُقاس على الأشهر التي مضت مهلتها فقط (لا على 12 شهراً كاملة في سنة جارية)
+      const expectedMonths = Math.max(1, dueMonthsInYear(year, new Date()));
+
       const allMemberStats = members.map(m => {
         const memberContributions = yearContributions.filter(c => c.memberId === m.id);
         const memberLoans = yearLoans.filter(l => l.memberId === m.id);
@@ -464,7 +469,7 @@ export function registerReportRoutes(app: Express) {
           contributionCount: memberContributions.length,
           loanCount: memberLoans.length,
           contributionMonths,
-          attendanceRate: Math.round((contributionMonths / 12) * 100),
+          attendanceRate: Math.min(100, Math.round((contributionMonths / expectedMonths) * 100)),
           netBalance: totalContributions - totalLoans
         };
       }).sort((a, b) => b.totalContributions - a.totalContributions);
@@ -572,9 +577,8 @@ export function registerReportRoutes(app: Express) {
         return res.status(404).json({ error: "Member not found" });
       }
 
-      const currentYear = new Date().getFullYear();
-      const currentMonth = new Date().getMonth() + 1;
-      const maxMonth = year === currentYear ? currentMonth : 12;
+      // الشهر لا يُحسب غائباً قبل مرور مهلته (يوم 26)
+      const maxMonth = dueMonthsInYear(year, new Date());
 
       // Monthly contributions grid for selected year
       const contributionsGrid = Array.from({ length: 12 }, (_, i) => {
@@ -632,7 +636,10 @@ export function registerReportRoutes(app: Express) {
       const yearPaidContributions = allContributions.filter(c => c.year === year && c.status === 'approved');
       const paidMonths = yearPaidContributions.length;
       const expectedMonths = maxMonth;
-      const commitmentRate = expectedMonths > 0 ? Math.round((paidMonths / expectedMonths) * 100) : 0;
+      // لا شهر مستحق بعد في هذه السنة ⇒ لا تأخير على أحد (100٪)
+      const commitmentRate = expectedMonths > 0
+        ? Math.min(100, Math.round((paidMonths / expectedMonths) * 100))
+        : 100;
       let rating = 'متأخر';
       if (commitmentRate >= 90) rating = 'ممتاز';
       else if (commitmentRate >= 70) rating = 'جيد';

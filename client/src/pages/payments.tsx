@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import MobileLayout from "@/components/layout/MobileLayout";
 import { getMembers, getContributions, createContribution, approveContribution, deleteContribution } from "@/lib/api";
+import { MONTHLY_DUE_DAY } from "@shared/finance";
 import { useAuth } from "@/hooks/use-auth";
 import { 
   ChevronLeft, 
@@ -230,6 +231,13 @@ export default function YearlyPaymentMatrix() {
             >
               <ChevronLeft className="w-5 h-5 text-primary" />
             </button>
+          </div>
+
+          <div className="mt-4 flex items-center justify-center gap-2 rounded-2xl bg-card/70 border border-primary/10 px-3 py-2" data-testid="due-day-hint">
+            <Calendar className="w-3.5 h-3.5 text-primary/60 shrink-0" />
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
+              مهلة مساهمة كل شهر حتى يوم <b className="text-primary">{MONTHLY_DUE_DAY}</b> منه — لا يُحتسب تأخير قبل ذلك.
+            </p>
           </div>
         </div>
 
