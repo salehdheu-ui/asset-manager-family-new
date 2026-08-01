@@ -320,6 +320,48 @@ export async function castLoanVote(loanId: string, vote: "approve" | "reject"): 
   return res.json();
 }
 
+// كشف حساب العضو الكامل
+export interface MemberStatement {
+  member: { id: string; name: string; role: string };
+  generatedAt: string;
+  filterYear: number | null;
+  summary: {
+    totalContributed: number;
+    totalBorrowed: number;
+    totalRepaid: number;
+    currentDebt: number;
+  };
+  timeline: Array<{
+    date: string;
+    type: "contribution" | "loan" | "repayment";
+    label: string;
+    amount: number;
+    debtAfter: number;
+    contributedAfter: number;
+  }>;
+  loans: Array<{
+    id: string;
+    title: string;
+    type: string;
+    status: string;
+    amount: number;
+    borrowedAt: string | null;
+    totalPaid: number;
+    remaining: number;
+    settled: boolean;
+    payments: Array<{ date: string | null; amount: number; note: string | null }>;
+  }>;
+  contributionsByYear: Array<{ year: number; months: Array<{ month: number; amount: number; status: string }> }>;
+}
+
+export async function getMemberStatement(memberId: string, year?: number | null): Promise<MemberStatement> {
+  const url = new URL(`/api/reports/member-statement/${memberId}`, window.location.origin);
+  if (year) url.searchParams.append("year", String(year));
+  const res = await fetch(url.toString(), { credentials: "include" });
+  if (!res.ok) await parseFetchError(res);
+  return res.json();
+}
+
 // استعادة كلمة المرور
 export async function forgotPassword(username: string): Promise<{ message: string }> {
   const res = await apiRequest("POST", "/api/auth/forgot-password", { username });

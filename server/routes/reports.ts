@@ -114,6 +114,133 @@ export function registerReportRoutes(app: Express) {
     }
   });
 
+  // كشف حساب العضو الكامل: سجل زمني لكل حركة مع رصيد «كم عليه» الجاري بعد كل حركة
+  app.get("/api/reports/member-statement/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const memberId = req.params.id as string;
+      const filterYear = req.query.year ? Number(req.query.year) : null;
+
+      const member = await storage.getMember(memberId);
+      if (!member) {
+        return res.status(404).json({ error: "العضو غير موجود" });
+      }
+
+      const [contributions, memberLoans, allPayments] = await Promise.all([
+        storage.getContributionsByMember(memberId),
+        storage.getLoansByMember(memberId),
+        storage.getAllLoanPayments(),
+      ]);
+
+      const approvedLoans = memberLoans.filter((l) => l.status === "approved");
+      const loanIds = new Set(approvedLoans.map((l) => l.id));
+      const payments = allPayments
+        .filter((p) => loanIds.has(p.loanId))
+        .sort((a, b) => new Date(a.paidAt ?? 0).getTime() - new Date(b.paidAt ?? 0).getTime());
+
+      // السجل الزمني الكامل بترتيب التاريخ
+      type Entry = {
+        date: string;
+        type: "contribution" | "loan" | "repayment";
+        label: string;
+        amount: number;
+        debtAfter: number;        // كم عليه بعد هذه الحركة
+        contributedAfter: number; // كم له (إجمالي مساهماته) بعد هذه الحركة
+      };
+      const raw: Array<Omit<Entry, "debtAfter" | "contributedAfter">> = [];
+
+      for (const c of contributions) {
+        if (c.status !== "approved") continue;
+        const date = c.approvedAt ?? c.createdAt ?? new Date(c.year, c.month - 1, 1);
+        raw.push({ date: new Date(date).toISOString(), type: "contribution", label: `مساهمة ${c.month}/${c.year}`, amount: Number(c.amount) });
+      }
+      for (const l of approvedLoans) {
+        const date = l.approvedAt ?? l.createdAt ?? new Date();
+        raw.push({ date: new Date(date).toISOString(), type: "loan", label: `سلفة: ${l.title}`, amount: Number(l.amount) });
+      }
+      for (const p of payments) {
+        const loan = approvedLoans.find((l) => l.id === p.loanId);
+        raw.push({
+          date: new Date(p.paidAt ?? new Date()).toISOString(),
+          type: "repayment",
+          label: `سداد${loan ? ` (${loan.title})` : ""}${p.note ? ` — ${p.note}` : ""}`,
+          amount: Number(p.amount),
+        });
+      }
+
+      raw.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+      let debt = 0;
+      let contributed = 0;
+      const timeline: Entry[] = raw.map((e) => {
+        if (e.type === "loan") debt += e.amount;
+        if (e.type === "repayment") debt = Math.max(0, debt - e.amount);
+        if (e.type === "contribution") contributed += e.amount;
+        return { ...e, debtAfter: Number(debt.toFixed(3)), contributedAfter: Number(contributed.toFixed(3)) };
+      });
+
+      // تفاصيل كل سلفة مع دفعات سدادها بتواريخها
+      const loansDetail = memberLoans.map((l) => {
+        const loanPays = allPayments
+          .filter((p) => p.loanId === l.id)
+          .sort((a, b) => new Date(a.paidAt ?? 0).getTime() - new Date(b.paidAt ?? 0).getTime());
+        const totalPaid = loanPays.reduce((s, p) => s + Number(p.amount), 0);
+        const remaining = l.status === "approved" ? Math.max(0, Number(l.amount) - totalPaid) : 0;
+        return {
+          id: l.id,
+          title: l.title,
+          type: l.type,
+          status: l.status,
+          amount: Number(l.amount),
+          borrowedAt: l.approvedAt ?? l.createdAt, // متى تسلّف
+          totalPaid: Number(totalPaid.toFixed(3)),
+          remaining: Number(remaining.toFixed(3)),
+          settled: l.status === "approved" && remaining <= 0.0005,
+          payments: loanPays.map((p) => ({ date: p.paidAt, amount: Number(p.amount), note: p.note })), // متى سدّد
+        };
+      });
+
+      const totalBorrowed = approvedLoans.reduce((s, l) => s + Number(l.amount), 0);
+      const totalRepaid = payments.reduce((s, p) => s + Number(p.amount), 0);
+      const currentDebt = Math.max(0, totalBorrowed - totalRepaid);
+
+      // شبكة المساهمات مجمعة بالسنوات
+      const contribYears = new Map<number, Array<{ month: number; amount: number; status: string }>>();
+      for (const c of contributions) {
+        if (!contribYears.has(c.year)) contribYears.set(c.year, []);
+        contribYears.get(c.year)!.push({ month: c.month, amount: Number(c.amount), status: c.status });
+      }
+      let contributionsByYear = Array.from(contribYears.entries())
+        .map(([year, months]) => ({ year, months: months.sort((a, b) => a.month - b.month) }))
+        .sort((a, b) => b.year - a.year);
+
+      // مرشح السنة (اختياري) — الأرصدة الجارية تبقى صحيحة لأنها حُسبت على كامل التاريخ
+      const filteredTimeline = filterYear
+        ? timeline.filter((e) => new Date(e.date).getFullYear() === filterYear)
+        : timeline;
+      if (filterYear) {
+        contributionsByYear = contributionsByYear.filter((y) => y.year === filterYear);
+      }
+
+      res.json({
+        member: { id: member.id, name: member.name, role: member.role },
+        generatedAt: new Date().toISOString(),
+        filterYear,
+        summary: {
+          totalContributed: Number(contributed.toFixed(3)), // كم له
+          totalBorrowed: Number(totalBorrowed.toFixed(3)),  // كم تسلّف إجمالاً
+          totalRepaid: Number(totalRepaid.toFixed(3)),      // كم سدّد
+          currentDebt: Number(currentDebt.toFixed(3)),      // كم عليه الآن بالضبط
+        },
+        timeline: filteredTimeline,
+        loans: loansDetail,
+        contributionsByYear,
+      });
+    } catch (error) {
+      console.error("Member statement error:", error);
+      res.status(500).json({ error: "تعذر إعداد كشف الحساب" });
+    }
+  });
+
   // بطاقة «يحتاج انتباهك» — تنبيهات تشغيلية للوصي
   app.get("/api/reports/alerts", isAuthenticated, isAdmin, async (_req, res) => {
     try {
