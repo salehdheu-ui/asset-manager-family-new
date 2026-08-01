@@ -86,6 +86,52 @@ export function availableInLayer(allocated: number, used: number): number {
 // السلفة التي تتجاوز هذا المبلغ (ر.ع) تتطلب تصويت العائلة قبل اعتماد الوصي
 export const LOAN_VOTE_THRESHOLD = 2000;
 
+// ــــ مهلة الاستحقاق الشهرية ــــ
+// التزام الشهر (مساهمة أو قسط) يُمهَل حتى نهاية يوم 26 من ذلك الشهر،
+// فلا يُحسب العضو متأخراً قبل مرور هذا التاريخ.
+export const MONTHLY_DUE_DAY = 26;
+
+// آخر لحظة سماح لالتزامات شهر معين
+export function monthDeadline(year: number, month: number): Date {
+  return new Date(year, month - 1, MONTHLY_DUE_DAY, 23, 59, 59, 999);
+}
+
+// هل مضت مهلة هذا الشهر؟ (أي أصبح التأخير محسوباً عليه)
+export function isMonthDue(year: number, month: number, now: Date = new Date()): boolean {
+  return now.getTime() > monthDeadline(year, month).getTime();
+}
+
+// عدد أشهر السنة التي مضت مهلتها حتى الآن — يُستخدم مقاماً لنسب الالتزام
+export function dueMonthsInYear(year: number, now: Date = new Date()): number {
+  if (year < now.getFullYear()) return 12;
+  if (year > now.getFullYear()) return 0;
+  const currentMonth = now.getMonth() + 1;
+  return isMonthDue(year, currentMonth, now) ? currentMonth : currentMonth - 1;
+}
+
+// آخر (count) شهراً مضت مهلتها — من الأحدث للأقدم
+export function recentDueMonths(now: Date = new Date(), count = 12): Array<{ year: number; month: number }> {
+  const months: Array<{ year: number; month: number }> = [];
+  // الشهر الجاري لا يدخل الحساب قبل مرور مهلته
+  let cursor = isMonthDue(now.getFullYear(), now.getMonth() + 1, now)
+    ? new Date(now.getFullYear(), now.getMonth(), 1)
+    : new Date(now.getFullYear(), now.getMonth() - 1, 1);
+
+  for (let i = 0; i < count; i++) {
+    months.push({ year: cursor.getFullYear(), month: cursor.getMonth() + 1 });
+    cursor = new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1);
+  }
+  return months;
+}
+
+// القسط يُعد متأخراً بعد الأبعد بين تاريخ استحقاقه ومهلة يوم 26 من شهره
+export function isInstallmentLate(dueDate: Date | string, now: Date = new Date()): boolean {
+  const due = new Date(dueDate);
+  const grace = monthDeadline(due.getFullYear(), due.getMonth() + 1);
+  const deadline = due.getTime() > grace.getTime() ? due : grace;
+  return now.getTime() > deadline.getTime();
+}
+
 export interface CommitmentInput {
   monthsConsidered: number;   // نافذة الحساب (عادة 12 شهراً)
   contributedMonths: number;  // أشهر ساهم فيها فعلاً (معتمدة)
