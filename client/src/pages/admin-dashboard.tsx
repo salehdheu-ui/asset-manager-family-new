@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import MobileLayout from "@/components/layout/MobileLayout";
 import { getAdminUsers, getMembers, updateUserRole, linkUserToMember, deleteUser, createUser, updateUserPassword, updateUser, resetSystem, lockYearAllocation, resetYearAllocation, getResetRequests, issueResetCode, rejectResetRequest, getAlerts, type ResetRequest, type SystemAlert } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
-import { Shield, Users, Trash2, UserCheck, Link, Crown, User as UserIcon, Plus, Key, Eye, EyeOff, RotateCcw, AlertTriangle, Lock, Landmark, ChevronLeft, KeyRound, Copy, Check, X, FileText } from "lucide-react";
+import { Shield, Users, Trash2, UserCheck, Link, Crown, User as UserIcon, Plus, Key, Eye, EyeOff, RotateCcw, AlertTriangle, Lock, Landmark, ChevronLeft, KeyRound, Copy, Check, X, FileText, TrendingUp } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -486,6 +486,21 @@ export default function AdminDashboard() {
           <div className="text-right">
             <p className="font-bold text-sm">منشئ التقارير — كشف حساب العضو</p>
             <p className="text-[11px] opacity-75">كم له، كم عليه، متى تسلّف ومتى سدّد — بالتفصيل</p>
+          </div>
+          <ChevronLeft className="w-5 h-5 mr-auto" />
+        </button>
+
+        <button
+          onClick={() => setLocation("/investments")}
+          className="w-full bg-purple-600 text-white py-4 rounded-2xl font-bold flex items-center gap-4 px-5 active:scale-95 transition-transform shadow-lg shadow-purple-600/20"
+          data-testid="button-goto-investments"
+        >
+          <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+            <TrendingUp className="w-5 h-5" />
+          </div>
+          <div className="text-right">
+            <p className="font-bold text-sm">الاستثمار والزكاة</p>
+            <p className="text-[11px] opacity-75">طبقة النمو، عوائد الاستثمار، وحساب الزكاة عند اكتمال الحول</p>
           </div>
           <ChevronLeft className="w-5 h-5 mr-auto" />
         </button>

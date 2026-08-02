@@ -128,6 +128,8 @@ export const familySettings = pgTable("family_settings", {
   growthPercent: integer("growth_percent").notNull().default(20),
   // الاشتراك الشهري الافتراضي لكل عضو لم يُحدد له مبلغ خاص
   defaultMonthlyContribution: decimal("default_monthly_contribution", { precision: 10, scale: 3 }).notNull().default("0"),
+  // نصاب الزكاة بالريال (قيمة 85 غراماً من الذهب — تتغير بتغير سعر الذهب)
+  zakatNisab: decimal("zakat_nisab", { precision: 12, scale: 3 }).notNull().default("0"),
   emergencyMode: boolean("emergency_mode").notNull().default(false),
   backupEnabled: boolean("backup_enabled").notNull().default(false),
   backupKeepDays: integer("backup_keep_days").notNull().default(7),
@@ -242,3 +244,66 @@ export const capitalAllocations = pgTable("capital_allocations", {
 export const insertCapitalAllocationSchema = createInsertSchema(capitalAllocations).omit({ id: true, lockedAt: true, resetAt: true, resetBy: true });
 export type InsertCapitalAllocation = z.infer<typeof insertCapitalAllocationSchema>;
 export type CapitalAllocation = typeof capitalAllocations.$inferSelect;
+
+// دورات الزكاة — كل دورة حول كامل على مال الصندوق
+export const zakatCycles = pgTable("zakat_cycles", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  cycleStart: timestamp("cycle_start").notNull(),
+  dueAt: timestamp("due_at"),                                              // متى اكتمل الحول فعلياً
+  netAssetsAtDue: decimal("net_assets_at_due", { precision: 12, scale: 3 }).notNull().default("0"),
+  nisabUsed: decimal("nisab_used", { precision: 12, scale: 3 }).notNull().default("0"),
+  amountDue: decimal("amount_due", { precision: 12, scale: 3 }).notNull().default("0"),
+  status: text("status").notNull().default("open"),                        // 'open' | 'due' | 'paid'
+  expenseId: varchar("expense_id").references(() => expenses.id),          // مصروف الزكاة عند الإخراج
+  paidAt: timestamp("paid_at"),
+  paidBy: varchar("paid_by"),
+  note: text("note"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type ZakatCycle = typeof zakatCycles.$inferSelect;
+
+// سجل الاستثمارات — تُموَّل من طبقة النمو
+export const investments = pgTable("investments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: text("title").notNull(),
+  type: text("type").notNull().default("other"),                           // 'property' | 'stocks' | 'project' | 'other'
+  amount: decimal("amount", { precision: 12, scale: 3 }).notNull(),        // المبلغ المستثمر
+  startedAt: timestamp("started_at").notNull(),
+  status: text("status").notNull().default("active"),                      // 'active' | 'exited'
+  exitedAt: timestamp("exited_at"),
+  exitValue: decimal("exit_value", { precision: 12, scale: 3 }),           // قيمة الخروج عند التصفية
+  note: text("note"),
+  createdAt: timestamp("created_at").defaultNow(),
+  createdBy: varchar("created_by"),
+});
+
+export const insertInvestmentSchema = createInsertSchema(investments)
+  .omit({ id: true, createdAt: true, exitedAt: true, exitValue: true })
+  .extend({
+    type: z.enum(["property", "stocks", "project", "other"]).default("other"),
+    amount: z.string().refine((value) => Number(value) > 0, "المبلغ يجب أن يكون أكبر من صفر"),
+    startedAt: z.coerce.date(),
+  });
+export type InsertInvestment = z.infer<typeof insertInvestmentSchema>;
+export type Investment = typeof investments.$inferSelect;
+
+// تقييمات دورية للاستثمار — لرسم منحنى العائد
+export const investmentValuations = pgTable("investment_valuations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  investmentId: varchar("investment_id").notNull().references(() => investments.id, { onDelete: "cascade" }),
+  valuedAt: timestamp("valued_at").notNull(),
+  value: decimal("value", { precision: 12, scale: 3 }).notNull(),
+  note: text("note"),
+  createdAt: timestamp("created_at").defaultNow(),
+  createdBy: varchar("created_by"),
+});
+
+export const insertInvestmentValuationSchema = createInsertSchema(investmentValuations)
+  .omit({ id: true, createdAt: true })
+  .extend({
+    value: z.string().refine((value) => Number(value) >= 0, "القيمة لا يمكن أن تكون سالبة"),
+    valuedAt: z.coerce.date(),
+  });
+export type InsertInvestmentValuation = z.infer<typeof insertInvestmentValuationSchema>;
+export type InvestmentValuation = typeof investmentValuations.$inferSelect;

@@ -726,3 +726,104 @@ export async function getChartData(type: string, period?: string): Promise<Chart
   if (!res.ok) await parseFetchError(res);
   return res.json();
 }
+
+// ــــ الزكاة ــــ
+export interface ZakatCycle {
+  id: string;
+  cycleStart: string;
+  dueAt: string | null;
+  netAssetsAtDue: string;
+  nisabUsed: string;
+  amountDue: string;
+  status: "open" | "due" | "paid";
+  expenseId: string | null;
+  paidAt: string | null;
+  note: string | null;
+}
+
+export interface ZakatStatus {
+  nisab: number;
+  hawlDays: number;
+  netAssets: number;
+  currentCycle: (ZakatCycle & { hawlComplete: boolean; daysRemaining: number }) | null;
+  estimate: { netAssets: number; nisab: number; reachesNisab: boolean; amount: number };
+  history: ZakatCycle[];
+}
+
+export async function getZakatStatus(): Promise<ZakatStatus> {
+  const res = await fetch("/api/zakat", { credentials: "include" });
+  if (!res.ok) await parseFetchError(res);
+  return res.json();
+}
+
+export async function startZakatCycle(data: { cycleStart?: string; note?: string | null } = {}): Promise<ZakatCycle> {
+  const res = await apiRequest("POST", "/api/zakat/cycles", data);
+  return res.json();
+}
+
+export async function payZakat(cycleId: string, data: { amount?: string; title?: string; note?: string | null } = {}): Promise<{ cycle: ZakatCycle }> {
+  const res = await apiRequest("POST", `/api/zakat/cycles/${cycleId}/pay`, data);
+  return res.json();
+}
+
+// ــــ الاستثمارات ــــ
+export interface InvestmentValuation {
+  id: string;
+  investmentId: string;
+  valuedAt: string;
+  value: string;
+  note: string | null;
+}
+
+export interface InvestmentRow {
+  id: string;
+  title: string;
+  type: "property" | "stocks" | "project" | "other";
+  amount: string;
+  startedAt: string;
+  status: "active" | "exited";
+  exitedAt: string | null;
+  exitValue: string | null;
+  note: string | null;
+  currentValue: number;
+  gain: number;
+  returnPercent: number;
+  valuations: InvestmentValuation[];
+}
+
+export interface InvestmentsResponse {
+  investments: InvestmentRow[];
+  totals: { invested: number; currentValue: number; realizedGain: number };
+  growthLayer: { amount: number; percent: number; used: number; available: number };
+}
+
+export async function getInvestments(): Promise<InvestmentsResponse> {
+  const res = await fetch("/api/investments", { credentials: "include" });
+  if (!res.ok) await parseFetchError(res);
+  return res.json();
+}
+
+export async function createInvestment(data: {
+  title: string;
+  type: string;
+  amount: string;
+  startedAt: string;
+  note?: string | null;
+}): Promise<InvestmentRow> {
+  const res = await apiRequest("POST", "/api/investments", data);
+  return res.json();
+}
+
+export async function addInvestmentValuation(id: string, data: { value: string; valuedAt: string; note?: string | null }): Promise<InvestmentValuation> {
+  const res = await apiRequest("POST", `/api/investments/${id}/valuations`, data);
+  return res.json();
+}
+
+export async function exitInvestment(id: string, data: { exitValue: string; note?: string | null }): Promise<{ gain: number; returnPercent: number }> {
+  const res = await apiRequest("POST", `/api/investments/${id}/exit`, data);
+  return res.json();
+}
+
+export async function deleteInvestment(id: string): Promise<void> {
+  await apiRequest("DELETE", `/api/investments/${id}`);
+}

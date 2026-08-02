@@ -4,9 +4,13 @@ import {
   buildRepaymentSchedule,
   computeArrears,
   computeCommitmentScore,
+  computeInvestmentReturn,
   computeMemberShares,
   computeNetAssets,
+  computeZakat,
+  daysUntilHawl,
   dueMonthsInYear,
+  isHawlComplete,
   isInstallmentLate,
   isMonthDue,
   projectCashflow,
@@ -227,5 +231,51 @@ describe("projectCashflow", () => {
     expect(result[0].projectedBalance).toBe(1100);
     expect(result[1].projectedBalance).toBe(1250);
     expect(result[1].scheduledRepayments).toBe(50);
+  });
+});
+
+describe("الزكاة", () => {
+  it("لا زكاة على مال دون النصاب", () => {
+    const r = computeZakat(500, 1000);
+    expect(r.reachesNisab).toBe(false);
+    expect(r.amount).toBe(0);
+  });
+
+  it("ربع العشر على ما بلغ النصاب", () => {
+    const r = computeZakat(10000, 1000);
+    expect(r.reachesNisab).toBe(true);
+    expect(r.amount).toBe(250); // 2.5٪
+  });
+
+  it("بلوغ النصاب بالضبط توجب الزكاة", () => {
+    expect(computeZakat(1000, 1000).amount).toBe(25);
+  });
+
+  it("نصاب غير محدد يوقف الحساب بدل إخراج رقم عشوائي", () => {
+    const r = computeZakat(10000, 0);
+    expect(r.reachesNisab).toBe(false);
+    expect(r.amount).toBe(0);
+  });
+
+  it("الحول يكتمل بعد 354 يوماً لا قبلها", () => {
+    const start = new Date(2026, 0, 1);
+    expect(isHawlComplete(start, new Date(2026, 11, 1))).toBe(false); // 334 يوماً
+    expect(daysUntilHawl(start, new Date(2026, 11, 1))).toBe(20);
+    expect(isHawlComplete(start, new Date(2026, 11, 21, 12))).toBe(true);
+    expect(daysUntilHawl(start, new Date(2026, 11, 21, 12))).toBe(0);
+  });
+});
+
+describe("عائد الاستثمار", () => {
+  it("يحسب الربح ونسبته", () => {
+    expect(computeInvestmentReturn({ amount: 1000, currentValue: 1250 })).toEqual({ gain: 250, returnPercent: 25 });
+  });
+
+  it("يحسب الخسارة بإشارة سالبة", () => {
+    expect(computeInvestmentReturn({ amount: 1000, currentValue: 800 })).toEqual({ gain: -200, returnPercent: -20 });
+  });
+
+  it("استثمار بصفر لا يقسم على صفر", () => {
+    expect(computeInvestmentReturn({ amount: 0, currentValue: 0 }).returnPercent).toBe(0);
   });
 });

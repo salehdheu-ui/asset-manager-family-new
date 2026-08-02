@@ -49,6 +49,7 @@ export default function FamilySettings() {
   const queryClient = useQueryClient();
   const [familyName, setFamilyName] = useState(() => localStorage.getItem("familyName") || "عائلة السعيدي");
   const [defaultMonthly, setDefaultMonthly] = useState("");
+  const [zakatNisab, setZakatNisab] = useState("");
   const [backupEnabled, setBackupEnabled] = useState(false);
   const [backupKeepDays, setBackupKeepDays] = useState(7);
   const [backupKeepWeeksPerMonth, setBackupKeepWeeksPerMonth] = useState(4);
@@ -73,6 +74,7 @@ export default function FamilySettings() {
     if (!settings) return;
     setFamilyName(settings.familyName || "صندوق العائلة");
     setDefaultMonthly(settings.defaultMonthlyContribution ? String(Number(settings.defaultMonthlyContribution)) : "");
+    setZakatNisab(settings.zakatNisab ? String(Number(settings.zakatNisab)) : "");
     setBackupEnabled(settings.backupEnabled ?? false);
     setBackupKeepDays(settings.backupKeepDays ?? 7);
     setBackupKeepWeeksPerMonth(settings.backupKeepWeeksPerMonth ?? 4);
@@ -88,6 +90,7 @@ export default function FamilySettings() {
       updateSettings({
         familyName,
         defaultMonthlyContribution: defaultMonthly.trim() ? defaultMonthly.trim() : "0",
+        zakatNisab: zakatNisab.trim() ? zakatNisab.trim() : "0",
         backupEnabled,
         backupKeepDays,
         backupKeepWeeksPerMonth,
@@ -254,6 +257,28 @@ export default function FamilySettings() {
             </div>
             <p className="text-[11px] text-muted-foreground leading-relaxed">
               يُستخدم لحساب المتأخرات بالريال لكل عضو لم يُحدد له مبلغ خاص من صفحة الأعضاء. اتركه صفراً لتعطيل حساب المتأخرات.
+            </p>
+          </div>
+
+          <div className="space-y-2 pt-2 border-t border-border/50">
+            <label className="text-sm font-bold flex items-center gap-2">
+              <Wallet className="w-4 h-4 text-purple-500" />
+              نصاب الزكاة
+            </label>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                step="0.001"
+                value={zakatNisab}
+                onChange={(e) => setZakatNisab(e.target.value)}
+                className="flex-1 font-mono p-3 border rounded-xl focus:ring-2 focus:ring-primary/20 outline-none bg-background"
+                placeholder="0.000"
+                data-testid="input-zakat-nisab"
+              />
+              <span className="text-sm text-muted-foreground font-bold">ر.ع</span>
+            </div>
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
+              قيمة 85 غراماً من الذهب بالريال العُماني — تتغير بتغير سعر الذهب، فحدّثها عند حلول الحول. اتركها صفراً ليتوقف حساب الزكاة.
             </p>
           </div>
 

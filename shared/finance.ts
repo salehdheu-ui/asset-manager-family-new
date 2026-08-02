@@ -273,3 +273,59 @@ export function projectCashflow(opts: {
     };
   });
 }
+
+// ــــ الزكاة ــــ
+export const ZAKAT_RATE = 0.025;        // ربع العشر
+export const HAWL_DAYS = 354;           // السنة القمرية تقريباً — تبسيط موثّق بدل حساب هجري كامل
+
+export interface ZakatResult {
+  netAssets: number;
+  nisab: number;
+  reachesNisab: boolean;   // هل بلغ المال النصاب؟
+  amount: number;          // الواجب إخراجه
+}
+
+// الزكاة 2.5٪ من صافي الأصول، ولا تجب إن لم يبلغ المال النصاب
+export function computeZakat(netAssets: number, nisab: number): ZakatResult {
+  const assets = Math.max(0, netAssets);
+  const reachesNisab = nisab > 0 && assets >= nisab;
+  return {
+    netAssets: Number(assets.toFixed(3)),
+    nisab: Number(Math.max(0, nisab).toFixed(3)),
+    reachesNisab,
+    amount: reachesNisab ? Number((assets * ZAKAT_RATE).toFixed(3)) : 0,
+  };
+}
+
+// اكتمال الحول: مرور سنة قمرية على بداية الدورة
+export function isHawlComplete(cycleStart: Date | string, now: Date = new Date()): boolean {
+  return daysSince(cycleStart, now) >= HAWL_DAYS;
+}
+
+// الأيام المتبقية لاكتمال الحول (صفر إن اكتمل)
+export function daysUntilHawl(cycleStart: Date | string, now: Date = new Date()): number {
+  return Math.max(0, Math.ceil(HAWL_DAYS - daysSince(cycleStart, now)));
+}
+
+function daysSince(from: Date | string, now: Date): number {
+  return (now.getTime() - new Date(from).getTime()) / (1000 * 60 * 60 * 24);
+}
+
+// ــــ الاستثمار ــــ
+export interface InvestmentReturnInput {
+  amount: number;          // المبلغ المستثمر
+  currentValue: number;    // آخر تقييم (أو قيمة الخروج)
+}
+
+export interface InvestmentReturn {
+  gain: number;            // الربح أو الخسارة بالريال
+  returnPercent: number;   // نسبته من رأس المال المستثمر
+}
+
+export function computeInvestmentReturn(input: InvestmentReturnInput): InvestmentReturn {
+  const gain = input.currentValue - input.amount;
+  return {
+    gain: Number(gain.toFixed(3)),
+    returnPercent: input.amount > 0 ? Number(((gain / input.amount) * 100).toFixed(2)) : 0,
+  };
+}

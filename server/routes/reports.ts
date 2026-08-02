@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { storage } from "../storage";
 import { isAuthenticated, isAdmin } from "../auth";
 import { computeDashboardSummary } from "../services/dashboard";
-import { computeCommitmentScore, projectCashflow, dueMonthsInYear, isInstallmentLate, recentDueMonths, MONTHLY_DUE_DAY, computeArrears, computeMemberShares } from "@shared/finance";
+import { computeCommitmentScore, projectCashflow, dueMonthsInYear, isInstallmentLate, recentDueMonths, MONTHLY_DUE_DAY, computeArrears, computeMemberShares, computeZakat, isHawlComplete } from "@shared/finance";
 import { rebalanceYear } from "../capital-engine";
 
 export function registerReportRoutes(app: Express) {
@@ -432,6 +432,24 @@ export function registerReportRoutes(app: Express) {
           severity: "medium",
           title: "احتياطي الطوارئ استُهلك أكثر من نصفه",
           detail: `المتاح ${allocation.emergency.available.toFixed(3)} ر.ع من أصل ${allocation.emergency.amount.toFixed(3)}`,
+        });
+      }
+
+      // وجوب الزكاة — دورة اكتمل حولها ولم تُخرج زكاتها بعد
+      const openCycle = await storage.getOpenZakatCycle();
+      if (openCycle && isHawlComplete(openCycle.cycleStart, now)) {
+        const nisab = Number(settings?.zakatNisab ?? 0);
+        const zakat = computeZakat(allocation.netAssets, nisab);
+        alerts.push({
+          severity: "high",
+          title: zakat.reachesNisab
+            ? `وجبت زكاة الصندوق: ${zakat.amount.toFixed(3)} ر.ع`
+            : "اكتمل حول الزكاة",
+          detail: nisab <= 0
+            ? "حدّد قيمة النصاب في الإعدادات ليحسب النظام الزكاة الواجبة"
+            : zakat.reachesNisab
+              ? `2.5٪ من صافي أصول ${zakat.netAssets.toFixed(3)} ر.ع — النصاب ${zakat.nisab.toFixed(3)} ر.ع`
+              : `صافي الأصول (${zakat.netAssets.toFixed(3)} ر.ع) دون النصاب (${zakat.nisab.toFixed(3)} ر.ع) — لا زكاة`,
         });
       }
 
