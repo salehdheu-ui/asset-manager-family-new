@@ -21,7 +21,7 @@ export function registerSettingsRoutes(app: Express) {
     }
   });
 
-  app.patch("/api/settings", isAuthenticated, isAdmin, async (req: any, res) => {
+  app.patch("/api/settings", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const data = insertFamilySettingsSchema.partial().parse(req.body);
       const previousSettings = await storage.getFamilySettings();

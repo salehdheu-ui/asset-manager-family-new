@@ -6,7 +6,7 @@ import { isAuthenticated, isAdmin } from "../auth";
 import { zodErrorResponse } from "../validation";
 
 export function registerMemberRoutes(app: Express) {
-  app.get("/api/members", isAuthenticated, async (req: any, res) => {
+  app.get("/api/members", isAuthenticated, async (req, res) => {
     try {
       const members = await storage.getMembers();
       if (req.user?.role !== 'admin') {

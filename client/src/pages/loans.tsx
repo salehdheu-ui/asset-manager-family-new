@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import MobileLayout from "@/components/layout/MobileLayout";
-import { getLoans, getMembers, createLoan, updateLoan, updateLoanStatus, deleteLoan, getLoanRepayments, markRepaymentPaid, getDashboardSummary, getLoanPayments, createLoanPayment, getCommitmentScores, getLoanVotes, castLoanVote } from "@/lib/api";
+import { getLoans, getMembers, createLoan, updateLoan, updateLoanStatus, deleteLoan, getLoanRepayments, markRepaymentPaid, getDashboardSummary, getLoanPayments, createLoanPayment, getCommitmentScores } from "@/lib/api";
 import { LOAN_VOTE_THRESHOLD } from "@shared/finance";
+import { extractErrorMessage } from "@/lib/errors";
+import LoanVoteBox from "@/components/loans/LoanVoteBox";
 import { useAuth } from "@/hooks/use-auth";
-import { HandCoins, Clock, AlertCircle, CheckCircle2, History, UserCheck, Trash2, X, Calendar, ChevronDown, ChevronUp, RotateCcw, Pencil, BarChart3, Vote, ThumbsUp, ThumbsDown, Gauge } from "lucide-react";
+import { HandCoins, Clock, AlertCircle, CheckCircle2, History, UserCheck, Trash2, X, Calendar, ChevronDown, ChevronUp, RotateCcw, Pencil, BarChart3, Gauge } from "lucide-react";
 import { Link } from "wouter";
 import {
   AlertDialog,
@@ -28,101 +30,8 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 
-function extractErrorMessage(error: unknown): string {
-  if (error instanceof Error) {
-    if (error.message === "Failed to fetch") {
-      return "تعذر الاتصال بالخادم. حاول تحديث الصفحة ثم أعد المحاولة.";
-    }
-    try {
-      const match = error.message.match(/^\d+:\s*([\s\S]+)$/);
-      if (match) {
-        const parsed = JSON.parse(match[1]);
-        if (typeof parsed.error === "string") return parsed.error;
-        if (Array.isArray(parsed.error) && parsed.error[0]?.message) return parsed.error[0].message;
-        if (typeof parsed.message === "string") return parsed.message;
-      }
-    } catch {}
-    return error.message;
-  }
-  return "حدث خطأ غير متوقع";
-}
 
 // صندوق تصويت العائلة على السلف الكبيرة
-function LoanVoteBox({ loanId }: { loanId: string }) {
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-  const { data: tally } = useQuery({
-    queryKey: ["loan-votes", loanId],
-    queryFn: () => getLoanVotes(loanId),
-  });
-
-  const voteMutation = useMutation({
-    mutationFn: (vote: "approve" | "reject") => castLoanVote(loanId, vote),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["loan-votes", loanId] });
-      toast({ title: "سُجّل صوتك" });
-    },
-    onError: (error) => {
-      toast({ title: "تعذر التصويت", description: extractErrorMessage(error), variant: "destructive" });
-    },
-  });
-
-  if (!tally) return null;
-
-  return (
-    <div className="rounded-2xl border border-violet-200 bg-violet-50/60 p-3 space-y-2" data-testid={`vote-box-${loanId}`}>
-      <div className="flex items-center gap-2 text-violet-700">
-        <Vote className="w-4 h-4" />
-        <span className="text-[11px] font-bold">سلفة كبيرة — تتطلب تصويت العائلة</span>
-        {tally.passed && (
-          <span className="mr-auto rounded-full bg-emerald-100 px-2 py-0.5 text-[9px] font-bold text-emerald-700">اكتمل النصاب ✓</span>
-        )}
-      </div>
-      <div className="flex items-center justify-between text-[10px] font-bold">
-        <span className="text-emerald-700">موافقون: {tally.approve} / {tally.required} المطلوبين</span>
-        <span className="text-red-600">رافضون: {tally.reject}</span>
-      </div>
-      <div className="h-1.5 rounded-full bg-violet-100 overflow-hidden">
-        <div
-          className="h-full rounded-full bg-emerald-500 transition-all"
-          style={{ width: `${Math.min(100, (tally.approve / Math.max(1, tally.required)) * 100)}%` }}
-        />
-      </div>
-      {tally.canVote && (
-        <div className="flex gap-2 pt-1">
-          <button
-            onClick={() => voteMutation.mutate("approve")}
-            disabled={voteMutation.isPending}
-            className={cn(
-              "flex-1 py-2 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50",
-              tally.myVote === "approve" ? "bg-emerald-600 text-white" : "bg-emerald-100 text-emerald-700 hover:bg-emerald-200",
-            )}
-            data-testid={`button-vote-approve-${loanId}`}
-          >
-            <ThumbsUp className="w-3.5 h-3.5" /> {tally.myVote === "approve" ? "صوتّ بالموافقة" : "أوافق"}
-          </button>
-          <button
-            onClick={() => voteMutation.mutate("reject")}
-            disabled={voteMutation.isPending}
-            className={cn(
-              "flex-1 py-2 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50",
-              tally.myVote === "reject" ? "bg-red-600 text-white" : "bg-red-100 text-red-700 hover:bg-red-200",
-            )}
-            data-testid={`button-vote-reject-${loanId}`}
-          >
-            <ThumbsDown className="w-3.5 h-3.5" /> {tally.myVote === "reject" ? "صوتّ بالرفض" : "أرفض"}
-          </button>
-        </div>
-      )}
-      {tally.voters && tally.voters.length > 0 && (
-        <p className="text-[9px] text-muted-foreground pt-1">
-          {tally.voters.map((v) => `${v.name} (${v.vote === "approve" ? "موافق" : "رافض"})`).join("، ")}
-        </p>
-      )}
-    </div>
-  );
-}
-
 export default function Loans() {
   const { toast } = useToast();
   const queryClient = useQueryClient();

@@ -254,7 +254,7 @@ export async function setupAuth(app: Express) {
   });
 
   // الوصي: إصدار كود مؤقت — يظهر الكود مرة واحدة فقط ليرسله الوصي للعضو
-  app.post("/api/admin/reset-requests/:id/issue", isAdmin, async (req: any, res) => {
+  app.post("/api/admin/reset-requests/:id/issue", isAdmin, async (req, res) => {
     try {
       const request = await storage.getResetRequest(req.params.id as string);
       if (!request) {
@@ -299,7 +299,7 @@ export async function setupAuth(app: Express) {
   });
 
   // الوصي: رفض طلب استعادة
-  app.post("/api/admin/reset-requests/:id/reject", isAdmin, async (req: any, res) => {
+  app.post("/api/admin/reset-requests/:id/reject", isAdmin, async (req, res) => {
     try {
       const request = await storage.getResetRequest(req.params.id as string);
       if (!request) {

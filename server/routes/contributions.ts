@@ -8,7 +8,7 @@ import { rebalanceYear } from "../capital-engine";
 import { zodErrorResponse } from "../validation";
 
 export function registerContributionRoutes(app: Express) {
-  app.get("/api/contributions", isAuthenticated, async (req: any, res) => {
+  app.get("/api/contributions", isAuthenticated, async (req, res) => {
     try {
       const year = req.query.year ? Number(req.query.year) : undefined;
       const memberId = req.query.memberId as string | undefined;
@@ -69,7 +69,7 @@ export function registerContributionRoutes(app: Express) {
     }
   });
 
-  app.patch("/api/contributions/:id/approve", isAuthenticated, isAdmin, async (req: any, res) => {
+  app.patch("/api/contributions/:id/approve", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const contribId = req.params.id as string;
       const contribution = await storage.approveContribution(contribId);
@@ -103,7 +103,7 @@ export function registerContributionRoutes(app: Express) {
     }
   });
 
-  app.delete("/api/contributions/:id", isAuthenticated, isAdmin, async (req: any, res) => {
+  app.delete("/api/contributions/:id", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const contribId = req.params.id as string;
       const deletedContribution = await storage.deleteContribution(contribId);

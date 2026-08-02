@@ -13,7 +13,7 @@ export function registerAllocationRoutes(app: Express) {
     }
   });
 
-  app.post("/api/allocation/:year/lock", isAuthenticated, isAdmin, async (req: any, res) => {
+  app.post("/api/allocation/:year/lock", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const year = Number(req.params.year);
       const allocation = await lockYearAllocation(year);
@@ -23,9 +23,12 @@ export function registerAllocationRoutes(app: Express) {
     }
   });
 
-  app.post("/api/allocation/:year/reset", isAuthenticated, isAdmin, async (req: any, res) => {
+  app.post("/api/allocation/:year/reset", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const year = Number(req.params.year);
+      if (!req.user) {
+        return res.status(401).json({ error: "غير مصرح" });
+      }
       const allocation = await resetYearAllocation(year, req.user.id);
       res.json(allocation);
     } catch (error) {
