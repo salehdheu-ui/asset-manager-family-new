@@ -64,7 +64,7 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
   const activeDesc = activeItem?.desc || "واجهة متابعة مبسطة ومهيأة للجوال";
 
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden flex flex-col mx-auto max-w-md shadow-[0_20px_60px_rgba(16,24,40,0.08)] lg:max-w-none lg:flex-row lg:shadow-none">
+    <div className="min-h-screen bg-background relative overflow-hidden flex flex-col mx-auto max-w-md shadow-[0_20px_60px_rgba(16,24,40,0.08)] lg:max-w-none lg:flex-row lg:bg-muted/30 lg:shadow-none">
       {/* Background Texture */}
       <div 
         className="absolute inset-0 opacity-[0.03] pointer-events-none z-0"
@@ -118,7 +118,7 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
         </button>
       </aside>
 
-      <div className="relative z-10 flex flex-1 flex-col min-w-0">
+      <div className="relative z-10 flex flex-1 flex-col min-w-0 lg:mx-auto lg:my-6 lg:h-fit lg:min-h-[calc(100vh-3rem)] lg:w-full lg:max-w-md lg:rounded-[2rem] lg:bg-background lg:shadow-[0_20px_60px_rgba(16,24,40,0.10)] lg:overflow-hidden">
       {/* Header */}
       <header className="relative z-10 px-5 pt-8 pb-4 bg-gradient-to-b from-background via-background/95 to-transparent shrink-0">
         <div className="flex items-center justify-between">
@@ -271,7 +271,7 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
       </AnimatePresence>
 
       {/* Main Content */}
-      <main className="relative z-10 flex-1 px-5 pb-24 overflow-y-auto scrollbar-hide lg:px-10 lg:pb-12 lg:w-full lg:max-w-5xl lg:mx-auto">
+      <main className="relative z-10 flex-1 px-5 pb-24 overflow-y-auto scrollbar-hide lg:pb-8">
         {children}
       </main>
 
