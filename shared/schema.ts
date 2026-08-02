@@ -307,3 +307,57 @@ export const insertInvestmentValuationSchema = createInsertSchema(investmentValu
   });
 export type InsertInvestmentValuation = z.infer<typeof insertInvestmentValuationSchema>;
 export type InvestmentValuation = typeof investmentValuations.$inferSelect;
+
+// اقتراحات العائلة — تعميم محرك التصويت خارج السلف
+export const proposals = pgTable("proposals", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: text("title").notNull(),
+  category: text("category").notNull().default("general"), // 'allocation' | 'expense' | 'investment' | 'general'
+  description: text("description"),
+  amount: decimal("amount", { precision: 12, scale: 3 }),  // إن كان للاقتراح أثر مالي
+  status: text("status").notNull().default("open"),        // 'open' | 'approved' | 'rejected' | 'cancelled'
+  closesAt: timestamp("closes_at"),
+  decidedAt: timestamp("decided_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  createdBy: varchar("created_by"),
+  createdByName: text("created_by_name"),
+});
+
+export const insertProposalSchema = createInsertSchema(proposals)
+  .omit({ id: true, createdAt: true, decidedAt: true, status: true })
+  .extend({
+    category: z.enum(["allocation", "expense", "investment", "general"]).default("general"),
+    title: z.string().min(3, "العنوان قصير جداً").max(200),
+    amount: z.string().nullable().optional(),
+    closesAt: z.coerce.date().nullable().optional(),
+  });
+export type InsertProposal = z.infer<typeof insertProposalSchema>;
+export type Proposal = typeof proposals.$inferSelect;
+
+export const proposalVotes = pgTable("proposal_votes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  proposalId: varchar("proposal_id").notNull().references(() => proposals.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull(),
+  voterName: text("voter_name").notNull(),
+  vote: text("vote").notNull(), // 'approve' | 'reject'
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  proposalUserUnique: uniqueIndex("proposal_votes_proposal_user_unique").on(table.proposalId, table.userId),
+}));
+
+export type ProposalVote = typeof proposalVotes.$inferSelect;
+
+// مرفقات الإيصالات — تُحفظ في قاعدة البيانات لا على القرص (قرص النشر مؤقت وتضيع الملفات)
+export const attachments = pgTable("attachments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  entityType: text("entity_type").notNull(),   // 'contribution' | 'expense' | 'loan_payment' | 'investment'
+  entityId: varchar("entity_id").notNull(),
+  fileName: text("file_name").notNull(),
+  mimeType: text("mime_type").notNull(),
+  sizeBytes: integer("size_bytes").notNull(),
+  content: text("content").notNull(),          // base64
+  createdAt: timestamp("created_at").defaultNow(),
+  createdBy: varchar("created_by"),
+});
+
+export type Attachment = typeof attachments.$inferSelect;

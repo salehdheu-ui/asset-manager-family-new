@@ -27,6 +27,7 @@ const AuditLog = lazy(() => import("@/pages/audit-log"));
 const AnnualReport = lazy(() => import("@/pages/annual-report"));
 const ReportBuilder = lazy(() => import("@/pages/report-builder"));
 const Investments = lazy(() => import("@/pages/investments"));
+const Proposals = lazy(() => import("@/pages/proposals"));
 
 function PageLoader() {
   return (
@@ -75,6 +76,7 @@ function Router() {
         <Route path="/annual-report">{() => <AdminRoute component={AnnualReport} />}</Route>
         <Route path="/report-builder">{() => <AdminRoute component={ReportBuilder} />}</Route>
         <Route path="/investments">{() => <AdminRoute component={Investments} />}</Route>
+        <Route path="/proposals">{() => <ProtectedRoute component={Proposals} />}</Route>
         <Route component={NotFound} />
       </Switch>
     </Suspense>

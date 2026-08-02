@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import MobileLayout from "@/components/layout/MobileLayout";
+import AttachmentBox from "@/components/AttachmentBox";
 import { getExpenses, createExpense, deleteExpense, getDashboardSummary } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
 import { Wallet, Heart, Scale, ArrowUpRight, TrendingDown, History, Trash2 } from "lucide-react";
@@ -295,6 +296,10 @@ export default function Expenses() {
                       </div>
                     </div>
                   </div>
+                  <div className="pt-3 mt-3 border-t border-border/40">
+                    <AttachmentBox entityType="expense" entityId={expense.id} canDelete label="الفاتورة أو الإيصال" />
+                  </div>
+
                   <button 
                     onClick={() => deleteMutation.mutate(expense.id)}
                     disabled={deleteMutation.isPending}

@@ -9,3 +9,5 @@ export { registerAllocationRoutes } from "./allocation";
 export { registerReportRoutes } from "./reports";
 export { registerZakatRoutes } from "./zakat";
 export { registerInvestmentRoutes } from "./investments";
+export { registerProposalRoutes } from "./proposals";
+export { registerAttachmentRoutes } from "./attachments";

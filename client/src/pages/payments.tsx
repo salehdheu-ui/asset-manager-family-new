@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import MobileLayout from "@/components/layout/MobileLayout";
+import AttachmentBox from "@/components/AttachmentBox";
 import { getMembers, getContributions, createContribution, approveContribution, deleteContribution } from "@/lib/api";
 import { MONTHLY_DUE_DAY } from "@shared/finance";
 import { useAuth } from "@/hooks/use-auth";
@@ -560,6 +561,12 @@ export default function YearlyPaymentMatrix() {
                                     <div className="text-4xl font-mono font-bold tracking-tighter">{amount.toLocaleString()} <span className="text-base font-sans font-normal">ر.ع</span></div>
                                     <p className="text-sm font-bold opacity-80">تم الاعتماد والتوثيق</p>
                                   </div>
+
+                                  {contribution && (
+                                    <div className="bg-muted/30 rounded-2xl p-4">
+                                      <AttachmentBox entityType="contribution" entityId={contribution.id} canDelete={isGuardian} label="إثبات التحويل" />
+                                    </div>
+                                  )}
 
                                   {isGuardian && contribution && (
                                     <>

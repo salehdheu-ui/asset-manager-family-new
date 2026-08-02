@@ -827,3 +827,98 @@ export async function exitInvestment(id: string, data: { exitValue: string; note
 export async function deleteInvestment(id: string): Promise<void> {
   await apiRequest("DELETE", `/api/investments/${id}`);
 }
+
+// ــــ اقتراحات العائلة ــــ
+export interface ProposalRow {
+  id: string;
+  title: string;
+  category: "allocation" | "expense" | "investment" | "general";
+  description: string | null;
+  amount: string | null;
+  status: "open" | "approved" | "rejected" | "cancelled";
+  closesAt: string | null;
+  decidedAt: string | null;
+  createdAt: string;
+  createdByName: string | null;
+  approve: number;
+  reject: number;
+  eligible: number;
+  required: number;
+  passed: boolean;
+  myVote: "approve" | "reject" | null;
+  voters: Array<{ name: string; vote: string }>;
+}
+
+export async function getProposals(): Promise<ProposalRow[]> {
+  const res = await fetch("/api/proposals", { credentials: "include" });
+  if (!res.ok) await parseFetchError(res);
+  return res.json();
+}
+
+export async function createProposal(data: {
+  title: string;
+  category: string;
+  description?: string | null;
+  amount?: string | null;
+  closesAt?: string | null;
+}): Promise<ProposalRow> {
+  const res = await apiRequest("POST", "/api/proposals", data);
+  return res.json();
+}
+
+export async function voteProposal(id: string, vote: "approve" | "reject"): Promise<{ approve: number; reject: number; required: number; passed: boolean }> {
+  const res = await apiRequest("POST", `/api/proposals/${id}/vote`, { vote });
+  return res.json();
+}
+
+export async function closeProposal(id: string, status: "rejected" | "cancelled" = "rejected"): Promise<ProposalRow> {
+  const res = await apiRequest("POST", `/api/proposals/${id}/close`, { status });
+  return res.json();
+}
+
+// ــــ المرفقات (إيصالات وفواتير) ــــ
+export interface AttachmentMeta {
+  id: string;
+  entityType: string;
+  entityId: string;
+  fileName: string;
+  mimeType: string;
+  sizeBytes: number;
+  createdAt: string;
+}
+
+export async function getAttachments(entityType: string, entityId: string): Promise<AttachmentMeta[]> {
+  const url = new URL("/api/attachments", window.location.origin);
+  url.searchParams.set("entityType", entityType);
+  url.searchParams.set("entityId", entityId);
+  const res = await fetch(url.toString(), { credentials: "include" });
+  if (!res.ok) await parseFetchError(res);
+  return res.json();
+}
+
+// يقرأ الملف في المتصفح ويرسله base64 — التخزين في قاعدة البيانات لا على القرص
+export async function uploadAttachment(entityType: string, entityId: string, file: File): Promise<AttachmentMeta> {
+  const content = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result).split(",")[1] ?? "");
+    reader.onerror = () => reject(new Error("تعذرت قراءة الملف"));
+    reader.readAsDataURL(file);
+  });
+
+  const res = await apiRequest("POST", "/api/attachments", {
+    entityType,
+    entityId,
+    fileName: file.name,
+    mimeType: file.type,
+    content,
+  });
+  return res.json();
+}
+
+export function attachmentUrl(id: string) {
+  return `/api/attachments/${id}/download`;
+}
+
+export async function deleteAttachment(id: string): Promise<void> {
+  await apiRequest("DELETE", `/api/attachments/${id}`);
+}
