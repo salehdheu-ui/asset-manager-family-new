@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   availableInLayer,
   buildRepaymentSchedule,
+  computeArrears,
   computeCommitmentScore,
+  computeMemberShares,
   computeNetAssets,
   dueMonthsInYear,
   isInstallmentLate,
@@ -146,6 +148,71 @@ describe("مهلة يوم 26 من الشهر", () => {
     const due = new Date(2026, 7, 28); // مستحق 28 أغسطس
     expect(isInstallmentLate(due, new Date(2026, 7, 27))).toBe(false);
     expect(isInstallmentLate(due, new Date(2026, 7, 29))).toBe(true);
+  });
+});
+
+describe("computeArrears", () => {
+  const dueMonths = [
+    { year: 2026, month: 5 },
+    { year: 2026, month: 6 },
+    { year: 2026, month: 7 },
+  ];
+
+  it("يحسب المتأخر بالريال لا بعدد الأشهر", () => {
+    const r = computeArrears({ expectedMonthly: 50, dueMonths, paidByMonth: { "2026-5": 50, "2026-6": 20 } });
+    expect(r.expectedTotal).toBe(150);
+    expect(r.paidTotal).toBe(70);
+    expect(r.arrears).toBe(80);       // 30 نقص يونيو + 50 يوليو كاملاً
+    expect(r.missedMonths).toBe(1);
+    expect(r.partialMonths).toBe(1);
+  });
+
+  it("الدفع الزائد في شهر لا يغطي شهراً آخر", () => {
+    const r = computeArrears({ expectedMonthly: 50, dueMonths, paidByMonth: { "2026-5": 500 } });
+    expect(r.arrears).toBe(100); // يونيو ويوليو ما زالا مستحقين
+  });
+
+  it("الملتزم بالكامل لا متأخرات عليه", () => {
+    const r = computeArrears({ expectedMonthly: 50, dueMonths, paidByMonth: { "2026-5": 50, "2026-6": 50, "2026-7": 50 } });
+    expect(r.arrears).toBe(0);
+    expect(r.missedMonths).toBe(0);
+  });
+
+  it("بلا اشتراك محدد لا يُحسب تأخر", () => {
+    expect(computeArrears({ expectedMonthly: 0, dueMonths, paidByMonth: {} }).arrears).toBe(0);
+  });
+});
+
+describe("computeMemberShares", () => {
+  const now = new Date(2026, 7, 1);
+
+  it("الحصة مرجّحة بالزمن: الأقدم أثقل عند تساوي المبلغ", () => {
+    const shares = computeMemberShares([
+      { memberId: "a", amount: 100, at: new Date(2025, 7, 1) }, // سنة كاملة
+      { memberId: "b", amount: 100, at: new Date(2026, 6, 1) }, // شهر واحد
+    ], 1000, now);
+    expect(shares[0].memberId).toBe("a");
+    expect(shares[0].percent).toBeGreaterThan(shares[1].percent);
+    expect(shares[0].percent + shares[1].percent).toBeCloseTo(100, 1);
+  });
+
+  it("قيمة الحصة تعادل نسبتها من صافي الأصول", () => {
+    const shares = computeMemberShares([
+      { memberId: "a", amount: 100, at: new Date(2025, 7, 1) },
+      { memberId: "b", amount: 100, at: new Date(2025, 7, 1) },
+    ], 2000, now);
+    expect(shares[0].percent).toBeCloseTo(50, 1);
+    expect(shares[0].value).toBeCloseTo(1000, 0);
+  });
+
+  it("عند تساوي التواريخ تماماً تُوزع بنسبة المبالغ", () => {
+    const at = new Date(2026, 7, 1);
+    const shares = computeMemberShares([
+      { memberId: "a", amount: 300, at },
+      { memberId: "b", amount: 100, at },
+    ], 400, at);
+    expect(shares[0].percent).toBe(75);
+    expect(shares[0].value).toBe(300);
   });
 });
 

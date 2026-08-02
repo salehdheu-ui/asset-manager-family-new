@@ -22,12 +22,12 @@ export async function getMembers(): Promise<Member[]> {
   return res.json();
 }
 
-export async function createMember(data: { name: string; role?: string; avatar?: string }): Promise<Member> {
+export async function createMember(data: { name: string; role?: string; avatar?: string; expectedMonthly?: string | null }): Promise<Member> {
   const res = await apiRequest("POST", "/api/members", data);
   return res.json();
 }
 
-export async function updateMember(id: string, data: Partial<{ name: string; role: string; avatar: string }>): Promise<Member> {
+export async function updateMember(id: string, data: Partial<{ name: string; role: string; avatar: string; expectedMonthly: string | null }>): Promise<Member> {
   const res = await apiRequest("PATCH", `/api/members/${id}`, data);
   return res.json();
 }
@@ -320,6 +320,41 @@ export async function castLoanVote(loanId: string, vote: "approve" | "reject"): 
   return res.json();
 }
 
+// المتأخرات بالريال وحصص الأعضاء
+export interface ArrearsReport {
+  windowMonths: number;
+  familyDefault: number;
+  totalArrears: number;
+  members: Array<{
+    memberId: string;
+    name: string;
+    expectedMonthly: number;
+    expectedTotal: number;
+    paidTotal: number;
+    arrears: number;
+    missedMonths: number;
+    partialMonths: number;
+  }>;
+}
+
+export async function getArrearsReport(): Promise<ArrearsReport> {
+  const res = await fetch("/api/reports/arrears", { credentials: "include" });
+  if (!res.ok) await parseFetchError(res);
+  return res.json();
+}
+
+export interface MemberSharesReport {
+  netAssets: number;
+  note: string;
+  shares: Array<{ memberId: string; name: string; contributed: number; weight: number; percent: number; value: number }>;
+}
+
+export async function getMemberShares(): Promise<MemberSharesReport> {
+  const res = await fetch("/api/reports/member-shares", { credentials: "include" });
+  if (!res.ok) await parseFetchError(res);
+  return res.json();
+}
+
 // كشف حساب العضو الكامل
 export interface MemberStatement {
   member: { id: string; name: string; role: string };
@@ -330,6 +365,14 @@ export interface MemberStatement {
     totalBorrowed: number;
     totalRepaid: number;
     currentDebt: number;
+  };
+  arrears: {
+    expectedMonthly: number;
+    expectedTotal: number;
+    paidTotal: number;
+    arrears: number;
+    missedMonths: number;
+    partialMonths: number;
   };
   timeline: Array<{
     date: string;
@@ -558,7 +601,8 @@ export interface MemberPerformance {
   loanCount: number;
   contributionMonths: number;
   attendanceRate: number;
-  netBalance: number;
+  sharePercent: number;   // نسبته الحقيقية من الصندوق (مرجّحة بالزمن)
+  shareValue: number;     // مقابل نسبته من صافي الأصول
 }
 
 export interface MembersPerformanceReport {

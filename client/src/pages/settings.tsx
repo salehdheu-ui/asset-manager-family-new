@@ -48,6 +48,7 @@ export default function FamilySettings() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [familyName, setFamilyName] = useState(() => localStorage.getItem("familyName") || "عائلة السعيدي");
+  const [defaultMonthly, setDefaultMonthly] = useState("");
   const [backupEnabled, setBackupEnabled] = useState(false);
   const [backupKeepDays, setBackupKeepDays] = useState(7);
   const [backupKeepWeeksPerMonth, setBackupKeepWeeksPerMonth] = useState(4);
@@ -71,6 +72,7 @@ export default function FamilySettings() {
   useEffect(() => {
     if (!settings) return;
     setFamilyName(settings.familyName || "صندوق العائلة");
+    setDefaultMonthly(settings.defaultMonthlyContribution ? String(Number(settings.defaultMonthlyContribution)) : "");
     setBackupEnabled(settings.backupEnabled ?? false);
     setBackupKeepDays(settings.backupKeepDays ?? 7);
     setBackupKeepWeeksPerMonth(settings.backupKeepWeeksPerMonth ?? 4);
@@ -85,6 +87,7 @@ export default function FamilySettings() {
     mutationFn: () =>
       updateSettings({
         familyName,
+        defaultMonthlyContribution: defaultMonthly.trim() ? defaultMonthly.trim() : "0",
         backupEnabled,
         backupKeepDays,
         backupKeepWeeksPerMonth,
@@ -231,6 +234,29 @@ export default function FamilySettings() {
             className="w-full text-lg font-bold p-3 border rounded-xl focus:ring-2 focus:ring-primary/20 outline-none bg-background"
             placeholder="مثال: عائلة السعيدي"
           />
+
+          <div className="space-y-2 pt-2 border-t border-border/50">
+            <label className="text-sm font-bold flex items-center gap-2">
+              <Wallet className="w-4 h-4 text-primary" />
+              الاشتراك الشهري الافتراضي للعضو
+            </label>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                step="0.001"
+                value={defaultMonthly}
+                onChange={(e) => setDefaultMonthly(e.target.value)}
+                className="flex-1 font-mono p-3 border rounded-xl focus:ring-2 focus:ring-primary/20 outline-none bg-background"
+                placeholder="0.000"
+                data-testid="input-default-monthly"
+              />
+              <span className="text-sm text-muted-foreground font-bold">ر.ع</span>
+            </div>
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
+              يُستخدم لحساب المتأخرات بالريال لكل عضو لم يُحدد له مبلغ خاص من صفحة الأعضاء. اتركه صفراً لتعطيل حساب المتأخرات.
+            </p>
+          </div>
+
           <Button onClick={() => saveSettingsMutation.mutate()} disabled={saveSettingsMutation.isPending} className="w-full rounded-xl">
             {saveSettingsMutation.isPending ? "جاري الحفظ..." : "حفظ الإعدادات"}
           </Button>

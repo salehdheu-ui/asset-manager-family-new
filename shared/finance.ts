@@ -124,6 +124,100 @@ export function recentDueMonths(now: Date = new Date(), count = 12): Array<{ yea
   return months;
 }
 
+// ــــ المتأخرات بالمبلغ ــــ
+export interface ArrearsInput {
+  expectedMonthly: number;                     // الاشتراك الشهري المتوقع من العضو
+  dueMonths: Array<{ year: number; month: number }>; // الأشهر التي مضت مهلتها
+  paidByMonth: Record<string, number>;         // "2026-8" ⇒ المبلغ المعتمد في ذلك الشهر
+}
+
+export interface ArrearsResult {
+  expectedTotal: number;   // المتوقع عن كل الأشهر المستحقة
+  paidTotal: number;       // المدفوع المعتمد منها
+  arrears: number;         // المتأخر عليه بالريال
+  missedMonths: number;    // أشهر لم يدفع فيها شيئاً
+  partialMonths: number;   // أشهر دفع فيها أقل من المتوقع
+}
+
+// يحسب المتأخرات بالريال لا بعدد الأشهر — الشهر الذي دُفع فيه أكثر من المتوقع لا يغطي شهراً آخر
+export function computeArrears(input: ArrearsInput): ArrearsResult {
+  if (input.expectedMonthly <= 0) {
+    return { expectedTotal: 0, paidTotal: 0, arrears: 0, missedMonths: 0, partialMonths: 0 };
+  }
+
+  let paidTotal = 0;
+  let arrears = 0;
+  let missedMonths = 0;
+  let partialMonths = 0;
+
+  for (const m of input.dueMonths) {
+    const paid = input.paidByMonth[`${m.year}-${m.month}`] ?? 0;
+    paidTotal += paid;
+    const shortfall = Math.max(0, input.expectedMonthly - paid);
+    arrears += shortfall;
+    if (paid <= 0) missedMonths += 1;
+    else if (shortfall > 0) partialMonths += 1;
+  }
+
+  return {
+    expectedTotal: Number((input.expectedMonthly * input.dueMonths.length).toFixed(3)),
+    paidTotal: Number(paidTotal.toFixed(3)),
+    arrears: Number(arrears.toFixed(3)),
+    missedMonths,
+    partialMonths,
+  };
+}
+
+// ــــ حصة العضو من الصندوق ــــ
+export interface ShareContribution {
+  memberId: string;
+  amount: number;
+  at: Date | string; // تاريخ دخول المبلغ الصندوق
+}
+
+export interface MemberShare {
+  memberId: string;
+  contributed: number;   // إجمالي ما ساهم به
+  weight: number;        // ريال × شهر (وزن زمني)
+  percent: number;       // نسبته من الصندوق
+  value: number;         // مقابل نسبته من صافي الأصول الحالي
+}
+
+// الحصة مرجّحة بالزمن: ريال بقي سنة في الصندوق أثقل من ريال دخل الشهر الماضي
+export function computeMemberShares(
+  contributions: ShareContribution[],
+  netAssets: number,
+  now: Date = new Date(),
+): MemberShare[] {
+  const byMember = new Map<string, { contributed: number; weight: number }>();
+
+  for (const c of contributions) {
+    const at = new Date(c.at);
+    const monthsHeld = Math.max(0, (now.getTime() - at.getTime()) / (1000 * 60 * 60 * 24 * 30.44));
+    const entry = byMember.get(c.memberId) ?? { contributed: 0, weight: 0 };
+    entry.contributed += c.amount;
+    entry.weight += c.amount * monthsHeld;
+    byMember.set(c.memberId, entry);
+  }
+
+  const totalWeight = Array.from(byMember.values()).reduce((s, e) => s + e.weight, 0);
+  const totalContributed = Array.from(byMember.values()).reduce((s, e) => s + e.contributed, 0);
+
+  return Array.from(byMember.entries()).map(([memberId, e]) => {
+    // قبل مرور أي وقت تكون الأوزان صفراً — نرجع لنسبة المبالغ حتى لا تختفي الحصص
+    const percent = totalWeight > 0
+      ? (e.weight / totalWeight) * 100
+      : totalContributed > 0 ? (e.contributed / totalContributed) * 100 : 0;
+    return {
+      memberId,
+      contributed: Number(e.contributed.toFixed(3)),
+      weight: Number(e.weight.toFixed(3)),
+      percent: Number(percent.toFixed(2)),
+      value: Number(((percent / 100) * netAssets).toFixed(3)),
+    };
+  }).sort((a, b) => b.percent - a.percent);
+}
+
 // القسط يُعد متأخراً بعد الأبعد بين تاريخ استحقاقه ومهلة يوم 26 من شهره
 export function isInstallmentLate(dueDate: Date | string, now: Date = new Date()): boolean {
   const due = new Date(dueDate);

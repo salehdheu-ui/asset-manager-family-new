@@ -12,11 +12,14 @@ export const members = pgTable("members", {
   name: text("name").notNull(),
   role: text("role").notNull().default("member"), // 'guardian' | 'custodian' | 'member'
   avatar: text("avatar"),
+  // الاشتراك الشهري المتوقع من هذا العضو — فارغ يعني استخدام الافتراضي العائلي
+  expectedMonthly: decimal("expected_monthly", { precision: 10, scale: 3 }),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const insertMemberSchema = createInsertSchema(members).omit({ id: true, createdAt: true }).extend({
   role: z.enum(["guardian", "custodian", "member"]).default("member"),
+  expectedMonthly: z.string().nullable().optional(),
 });
 export type InsertMember = z.infer<typeof insertMemberSchema>;
 export type Member = typeof members.$inferSelect;
@@ -123,6 +126,8 @@ export const familySettings = pgTable("family_settings", {
   emergencyPercent: integer("emergency_percent").notNull().default(15),
   flexiblePercent: integer("flexible_percent").notNull().default(20),
   growthPercent: integer("growth_percent").notNull().default(20),
+  // الاشتراك الشهري الافتراضي لكل عضو لم يُحدد له مبلغ خاص
+  defaultMonthlyContribution: decimal("default_monthly_contribution", { precision: 10, scale: 3 }).notNull().default("0"),
   emergencyMode: boolean("emergency_mode").notNull().default(false),
   backupEnabled: boolean("backup_enabled").notNull().default(false),
   backupKeepDays: integer("backup_keep_days").notNull().default(7),

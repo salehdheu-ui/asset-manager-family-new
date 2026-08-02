@@ -1,18 +1,21 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { getMembers, getMemberStatement, getCommitmentScores } from "@/lib/api";
+import { getMembers, getMemberStatement, getCommitmentScores, getMemberShares } from "@/lib/api";
 import { downloadExcel, type ExcelSheetSpec } from "@/lib/excel";
 import { cn } from "@/lib/utils";
 import {
   Printer, ArrowRight, FileSpreadsheet, Wallet, HandCoins,
   CheckCircle2, TrendingUp, Gauge, FileText, CalendarClock,
+  AlertTriangle, PieChart,
 } from "lucide-react";
 
 const MONTH_NAMES = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
 
 const SECTIONS = [
   { key: "summary", label: "الملخص المالي", desc: "كم له، كم عليه، كم سدّد" },
+  { key: "arrears", label: "متأخرات المساهمات", desc: "المتأخر عليه بالريال لا بالأشهر" },
+  { key: "shares", label: "حصته من الصندوق", desc: "نسبته ومقابلها من صافي الأصول" },
   { key: "timeline", label: "السجل الزمني الكامل", desc: "كل حركة بتاريخها ورصيده بعدها" },
   { key: "loans", label: "تفاصيل السلف والسداد", desc: "متى تسلّف ومتى سدّد كل دفعة" },
   { key: "contributions", label: "شبكة المساهمات", desc: "مساهماته شهراً بشهر" },
@@ -29,11 +32,12 @@ export default function ReportBuilder() {
   const [memberId, setMemberId] = useState("");
   const [year, setYear] = useState<number | null>(null);
   const [sections, setSections] = useState<Record<SectionKey, boolean>>({
-    summary: true, timeline: true, loans: true, contributions: true,
+    summary: true, arrears: true, shares: true, timeline: true, loans: true, contributions: true,
   });
 
   const { data: members = [] } = useQuery({ queryKey: ["members"], queryFn: getMembers });
   const { data: scores = [] } = useQuery({ queryKey: ["commitment-scores"], queryFn: getCommitmentScores });
+  const { data: sharesReport } = useQuery({ queryKey: ["member-shares"], queryFn: getMemberShares });
   const { data: statement, isFetching } = useQuery({
     queryKey: ["member-statement", memberId, year],
     queryFn: () => getMemberStatement(memberId, year),
@@ -61,6 +65,36 @@ export default function ReportBuilder() {
         ],
         columnWidths: [26, 22],
       });
+    }
+    if (sections.arrears && statement.arrears.expectedMonthly > 0) {
+      sheets.push({
+        name: "متأخرات المساهمات",
+        rows: [
+          { البيان: "الاشتراك الشهري المتوقع", القيمة: statement.arrears.expectedMonthly },
+          { البيان: "المتوقع خلال الفترة", القيمة: statement.arrears.expectedTotal },
+          { البيان: "المدفوع المعتمد", القيمة: statement.arrears.paidTotal },
+          { البيان: "المتأخر عليه بالريال", القيمة: statement.arrears.arrears },
+          { البيان: "أشهر لم يدفع فيها", القيمة: statement.arrears.missedMonths },
+          { البيان: "أشهر دفع فيها جزئياً", القيمة: statement.arrears.partialMonths },
+        ],
+        columnWidths: [30, 22],
+      });
+    }
+    if (sections.shares) {
+      const share = sharesReport?.shares.find((s) => s.memberId === memberId);
+      if (share) {
+        sheets.push({
+          name: "حصته من الصندوق",
+          rows: [
+            { البيان: "إجمالي مساهماته", القيمة: share.contributed },
+            { البيان: "نسبته من الصندوق ٪", القيمة: share.percent },
+            { البيان: "قيمة حصته بالريال", القيمة: share.value },
+            { البيان: "صافي أصول الصندوق", القيمة: sharesReport?.netAssets ?? 0 },
+            { البيان: "ملاحظة", القيمة: sharesReport?.note ?? "" },
+          ],
+          columnWidths: [30, 40],
+        });
+      }
     }
     if (sections.timeline) {
       sheets.push({
@@ -218,6 +252,65 @@ export default function ReportBuilder() {
                     <span className={cn("font-mono font-bold", score >= 80 ? "text-emerald-600" : score >= 50 ? "text-amber-600" : "text-red-600")}>{score}/100</span>
                   </div>
                 )}
+              </section>
+            )}
+
+            {sections.arrears && (
+              <section>
+                <h3 className="font-bold text-lg mb-3 flex items-center gap-2"><AlertTriangle className="w-5 h-5 text-emerald-600" /> متأخرات المساهمات</h3>
+                {statement.arrears.expectedMonthly <= 0 ? (
+                  <p className="text-sm text-gray-400 text-center py-6 border border-dashed border-gray-200 rounded-2xl">
+                    لم يُحدَّد اشتراك شهري لهذا العضو ولا افتراضي للعائلة — حدِّده من صفحة الأعضاء أو الإعدادات
+                  </p>
+                ) : (
+                  <div className="border border-gray-200 rounded-2xl p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-500 font-bold">المتأخر عليه (آخر 12 شهراً مستحقاً)</span>
+                      <span className={cn("text-xl font-mono font-bold", statement.arrears.arrears > 0 ? "text-red-600" : "text-emerald-600")}>
+                        {fmt(statement.arrears.arrears)} <span className="text-xs">ر.ع</span>
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 text-xs border-t border-gray-100 pt-3">
+                      <div className="flex justify-between"><span className="text-gray-500">الاشتراك الشهري</span><span className="font-mono font-bold">{fmt(statement.arrears.expectedMonthly)}</span></div>
+                      <div className="flex justify-between"><span className="text-gray-500">المتوقع للفترة</span><span className="font-mono font-bold">{fmt(statement.arrears.expectedTotal)}</span></div>
+                      <div className="flex justify-between"><span className="text-gray-500">المدفوع المعتمد</span><span className="font-mono font-bold text-emerald-600">{fmt(statement.arrears.paidTotal)}</span></div>
+                      <div className="flex justify-between"><span className="text-gray-500">أشهر لم يدفع فيها</span><span className="font-mono font-bold">{statement.arrears.missedMonths}</span></div>
+                    </div>
+                    {statement.arrears.partialMonths > 0 && (
+                      <p className="text-[11px] text-amber-700 bg-amber-50 rounded-lg px-3 py-2">
+                        {statement.arrears.partialMonths} شهراً دفع فيها أقل من المتوقع
+                      </p>
+                    )}
+                  </div>
+                )}
+              </section>
+            )}
+
+            {sections.shares && (
+              <section>
+                <h3 className="font-bold text-lg mb-3 flex items-center gap-2"><PieChart className="w-5 h-5 text-emerald-600" /> حصته من الصندوق</h3>
+                {(() => {
+                  const share = sharesReport?.shares.find((s) => s.memberId === memberId);
+                  if (!share) {
+                    return <p className="text-sm text-gray-400 text-center py-6 border border-dashed border-gray-200 rounded-2xl">لا مساهمات معتمدة بعد لحساب حصة</p>;
+                  }
+                  return (
+                    <div className="border border-gray-200 rounded-2xl p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-500 font-bold">نسبته من الصندوق</span>
+                        <span className="text-xl font-mono font-bold text-emerald-600">{share.percent}%</span>
+                      </div>
+                      <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
+                        <div className="h-full rounded-full bg-emerald-500" style={{ width: `${Math.min(100, share.percent)}%` }} />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3 text-xs border-t border-gray-100 pt-3">
+                        <div className="flex justify-between"><span className="text-gray-500">مقابلها من صافي الأصول</span><span className="font-mono font-bold">{fmt(share.value)} ر.ع</span></div>
+                        <div className="flex justify-between"><span className="text-gray-500">إجمالي مساهماته</span><span className="font-mono font-bold">{fmt(share.contributed)} ر.ع</span></div>
+                      </div>
+                      <p className="text-[11px] text-gray-400 leading-relaxed">{sharesReport?.note}</p>
+                    </div>
+                  );
+                })()}
               </section>
             )}
 

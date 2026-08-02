@@ -61,6 +61,7 @@ vi.mock("../storage", () => ({
       { id: "r1", loanId: "l2", installmentNumber: 1, amount: "10", dueDate: new Date(2026, 7, 1), status: "scheduled" },
       { id: "r2", loanId: "l2", installmentNumber: 2, amount: "10", dueDate: new Date(2026, 6, 10), status: "scheduled" },
     ]),
+    getFamilySettings: vi.fn(async () => ({ defaultMonthlyContribution: "25" })),
     getAuditLogs: vi.fn(async () => ({ data: [], total: 0, page: 1, limit: 50, totalPages: 0 })),
     getContributionsByYearAndMonth: vi.fn(async () => []),
     getLoansByYear: vi.fn(async () => []),
@@ -131,6 +132,58 @@ describe("كشف حساب العضو", () => {
 
   it("عضو غير موجود يعيد 404", async () => {
     expect((await request("/api/reports/member-statement/ghost", admin)).status).toBe(404);
+  });
+});
+
+describe("المتأخرات بالريال", () => {
+  it("يحسب المتأخر بالمبلغ لا بعدد الأشهر", async () => {
+    // نافذة 12 شهراً تنتهي عند يوليو 2026، والعضو ساهم في يونيو فقط
+    vi.setSystemTime(new Date(2026, 7, 5, 12, 0));
+    const body = await (await request("/api/reports/arrears", admin)).json();
+    vi.useRealTimers();
+
+    expect(body.windowMonths).toBe(12);
+    expect(body.familyDefault).toBe(25);
+    const row = body.members.find((m: any) => m.memberId === "m1");
+    expect(row.expectedMonthly).toBe(25);   // لا اشتراك خاص ⇒ الافتراضي العائلي
+    expect(row.expectedTotal).toBe(300);    // 25 × 12
+    expect(row.paidTotal).toBe(25);
+    expect(row.arrears).toBe(275);
+    expect(row.missedMonths).toBe(11);
+    expect(body.totalArrears).toBe(275);
+  });
+
+  it("كشف الحساب يحمل متأخرات المساهمات", async () => {
+    vi.setSystemTime(new Date(2026, 7, 5, 12, 0));
+    const body = await (await request(`/api/reports/member-statement/${MEMBER.id}`, admin)).json();
+    vi.useRealTimers();
+    expect(body.arrears.expectedMonthly).toBe(25);
+    expect(body.arrears.arrears).toBe(275);
+  });
+
+  it("العضو العادي محجوب عن تقرير المتأخرات", async () => {
+    expect((await request("/api/reports/arrears", member)).status).toBe(403);
+  });
+});
+
+describe("حصص الأعضاء", () => {
+  it("العضو الوحيد يملك كامل صافي الأصول", async () => {
+    const body = await (await request("/api/reports/member-shares", admin)).json();
+    expect(body.netAssets).toBe(1000);
+    expect(body.shares).toHaveLength(1);
+    expect(body.shares[0]).toMatchObject({ memberId: "m1", name: "محمد", contributed: 25, percent: 100, value: 1000 });
+  });
+
+  it("أداء الأعضاء يعرض الحصة الحقيقية لا «مساهمات ناقص سلف»", async () => {
+    const body = await (await request("/api/reports/members-performance", admin)).json();
+    const row = body.members.find((m: any) => m.memberId === "m1");
+    expect(row.sharePercent).toBe(100);
+    expect(row.shareValue).toBe(1000);
+    expect(row).not.toHaveProperty("netBalance");
+  });
+
+  it("العضو العادي محجوب عن تقرير الحصص", async () => {
+    expect((await request("/api/reports/member-shares", member)).status).toBe(403);
   });
 });
 

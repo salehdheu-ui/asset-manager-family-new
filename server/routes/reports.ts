@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { storage } from "../storage";
 import { isAuthenticated, isAdmin } from "../auth";
 import { computeDashboardSummary } from "../services/dashboard";
-import { computeCommitmentScore, projectCashflow, dueMonthsInYear, isInstallmentLate, recentDueMonths, MONTHLY_DUE_DAY } from "@shared/finance";
+import { computeCommitmentScore, projectCashflow, dueMonthsInYear, isInstallmentLate, recentDueMonths, MONTHLY_DUE_DAY, computeArrears, computeMemberShares } from "@shared/finance";
 import { rebalanceYear } from "../capital-engine";
 
 export function registerReportRoutes(app: Express) {
@@ -115,6 +115,78 @@ export function registerReportRoutes(app: Express) {
     }
   });
 
+  // متأخرات المساهمات بالريال لكل عضو — تعتمد الاشتراك الشهري المتوقع ومهلة يوم 26
+  app.get("/api/reports/arrears", isAuthenticated, isAdmin, async (_req, res) => {
+    try {
+      const [members, contributions, settings] = await Promise.all([
+        storage.getMembers(),
+        storage.getContributions(),
+        storage.getFamilySettings(),
+      ]);
+
+      const now = new Date();
+      const dueMonths = recentDueMonths(now, 12);
+      const familyDefault = Number(settings?.defaultMonthlyContribution ?? 0);
+
+      const rows = members.map((member) => {
+        const expectedMonthly = Number(member.expectedMonthly ?? 0) || familyDefault;
+        const paidByMonth: Record<string, number> = {};
+        for (const c of contributions) {
+          if (c.memberId !== member.id || c.status !== "approved") continue;
+          const key = `${c.year}-${c.month}`;
+          paidByMonth[key] = (paidByMonth[key] ?? 0) + Number(c.amount);
+        }
+        return {
+          memberId: member.id,
+          name: member.name,
+          expectedMonthly,
+          ...computeArrears({ expectedMonthly, dueMonths, paidByMonth }),
+        };
+      });
+
+      res.json({
+        windowMonths: dueMonths.length,
+        familyDefault,
+        totalArrears: Number(rows.reduce((s, r) => s + r.arrears, 0).toFixed(3)),
+        members: rows.sort((a, b) => b.arrears - a.arrears),
+      });
+    } catch (error) {
+      console.error("Arrears report error:", error);
+      res.status(500).json({ error: "تعذر حساب المتأخرات" });
+    }
+  });
+
+  // حصة كل عضو من الصندوق — مرجّحة بالزمن على صافي الأصول الحالي
+  app.get("/api/reports/member-shares", isAuthenticated, isAdmin, async (_req, res) => {
+    try {
+      const [members, contributions, summary] = await Promise.all([
+        storage.getMembers(),
+        storage.getContributions(),
+        computeDashboardSummary(),
+      ]);
+
+      const approved = contributions
+        .filter((c) => c.status === "approved")
+        .map((c) => ({
+          memberId: c.memberId,
+          amount: Number(c.amount),
+          at: c.approvedAt ?? c.createdAt ?? new Date(c.year, c.month - 1, 1),
+        }));
+
+      const shares = computeMemberShares(approved, summary.netCapital);
+      const nameOf = (id: string) => members.find((m) => m.id === id)?.name ?? "عضو";
+
+      res.json({
+        netAssets: summary.netCapital,
+        note: "الحصة مرجّحة بالزمن — ريال بقي في الصندوق سنة أثقل من ريال دخل الشهر الماضي",
+        shares: shares.map((s) => ({ ...s, name: nameOf(s.memberId) })),
+      });
+    } catch (error) {
+      console.error("Member shares error:", error);
+      res.status(500).json({ error: "تعذر حساب حصص الأعضاء" });
+    }
+  });
+
   // كشف حساب العضو الكامل: سجل زمني لكل حركة مع رصيد «كم عليه» الجاري بعد كل حركة
   app.get("/api/reports/member-statement/:id", isAuthenticated, isAdmin, async (req, res) => {
     try {
@@ -126,10 +198,11 @@ export function registerReportRoutes(app: Express) {
         return res.status(404).json({ error: "العضو غير موجود" });
       }
 
-      const [contributions, memberLoans, allPayments] = await Promise.all([
+      const [contributions, memberLoans, allPayments, settings] = await Promise.all([
         storage.getContributionsByMember(memberId),
         storage.getLoansByMember(memberId),
         storage.getAllLoanPayments(),
+        storage.getFamilySettings(),
       ]);
 
       const approvedLoans = memberLoans.filter((l) => l.status === "approved");
@@ -204,6 +277,20 @@ export function registerReportRoutes(app: Express) {
       const totalRepaid = payments.reduce((s, p) => s + Number(p.amount), 0);
       const currentDebt = Math.max(0, totalBorrowed - totalRepaid);
 
+      // متأخرات المساهمات بالريال عن آخر 12 شهراً مضت مهلتها
+      const expectedMonthly = Number(member.expectedMonthly ?? 0) || Number(settings?.defaultMonthlyContribution ?? 0);
+      const paidByMonth: Record<string, number> = {};
+      for (const c of contributions) {
+        if (c.status !== "approved") continue;
+        const key = `${c.year}-${c.month}`;
+        paidByMonth[key] = (paidByMonth[key] ?? 0) + Number(c.amount);
+      }
+      const arrears = computeArrears({
+        expectedMonthly,
+        dueMonths: recentDueMonths(new Date(), 12),
+        paidByMonth,
+      });
+
       // شبكة المساهمات مجمعة بالسنوات
       const contribYears = new Map<number, Array<{ month: number; amount: number; status: string }>>();
       for (const c of contributions) {
@@ -232,6 +319,7 @@ export function registerReportRoutes(app: Express) {
           totalRepaid: Number(totalRepaid.toFixed(3)),      // كم سدّد
           currentDebt: Number(currentDebt.toFixed(3)),      // كم عليه الآن بالضبط
         },
+        arrears: { expectedMonthly, ...arrears },           // متأخرات المساهمات بالريال
         timeline: filteredTimeline,
         loans: loansDetail,
         contributionsByYear,
@@ -281,6 +369,34 @@ export function registerReportRoutes(app: Express) {
           severity: "medium",
           title: `${staleLoans.length} طلب سلفة معلق منذ أكثر من أسبوع`,
           detail: staleLoans.map((l) => `${memberName(l.memberId)} (${Number(l.amount).toLocaleString()} ر.ع)`).join("، "),
+        });
+      }
+
+      // متأخرات مساهمات بالريال (إن حُدد اشتراك شهري)
+      const settings = await storage.getFamilySettings();
+      const familyDefault = Number(settings?.defaultMonthlyContribution ?? 0);
+      const dueWindow = recentDueMonths(now, 12);
+      const arrearsRows = members.map((m) => {
+        const expectedMonthly = Number(m.expectedMonthly ?? 0) || familyDefault;
+        const paidByMonth: Record<string, number> = {};
+        for (const c of contributions) {
+          if (c.memberId !== m.id || c.status !== "approved") continue;
+          const key = `${c.year}-${c.month}`;
+          paidByMonth[key] = (paidByMonth[key] ?? 0) + Number(c.amount);
+        }
+        return { name: m.name, ...computeArrears({ expectedMonthly, dueMonths: dueWindow, paidByMonth }) };
+      }).filter((r) => r.arrears > 0);
+
+      if (arrearsRows.length > 0) {
+        const total = arrearsRows.reduce((s, r) => s + r.arrears, 0);
+        alerts.push({
+          severity: "high",
+          title: `متأخرات مساهمات بقيمة ${total.toFixed(3)} ر.ع على ${arrearsRows.length} عضواً`,
+          detail: arrearsRows
+            .sort((a, b) => b.arrears - a.arrears)
+            .slice(0, 5)
+            .map((r) => `${r.name}: ${r.arrears.toFixed(3)}`)
+            .join("، "),
         });
       }
 
@@ -442,15 +558,30 @@ export function registerReportRoutes(app: Express) {
       const page = Math.max(1, Number(req.query.page) || 1);
       const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 20));
 
-      const [members, yearContributions, allYearLoans] = await Promise.all([
+      const [members, yearContributions, allYearLoans, allContributions, summary] = await Promise.all([
         storage.getMembers(),
         storage.getApprovedContributionsByYear(year),
-        storage.getLoansByYear(year)
+        storage.getLoansByYear(year),
+        storage.getContributions(),
+        computeDashboardSummary(),
       ]);
-      
+
       const yearLoans = allYearLoans.filter(l => l.status === 'approved');
       // نسبة الالتزام تُقاس على الأشهر التي مضت مهلتها فقط (لا على 12 شهراً كاملة في سنة جارية)
       const expectedMonths = Math.max(1, dueMonthsInYear(year, new Date()));
+
+      // الحصة الحقيقية من الصندوق: مرجّحة بالزمن على كل تاريخ العضو، لا «مساهمات السنة − سلف السنة»
+      const shares = computeMemberShares(
+        allContributions
+          .filter(c => c.status === "approved")
+          .map(c => ({
+            memberId: c.memberId,
+            amount: Number(c.amount),
+            at: c.approvedAt ?? c.createdAt ?? new Date(c.year, c.month - 1, 1),
+          })),
+        summary.netCapital,
+      );
+      const shareOf = (id: string) => shares.find(s => s.memberId === id);
 
       const allMemberStats = members.map(m => {
         const memberContributions = yearContributions.filter(c => c.memberId === m.id);
@@ -470,7 +601,8 @@ export function registerReportRoutes(app: Express) {
           loanCount: memberLoans.length,
           contributionMonths,
           attendanceRate: Math.min(100, Math.round((contributionMonths / expectedMonths) * 100)),
-          netBalance: totalContributions - totalLoans
+          sharePercent: shareOf(m.id)?.percent ?? 0,
+          shareValue: shareOf(m.id)?.value ?? 0,
         };
       }).sort((a, b) => b.totalContributions - a.totalContributions);
 
