@@ -1,30 +1,11 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import { 
-  Home, 
-  HandCoins, 
-  Menu, 
-  Wallet, 
-  Users, 
-  Settings, 
-  CreditCard,
-  X,
-  ChevronLeft,
-  ShieldCheck,
-  LogOut,
-  BarChart3,
-  Info,
-  User,
-  Shield,
-  Landmark,
-  History,
-  Vote,
-  TrendingUp
-} from "lucide-react";
+import { Menu, X, ChevronLeft, LogOut, Info } from "lucide-react";
 import pattern from "@assets/generated_images/subtle_islamic_geometric_pattern_background_texture.png";
 import logo from "@assets/generated_images/minimalist_family_fund_logo_symbol.png";
 import { useAuth } from "@/hooks/use-auth";
+import { visibleSections, sectionOf } from "./sections";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface MobileLayoutProps {
@@ -41,27 +22,14 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
 
   const isAdmin = user?.role === 'admin';
 
-  const navItems = [
-    { href: "/dashboard", icon: Home, label: "الرئيسية", desc: "نظرة عامة على الصندوق" },
-    { href: "/payments", icon: CreditCard, label: "المساهمات", desc: "سجل الدفع السنوي" },
-    ...(isAdmin ? [{ href: "/expenses", icon: Wallet, label: "الإنفاق", desc: "الزكاة والمصروفات" }] : []),
-    { href: "/loans", icon: HandCoins, label: "السلف", desc: "طلبات القروض العائلية" },
-    ...(isAdmin ? [{ href: "/members", icon: Users, label: "الأعضاء", desc: "إدارة أفراد العائلة" }] : []),
-    { href: "/analytics", icon: BarChart3, label: "التقارير", desc: "التقارير والتحليلات المالية" },
-    { href: "/profile", icon: User, label: "حسابي", desc: "إعدادات الحساب الشخصي" },
-    ...(isAdmin ? [{ href: "/admin", icon: Shield, label: "الإدارة", desc: "إدارة المستخدمين والصلاحيات" }] : []),
-    ...(isAdmin ? [{ href: "/fund-ops", icon: Landmark, label: "إجراءات الصندوق", desc: "سلفة مباشرة، مصروف، إيداع وارد" }] : []),
-    { href: "/audit-log", icon: History, label: "سجل التدقيق", desc: "العمليات الحساسة المسجلة" },
-    { href: "/proposals", icon: Vote, label: "قرارات العائلة", desc: "التصويت على الاقتراحات المطروحة" },
-    ...(isAdmin ? [{ href: "/investments", icon: TrendingUp, label: "الاستثمار والزكاة", desc: "طبقة النمو وحساب الزكاة" }] : []),
-    { href: "/governance", icon: ShieldCheck, label: "الحوكمة", desc: "قوانين الصندوق والقرارات" },
-    ...(isAdmin ? [{ href: "/settings", icon: Settings, label: "الإعدادات", desc: "تخصيص النظام" }] : []),
-  ];
+  const sections = visibleSections(isAdmin);
+  const activeSection = sectionOf(location, isAdmin);
+  const sectionTabs = activeSection?.tabs ?? [];
+  const activeTab = sectionTabs.find((t) => t.href === location);
 
-  const bottomNavItems = navItems.slice(0, 5);
-  const activeItem = navItems.find((item) => item.href === location);
-  const activeLabel = title || activeItem?.label || familyName;
-  const activeDesc = activeItem?.desc || "واجهة متابعة مبسطة ومهيأة للجوال";
+  const bottomNavItems = sections.slice(0, 5);
+  const activeLabel = title || activeTab?.label || activeSection?.label || familyName;
+  const activeDesc = activeSection?.desc || "واجهة متابعة مبسطة ومهيأة للجوال";
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden flex flex-col mx-auto max-w-md shadow-[0_20px_60px_rgba(16,24,40,0.08)] lg:max-w-none lg:flex-row lg:bg-muted/30 lg:shadow-none">
@@ -85,21 +53,41 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
         </div>
 
         <nav className="flex-1 space-y-1 overflow-y-auto scrollbar-hide">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all border",
-                location === item.href
-                  ? "bg-primary/5 border-primary/20 text-primary shadow-sm"
-                  : "border-transparent hover:bg-muted/50 text-muted-foreground",
+          {sections.map((item) => (
+            <div key={item.key}>
+              <Link
+                href={item.href}
+                className={cn(
+                  "flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all border",
+                  activeSection?.key === item.key
+                    ? "bg-primary/5 border-primary/20 text-primary shadow-sm"
+                    : "border-transparent hover:bg-muted/50 text-muted-foreground",
+                )}
+                data-testid={`sidebar-link-${item.key}`}
+              >
+                <item.icon className="w-4 h-4 shrink-0" />
+                <span className="font-bold text-xs">{item.label}</span>
+              </Link>
+
+              {/* تبويبات القسم الجاري تظهر تحته مباشرة */}
+              {activeSection?.key === item.key && item.tabs.length > 1 && (
+                <div className="mt-1 mb-2 space-y-0.5 pr-6">
+                  {item.tabs.map((tab) => (
+                    <Link
+                      key={tab.href}
+                      href={tab.href}
+                      className={cn(
+                        "block rounded-lg px-3 py-1.5 text-[11px] font-bold transition-colors",
+                        location === tab.href ? "text-primary bg-primary/5" : "text-muted-foreground hover:text-primary",
+                      )}
+                      data-testid={`sidebar-tab-${tab.href.replace("/", "")}`}
+                    >
+                      {tab.label}
+                    </Link>
+                  ))}
+                </div>
               )}
-              data-testid={`sidebar-link-${item.href.replace("/", "")}`}
-            >
-              <item.icon className="w-4 h-4 shrink-0" />
-              <span className="font-bold text-xs">{item.label}</span>
-            </Link>
+            </div>
           ))}
         </nav>
 
@@ -162,6 +150,27 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
             </span>
           </div>
         </div>
+
+        {/* تبويبات القسم — تظهر على الجوال فقط، والشريط الجانبي يتكفل بها على الكمبيوتر */}
+        {sectionTabs.length > 1 && (
+          <div className="mt-3 flex gap-1.5 overflow-x-auto scrollbar-hide lg:hidden" data-testid="section-tabs">
+            {sectionTabs.map((tab) => (
+              <Link
+                key={tab.href}
+                href={tab.href}
+                className={cn(
+                  "shrink-0 rounded-full px-3.5 py-1.5 text-[11px] font-bold border transition-all",
+                  location === tab.href
+                    ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                    : "bg-card/80 text-muted-foreground border-border/60 hover:text-primary",
+                )}
+                data-testid={`tab-${tab.href.replace("/", "")}`}
+              >
+                {tab.label}
+              </Link>
+            ))}
+          </div>
+        )}
       </header>
 
       {/* Side Menu Overlay */}
@@ -198,21 +207,21 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
               </div>
 
               <div className="space-y-2 flex-1 overflow-y-auto pr-1">
-                {navItems.map((item) => (
+                {sections.map((item) => (
                   <Link 
-                    key={item.href} 
+                    key={item.key} 
                     href={item.href}
                     onClick={() => setIsMenuOpen(false)}
                     className={cn(
                       "flex items-center gap-4 p-4 rounded-2xl transition-all border",
-                      location === item.href 
+                      activeSection?.key === item.key
                         ? "bg-primary/5 border-primary/20 text-primary shadow-sm" 
                         : "border-transparent hover:bg-muted/50 text-muted-foreground"
                     )}
                   >
                     <div className={cn(
                       "p-2 rounded-xl",
-                      location === item.href ? "bg-primary/10" : "bg-muted"
+                      activeSection?.key === item.key ? "bg-primary/10" : "bg-muted"
                     )}>
                       <item.icon className="w-5 h-5" />
                     </div>
@@ -221,7 +230,7 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
                       <div className="text-[10px] opacity-70">{item.desc}</div>
                     </div>
                     <div className="mr-auto flex items-center gap-2">
-                      {location === item.href && <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[9px] font-bold text-primary">نشط</span>}
+                      {activeSection?.key === item.key && <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[9px] font-bold text-primary">نشط</span>}
                       <ChevronLeft className="w-4 h-4 opacity-30" />
                     </div>
                   </Link>
@@ -279,9 +288,9 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
       <nav className="fixed bottom-0 left-0 right-0 z-50 mx-auto max-w-md lg:hidden border-t border-border/40 bg-card/90 px-5 pb-5 pt-2 backdrop-blur-xl shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
         <ul className="flex justify-between items-center">
           {bottomNavItems.map((item) => {
-            const isActive = location === item.href;
+            const isActive = activeSection?.key === item.key;
             return (
-              <li key={item.href} className="flex-1">
+              <li key={item.key} className="flex-1">
                 <Link
                   href={item.href}
                   className={cn(
