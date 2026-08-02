@@ -12,11 +12,14 @@ export const members = pgTable("members", {
   name: text("name").notNull(),
   role: text("role").notNull().default("member"), // 'guardian' | 'custodian' | 'member'
   avatar: text("avatar"),
+  // الاشتراك الشهري المتوقع من هذا العضو — فارغ يعني استخدام الافتراضي العائلي
+  expectedMonthly: decimal("expected_monthly", { precision: 10, scale: 3 }),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const insertMemberSchema = createInsertSchema(members).omit({ id: true, createdAt: true }).extend({
   role: z.enum(["guardian", "custodian", "member"]).default("member"),
+  expectedMonthly: z.string().nullable().optional(),
 });
 export type InsertMember = z.infer<typeof insertMemberSchema>;
 export type Member = typeof members.$inferSelect;
@@ -123,6 +126,10 @@ export const familySettings = pgTable("family_settings", {
   emergencyPercent: integer("emergency_percent").notNull().default(15),
   flexiblePercent: integer("flexible_percent").notNull().default(20),
   growthPercent: integer("growth_percent").notNull().default(20),
+  // الاشتراك الشهري الافتراضي لكل عضو لم يُحدد له مبلغ خاص
+  defaultMonthlyContribution: decimal("default_monthly_contribution", { precision: 10, scale: 3 }).notNull().default("0"),
+  // نصاب الزكاة بالريال (قيمة 85 غراماً من الذهب — تتغير بتغير سعر الذهب)
+  zakatNisab: decimal("zakat_nisab", { precision: 12, scale: 3 }).notNull().default("0"),
   emergencyMode: boolean("emergency_mode").notNull().default(false),
   backupEnabled: boolean("backup_enabled").notNull().default(false),
   backupKeepDays: integer("backup_keep_days").notNull().default(7),
@@ -237,3 +244,120 @@ export const capitalAllocations = pgTable("capital_allocations", {
 export const insertCapitalAllocationSchema = createInsertSchema(capitalAllocations).omit({ id: true, lockedAt: true, resetAt: true, resetBy: true });
 export type InsertCapitalAllocation = z.infer<typeof insertCapitalAllocationSchema>;
 export type CapitalAllocation = typeof capitalAllocations.$inferSelect;
+
+// دورات الزكاة — كل دورة حول كامل على مال الصندوق
+export const zakatCycles = pgTable("zakat_cycles", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  cycleStart: timestamp("cycle_start").notNull(),
+  dueAt: timestamp("due_at"),                                              // متى اكتمل الحول فعلياً
+  netAssetsAtDue: decimal("net_assets_at_due", { precision: 12, scale: 3 }).notNull().default("0"),
+  nisabUsed: decimal("nisab_used", { precision: 12, scale: 3 }).notNull().default("0"),
+  amountDue: decimal("amount_due", { precision: 12, scale: 3 }).notNull().default("0"),
+  status: text("status").notNull().default("open"),                        // 'open' | 'due' | 'paid'
+  expenseId: varchar("expense_id").references(() => expenses.id),          // مصروف الزكاة عند الإخراج
+  paidAt: timestamp("paid_at"),
+  paidBy: varchar("paid_by"),
+  note: text("note"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type ZakatCycle = typeof zakatCycles.$inferSelect;
+
+// سجل الاستثمارات — تُموَّل من طبقة النمو
+export const investments = pgTable("investments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: text("title").notNull(),
+  type: text("type").notNull().default("other"),                           // 'property' | 'stocks' | 'project' | 'other'
+  amount: decimal("amount", { precision: 12, scale: 3 }).notNull(),        // المبلغ المستثمر
+  startedAt: timestamp("started_at").notNull(),
+  status: text("status").notNull().default("active"),                      // 'active' | 'exited'
+  exitedAt: timestamp("exited_at"),
+  exitValue: decimal("exit_value", { precision: 12, scale: 3 }),           // قيمة الخروج عند التصفية
+  note: text("note"),
+  createdAt: timestamp("created_at").defaultNow(),
+  createdBy: varchar("created_by"),
+});
+
+export const insertInvestmentSchema = createInsertSchema(investments)
+  .omit({ id: true, createdAt: true, exitedAt: true, exitValue: true })
+  .extend({
+    type: z.enum(["property", "stocks", "project", "other"]).default("other"),
+    amount: z.string().refine((value) => Number(value) > 0, "المبلغ يجب أن يكون أكبر من صفر"),
+    startedAt: z.coerce.date(),
+  });
+export type InsertInvestment = z.infer<typeof insertInvestmentSchema>;
+export type Investment = typeof investments.$inferSelect;
+
+// تقييمات دورية للاستثمار — لرسم منحنى العائد
+export const investmentValuations = pgTable("investment_valuations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  investmentId: varchar("investment_id").notNull().references(() => investments.id, { onDelete: "cascade" }),
+  valuedAt: timestamp("valued_at").notNull(),
+  value: decimal("value", { precision: 12, scale: 3 }).notNull(),
+  note: text("note"),
+  createdAt: timestamp("created_at").defaultNow(),
+  createdBy: varchar("created_by"),
+});
+
+export const insertInvestmentValuationSchema = createInsertSchema(investmentValuations)
+  .omit({ id: true, createdAt: true })
+  .extend({
+    value: z.string().refine((value) => Number(value) >= 0, "القيمة لا يمكن أن تكون سالبة"),
+    valuedAt: z.coerce.date(),
+  });
+export type InsertInvestmentValuation = z.infer<typeof insertInvestmentValuationSchema>;
+export type InvestmentValuation = typeof investmentValuations.$inferSelect;
+
+// اقتراحات العائلة — تعميم محرك التصويت خارج السلف
+export const proposals = pgTable("proposals", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: text("title").notNull(),
+  category: text("category").notNull().default("general"), // 'allocation' | 'expense' | 'investment' | 'general'
+  description: text("description"),
+  amount: decimal("amount", { precision: 12, scale: 3 }),  // إن كان للاقتراح أثر مالي
+  status: text("status").notNull().default("open"),        // 'open' | 'approved' | 'rejected' | 'cancelled'
+  closesAt: timestamp("closes_at"),
+  decidedAt: timestamp("decided_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  createdBy: varchar("created_by"),
+  createdByName: text("created_by_name"),
+});
+
+export const insertProposalSchema = createInsertSchema(proposals)
+  .omit({ id: true, createdAt: true, decidedAt: true, status: true })
+  .extend({
+    category: z.enum(["allocation", "expense", "investment", "general"]).default("general"),
+    title: z.string().min(3, "العنوان قصير جداً").max(200),
+    amount: z.string().nullable().optional(),
+    closesAt: z.coerce.date().nullable().optional(),
+  });
+export type InsertProposal = z.infer<typeof insertProposalSchema>;
+export type Proposal = typeof proposals.$inferSelect;
+
+export const proposalVotes = pgTable("proposal_votes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  proposalId: varchar("proposal_id").notNull().references(() => proposals.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull(),
+  voterName: text("voter_name").notNull(),
+  vote: text("vote").notNull(), // 'approve' | 'reject'
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  proposalUserUnique: uniqueIndex("proposal_votes_proposal_user_unique").on(table.proposalId, table.userId),
+}));
+
+export type ProposalVote = typeof proposalVotes.$inferSelect;
+
+// مرفقات الإيصالات — تُحفظ في قاعدة البيانات لا على القرص (قرص النشر مؤقت وتضيع الملفات)
+export const attachments = pgTable("attachments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  entityType: text("entity_type").notNull(),   // 'contribution' | 'expense' | 'loan_payment' | 'investment'
+  entityId: varchar("entity_id").notNull(),
+  fileName: text("file_name").notNull(),
+  mimeType: text("mime_type").notNull(),
+  sizeBytes: integer("size_bytes").notNull(),
+  content: text("content").notNull(),          // base64
+  createdAt: timestamp("created_at").defaultNow(),
+  createdBy: varchar("created_by"),
+});
+
+export type Attachment = typeof attachments.$inferSelect;

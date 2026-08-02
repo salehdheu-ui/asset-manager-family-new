@@ -51,6 +51,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { downloadExcel } from "@/lib/excel";
+import { buildAnalyticsSheets } from "@/lib/analytics-export";
 import {
   CapitalDistributionChart,
   ContributionsTrendChart,
@@ -336,34 +337,25 @@ export default function Analytics() {
     setIsExporting(true);
     try {
       const periodLabel = filterMonth ? `${monthNames[filterMonth - 1]} ${selectedYear}` : `سنة ${selectedYear}`;
-      const summaryRows = [
-        { المؤشر: "الفترة", القيمة: periodLabel },
-        { المؤشر: "إجمالي المساهمات", القيمة: filteredContributionsTotal },
-        { المؤشر: "إجمالي السلف", القيمة: filteredLoansTotal },
-        { المؤشر: "إجمالي المصروفات", القيمة: filteredExpensesTotal },
-        { المؤشر: "صافي التدفق", القيمة: filteredNetFlow },
-        { المؤشر: "المسدد من السلف", القيمة: allRepaymentsTotals },
-        { المؤشر: "الأعضاء النشطون", القيمة: activeMembersCount },
-        { المؤشر: "عدد الحركات", القيمة: filteredTransactions.length },
-        { المؤشر: "متوسط المساهمة", القيمة: Math.round(averageContribution) },
-        { المؤشر: "أعلى مساهم", القيمة: topContributor ? `${topContributor.name} - ${formatCurrency(topContributor.filteredContributionsTotal)}` : "لا يوجد" },
-      ];
-      const txRows = filteredTransactions.map((t) => ({
-        التاريخ: t.date, النوع: getTransactionTypeLabel(t.type), العنوان: t.title,
-        المبلغ: t.amount, العضو: t.memberName, الحالة: t.status,
-        السنة: t.year, الشهر: t.month ? monthNames[t.month - 1] : "",
-      }));
-      const memberRows = filteredMemberStats.map((m, i) => ({
-        الترتيب: i + 1, الاسم: m.name, الصفة: m.role === "guardian" ? "الوصي" : "عضو",
-        إجمالي_المساهمات: m.totalPaid, إجمالي_السلف_القائمة: m.totalBorrowed,
-        مساهمات_الفترة: m.filteredContributionsTotal, سلف_الفترة: m.filteredLoansTotal,
-        عدد_المساهمات: m.contributionCount, عدد_السلف: m.loanCount, صافي_المركز: m.netPosition,
-      }));
-      await downloadExcel(`تقرير-الصندوق-${selectedYear}${filterMonth ? `-${filterMonth}` : ""}.xlsx`, [
-        { name: "الملخص", rows: summaryRows, columnWidths: [28, 28] },
-        { name: "الحركات", rows: txRows, columnWidths: [16, 14, 30, 14, 20, 14] },
-        { name: "الأعضاء", rows: memberRows, columnWidths: [8, 22, 12, 16, 16, 16, 16, 16, 16, 16] },
-      ]);
+      const sheets = buildAnalyticsSheets({
+        periodLabel,
+        monthNames,
+        formatCurrency,
+        getTransactionTypeLabel,
+        totals: {
+          contributions: filteredContributionsTotal,
+          loans: filteredLoansTotal,
+          expenses: filteredExpensesTotal,
+          netFlow: filteredNetFlow,
+          repayments: allRepaymentsTotals,
+          activeMembers: activeMembersCount,
+          averageContribution,
+        },
+        topContributor,
+        transactions: filteredTransactions,
+        memberStats: filteredMemberStats,
+      });
+      await downloadExcel(`تقرير-الصندوق-${selectedYear}${filterMonth ? `-${filterMonth}` : ""}.xlsx`, sheets);
     } finally {
       setIsExporting(false);
     }

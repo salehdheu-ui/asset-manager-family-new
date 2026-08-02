@@ -18,7 +18,9 @@ import {
   User,
   Shield,
   Landmark,
-  History
+  History,
+  Vote,
+  TrendingUp
 } from "lucide-react";
 import pattern from "@assets/generated_images/subtle_islamic_geometric_pattern_background_texture.png";
 import logo from "@assets/generated_images/minimalist_family_fund_logo_symbol.png";
@@ -50,6 +52,8 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
     ...(isAdmin ? [{ href: "/admin", icon: Shield, label: "الإدارة", desc: "إدارة المستخدمين والصلاحيات" }] : []),
     ...(isAdmin ? [{ href: "/fund-ops", icon: Landmark, label: "إجراءات الصندوق", desc: "سلفة مباشرة، مصروف، إيداع وارد" }] : []),
     { href: "/audit-log", icon: History, label: "سجل التدقيق", desc: "العمليات الحساسة المسجلة" },
+    { href: "/proposals", icon: Vote, label: "قرارات العائلة", desc: "التصويت على الاقتراحات المطروحة" },
+    ...(isAdmin ? [{ href: "/investments", icon: TrendingUp, label: "الاستثمار والزكاة", desc: "طبقة النمو وحساب الزكاة" }] : []),
     { href: "/governance", icon: ShieldCheck, label: "الحوكمة", desc: "قوانين الصندوق والقرارات" },
     ...(isAdmin ? [{ href: "/settings", icon: Settings, label: "الإعدادات", desc: "تخصيص النظام" }] : []),
   ];
@@ -60,13 +64,61 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
   const activeDesc = activeItem?.desc || "واجهة متابعة مبسطة ومهيأة للجوال";
 
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden flex flex-col mx-auto max-w-md shadow-[0_20px_60px_rgba(16,24,40,0.08)]">
+    <div className="min-h-screen bg-background relative overflow-hidden flex flex-col mx-auto max-w-md shadow-[0_20px_60px_rgba(16,24,40,0.08)] lg:max-w-none lg:flex-row lg:shadow-none">
       {/* Background Texture */}
       <div 
         className="absolute inset-0 opacity-[0.03] pointer-events-none z-0"
         style={{ backgroundImage: `url(${pattern})`, backgroundSize: '300px' }}
       />
 
+
+      {/* شريط جانبي ثابت للشاشات الكبيرة — تخطيط الجوال لم يتغير */}
+      <aside className="relative z-20 hidden lg:flex lg:h-screen lg:w-72 lg:shrink-0 lg:flex-col lg:sticky lg:top-0 lg:border-l lg:border-border/50 lg:bg-card/70 lg:backdrop-blur-sm lg:p-5">
+        <div className="flex items-center gap-2 mb-8 px-1">
+          <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
+            <img src={logo} alt="" className="w-5 h-5 opacity-80" />
+          </div>
+          <div>
+            <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-primary/60">صندوق العائلة</p>
+            <p className="font-bold text-primary font-heading leading-tight">{familyName}</p>
+          </div>
+        </div>
+
+        <nav className="flex-1 space-y-1 overflow-y-auto scrollbar-hide">
+          {navItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all border",
+                location === item.href
+                  ? "bg-primary/5 border-primary/20 text-primary shadow-sm"
+                  : "border-transparent hover:bg-muted/50 text-muted-foreground",
+              )}
+              data-testid={`sidebar-link-${item.href.replace("/", "")}`}
+            >
+              <item.icon className="w-4 h-4 shrink-0" />
+              <span className="font-bold text-xs">{item.label}</span>
+            </Link>
+          ))}
+        </nav>
+
+        <button
+          onClick={async () => {
+            try {
+              await logout();
+            } catch (e) {}
+            setLocation("/");
+          }}
+          className="mt-4 flex items-center gap-3 rounded-xl px-3 py-2.5 text-destructive hover:bg-destructive/5 transition-all font-bold text-xs"
+          data-testid="sidebar-button-logout"
+        >
+          <LogOut className="w-4 h-4" />
+          <span>تسجيل الخروج</span>
+        </button>
+      </aside>
+
+      <div className="relative z-10 flex flex-1 flex-col min-w-0">
       {/* Header */}
       <header className="relative z-10 px-5 pt-8 pb-4 bg-gradient-to-b from-background via-background/95 to-transparent shrink-0">
         <div className="flex items-center justify-between">
@@ -87,7 +139,7 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
           </div>
           <button 
             onClick={() => setIsMenuOpen(true)}
-            className="relative rounded-2xl border border-border/60 bg-card/80 p-2.5 shadow-sm transition-all hover:bg-primary/5 active:border-primary/10"
+            className="relative rounded-2xl border border-border/60 bg-card/80 p-2.5 shadow-sm transition-all hover:bg-primary/5 active:border-primary/10 lg:hidden"
           >
             <Menu className="w-5 h-5 text-primary" />
             <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-emerald-500 border border-background"></span>
@@ -121,14 +173,14 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsMenuOpen(false)}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] max-w-md mx-auto"
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] max-w-md mx-auto lg:hidden"
             />
             <motion.div 
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed top-0 right-0 h-full w-4/5 bg-card z-[70] shadow-2xl p-6 flex flex-col max-w-[320px]"
+              className="fixed top-0 right-0 h-full w-4/5 bg-card z-[70] shadow-2xl p-6 flex flex-col max-w-[320px] lg:hidden"
             >
               <div className="flex justify-between items-center mb-10">
                 <div className="flex items-center gap-2">
@@ -219,12 +271,12 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
       </AnimatePresence>
 
       {/* Main Content */}
-      <main className="relative z-10 flex-1 px-5 pb-24 overflow-y-auto scrollbar-hide">
+      <main className="relative z-10 flex-1 px-5 pb-24 overflow-y-auto scrollbar-hide lg:px-10 lg:pb-12 lg:w-full lg:max-w-5xl lg:mx-auto">
         {children}
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 mx-auto max-w-md border-t border-border/40 bg-card/90 px-5 pb-5 pt-2 backdrop-blur-xl shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 mx-auto max-w-md lg:hidden border-t border-border/40 bg-card/90 px-5 pb-5 pt-2 backdrop-blur-xl shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
         <ul className="flex justify-between items-center">
           {bottomNavItems.map((item) => {
             const isActive = location === item.href;
@@ -251,6 +303,7 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
           })}
         </ul>
       </nav>
+      </div>
     </div>
   );
 }

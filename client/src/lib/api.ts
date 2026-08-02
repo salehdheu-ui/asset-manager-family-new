@@ -22,12 +22,12 @@ export async function getMembers(): Promise<Member[]> {
   return res.json();
 }
 
-export async function createMember(data: { name: string; role?: string; avatar?: string }): Promise<Member> {
+export async function createMember(data: { name: string; role?: string; avatar?: string; expectedMonthly?: string | null }): Promise<Member> {
   const res = await apiRequest("POST", "/api/members", data);
   return res.json();
 }
 
-export async function updateMember(id: string, data: Partial<{ name: string; role: string; avatar: string }>): Promise<Member> {
+export async function updateMember(id: string, data: Partial<{ name: string; role: string; avatar: string; expectedMonthly: string | null }>): Promise<Member> {
   const res = await apiRequest("PATCH", `/api/members/${id}`, data);
   return res.json();
 }
@@ -320,6 +320,41 @@ export async function castLoanVote(loanId: string, vote: "approve" | "reject"): 
   return res.json();
 }
 
+// المتأخرات بالريال وحصص الأعضاء
+export interface ArrearsReport {
+  windowMonths: number;
+  familyDefault: number;
+  totalArrears: number;
+  members: Array<{
+    memberId: string;
+    name: string;
+    expectedMonthly: number;
+    expectedTotal: number;
+    paidTotal: number;
+    arrears: number;
+    missedMonths: number;
+    partialMonths: number;
+  }>;
+}
+
+export async function getArrearsReport(): Promise<ArrearsReport> {
+  const res = await fetch("/api/reports/arrears", { credentials: "include" });
+  if (!res.ok) await parseFetchError(res);
+  return res.json();
+}
+
+export interface MemberSharesReport {
+  netAssets: number;
+  note: string;
+  shares: Array<{ memberId: string; name: string; contributed: number; weight: number; percent: number; value: number }>;
+}
+
+export async function getMemberShares(): Promise<MemberSharesReport> {
+  const res = await fetch("/api/reports/member-shares", { credentials: "include" });
+  if (!res.ok) await parseFetchError(res);
+  return res.json();
+}
+
 // كشف حساب العضو الكامل
 export interface MemberStatement {
   member: { id: string; name: string; role: string };
@@ -330,6 +365,14 @@ export interface MemberStatement {
     totalBorrowed: number;
     totalRepaid: number;
     currentDebt: number;
+  };
+  arrears: {
+    expectedMonthly: number;
+    expectedTotal: number;
+    paidTotal: number;
+    arrears: number;
+    missedMonths: number;
+    partialMonths: number;
   };
   timeline: Array<{
     date: string;
@@ -558,7 +601,8 @@ export interface MemberPerformance {
   loanCount: number;
   contributionMonths: number;
   attendanceRate: number;
-  netBalance: number;
+  sharePercent: number;   // نسبته الحقيقية من الصندوق (مرجّحة بالزمن)
+  shareValue: number;     // مقابل نسبته من صافي الأصول
 }
 
 export interface MembersPerformanceReport {
@@ -681,4 +725,200 @@ export async function getChartData(type: string, period?: string): Promise<Chart
   const res = await fetch(url.toString(), { credentials: "include" });
   if (!res.ok) await parseFetchError(res);
   return res.json();
+}
+
+// ــــ الزكاة ــــ
+export interface ZakatCycle {
+  id: string;
+  cycleStart: string;
+  dueAt: string | null;
+  netAssetsAtDue: string;
+  nisabUsed: string;
+  amountDue: string;
+  status: "open" | "due" | "paid";
+  expenseId: string | null;
+  paidAt: string | null;
+  note: string | null;
+}
+
+export interface ZakatStatus {
+  nisab: number;
+  hawlDays: number;
+  netAssets: number;
+  currentCycle: (ZakatCycle & { hawlComplete: boolean; daysRemaining: number }) | null;
+  estimate: { netAssets: number; nisab: number; reachesNisab: boolean; amount: number };
+  history: ZakatCycle[];
+}
+
+export async function getZakatStatus(): Promise<ZakatStatus> {
+  const res = await fetch("/api/zakat", { credentials: "include" });
+  if (!res.ok) await parseFetchError(res);
+  return res.json();
+}
+
+export async function startZakatCycle(data: { cycleStart?: string; note?: string | null } = {}): Promise<ZakatCycle> {
+  const res = await apiRequest("POST", "/api/zakat/cycles", data);
+  return res.json();
+}
+
+export async function payZakat(cycleId: string, data: { amount?: string; title?: string; note?: string | null } = {}): Promise<{ cycle: ZakatCycle }> {
+  const res = await apiRequest("POST", `/api/zakat/cycles/${cycleId}/pay`, data);
+  return res.json();
+}
+
+// ــــ الاستثمارات ــــ
+export interface InvestmentValuation {
+  id: string;
+  investmentId: string;
+  valuedAt: string;
+  value: string;
+  note: string | null;
+}
+
+export interface InvestmentRow {
+  id: string;
+  title: string;
+  type: "property" | "stocks" | "project" | "other";
+  amount: string;
+  startedAt: string;
+  status: "active" | "exited";
+  exitedAt: string | null;
+  exitValue: string | null;
+  note: string | null;
+  currentValue: number;
+  gain: number;
+  returnPercent: number;
+  valuations: InvestmentValuation[];
+}
+
+export interface InvestmentsResponse {
+  investments: InvestmentRow[];
+  totals: { invested: number; currentValue: number; realizedGain: number };
+  growthLayer: { amount: number; percent: number; used: number; available: number };
+}
+
+export async function getInvestments(): Promise<InvestmentsResponse> {
+  const res = await fetch("/api/investments", { credentials: "include" });
+  if (!res.ok) await parseFetchError(res);
+  return res.json();
+}
+
+export async function createInvestment(data: {
+  title: string;
+  type: string;
+  amount: string;
+  startedAt: string;
+  note?: string | null;
+}): Promise<InvestmentRow> {
+  const res = await apiRequest("POST", "/api/investments", data);
+  return res.json();
+}
+
+export async function addInvestmentValuation(id: string, data: { value: string; valuedAt: string; note?: string | null }): Promise<InvestmentValuation> {
+  const res = await apiRequest("POST", `/api/investments/${id}/valuations`, data);
+  return res.json();
+}
+
+export async function exitInvestment(id: string, data: { exitValue: string; note?: string | null }): Promise<{ gain: number; returnPercent: number }> {
+  const res = await apiRequest("POST", `/api/investments/${id}/exit`, data);
+  return res.json();
+}
+
+export async function deleteInvestment(id: string): Promise<void> {
+  await apiRequest("DELETE", `/api/investments/${id}`);
+}
+
+// ــــ اقتراحات العائلة ــــ
+export interface ProposalRow {
+  id: string;
+  title: string;
+  category: "allocation" | "expense" | "investment" | "general";
+  description: string | null;
+  amount: string | null;
+  status: "open" | "approved" | "rejected" | "cancelled";
+  closesAt: string | null;
+  decidedAt: string | null;
+  createdAt: string;
+  createdByName: string | null;
+  approve: number;
+  reject: number;
+  eligible: number;
+  required: number;
+  passed: boolean;
+  myVote: "approve" | "reject" | null;
+  voters: Array<{ name: string; vote: string }>;
+}
+
+export async function getProposals(): Promise<ProposalRow[]> {
+  const res = await fetch("/api/proposals", { credentials: "include" });
+  if (!res.ok) await parseFetchError(res);
+  return res.json();
+}
+
+export async function createProposal(data: {
+  title: string;
+  category: string;
+  description?: string | null;
+  amount?: string | null;
+  closesAt?: string | null;
+}): Promise<ProposalRow> {
+  const res = await apiRequest("POST", "/api/proposals", data);
+  return res.json();
+}
+
+export async function voteProposal(id: string, vote: "approve" | "reject"): Promise<{ approve: number; reject: number; required: number; passed: boolean }> {
+  const res = await apiRequest("POST", `/api/proposals/${id}/vote`, { vote });
+  return res.json();
+}
+
+export async function closeProposal(id: string, status: "rejected" | "cancelled" = "rejected"): Promise<ProposalRow> {
+  const res = await apiRequest("POST", `/api/proposals/${id}/close`, { status });
+  return res.json();
+}
+
+// ــــ المرفقات (إيصالات وفواتير) ــــ
+export interface AttachmentMeta {
+  id: string;
+  entityType: string;
+  entityId: string;
+  fileName: string;
+  mimeType: string;
+  sizeBytes: number;
+  createdAt: string;
+}
+
+export async function getAttachments(entityType: string, entityId: string): Promise<AttachmentMeta[]> {
+  const url = new URL("/api/attachments", window.location.origin);
+  url.searchParams.set("entityType", entityType);
+  url.searchParams.set("entityId", entityId);
+  const res = await fetch(url.toString(), { credentials: "include" });
+  if (!res.ok) await parseFetchError(res);
+  return res.json();
+}
+
+// يقرأ الملف في المتصفح ويرسله base64 — التخزين في قاعدة البيانات لا على القرص
+export async function uploadAttachment(entityType: string, entityId: string, file: File): Promise<AttachmentMeta> {
+  const content = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result).split(",")[1] ?? "");
+    reader.onerror = () => reject(new Error("تعذرت قراءة الملف"));
+    reader.readAsDataURL(file);
+  });
+
+  const res = await apiRequest("POST", "/api/attachments", {
+    entityType,
+    entityId,
+    fileName: file.name,
+    mimeType: file.type,
+    content,
+  });
+  return res.json();
+}
+
+export function attachmentUrl(id: string) {
+  return `/api/attachments/${id}/download`;
+}
+
+export async function deleteAttachment(id: string): Promise<void> {
+  await apiRequest("DELETE", `/api/attachments/${id}`);
 }

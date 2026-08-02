@@ -7,3 +7,7 @@ export { registerBackupRoutes } from "./backups";
 export { registerAdminRoutes } from "./admin";
 export { registerAllocationRoutes } from "./allocation";
 export { registerReportRoutes } from "./reports";
+export { registerZakatRoutes } from "./zakat";
+export { registerInvestmentRoutes } from "./investments";
+export { registerProposalRoutes } from "./proposals";
+export { registerAttachmentRoutes } from "./attachments";

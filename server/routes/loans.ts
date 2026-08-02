@@ -35,7 +35,7 @@ async function createScheduleAndRebalance(loan: LoanRecord) {
 }
 
 export function registerLoanRoutes(app: Express) {
-  app.get("/api/loans", isAuthenticated, async (req: any, res) => {
+  app.get("/api/loans", isAuthenticated, async (req, res) => {
     try {
       const memberId = req.query.memberId as string | undefined;
       let loans = memberId 
@@ -328,7 +328,7 @@ export function registerLoanRoutes(app: Express) {
   });
 
   // Loan Repayments
-  app.get("/api/loans/:id/repayments", isAuthenticated, async (req: any, res) => {
+  app.get("/api/loans/:id/repayments", isAuthenticated, async (req, res) => {
     try {
       const loanId = req.params.id as string;
       // التحقق من ملكية السلفة أو صلاحية المدير
@@ -369,7 +369,7 @@ export function registerLoanRoutes(app: Express) {
     }
   });
 
-  app.get("/api/loans/:id/payments", isAuthenticated, async (req: any, res) => {
+  app.get("/api/loans/:id/payments", isAuthenticated, async (req, res) => {
     try {
       const loanId = req.params.id as string;
       if (req.user?.role !== 'admin') {
@@ -388,7 +388,7 @@ export function registerLoanRoutes(app: Express) {
     }
   });
 
-  app.post("/api/loans/:id/payments", isAuthenticated, isAdmin, async (req: any, res) => {
+  app.post("/api/loans/:id/payments", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const loanId = req.params.id as string;
       const loan = await storage.getLoan(loanId);

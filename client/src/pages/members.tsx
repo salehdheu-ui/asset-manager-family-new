@@ -12,6 +12,7 @@ export default function Members() {
   const queryClient = useQueryClient();
   const [editingMember, setEditingMember] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
+  const [editExpected, setEditExpected] = useState("");
 
   const { data: members = [], isLoading: membersLoading } = useQuery({
     queryKey: ["members"],
@@ -51,7 +52,8 @@ export default function Members() {
   });
 
   const updateMemberMutation = useMutation({
-    mutationFn: ({ id, name }: { id: string; name: string }) => updateMember(id, { name, avatar: name.substring(0, 2) }),
+    mutationFn: ({ id, name, expectedMonthly }: { id: string; name: string; expectedMonthly: string | null }) =>
+      updateMember(id, { name, avatar: name.substring(0, 2), expectedMonthly }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["members"] });
       toast({ title: "تم تحديث بيانات العضو" });
@@ -63,19 +65,25 @@ export default function Members() {
     },
   });
 
-  const startEditing = (member: { id: string; name: string }) => {
+  const startEditing = (member: { id: string; name: string; expectedMonthly?: string | null }) => {
     setEditingMember(member.id);
     setEditName(member.name);
+    setEditExpected(member.expectedMonthly ? String(Number(member.expectedMonthly)) : "");
   };
 
   const cancelEditing = () => {
     setEditingMember(null);
     setEditName("");
+    setEditExpected("");
   };
 
   const saveEdit = (id: string) => {
     if (editName.trim()) {
-      updateMemberMutation.mutate({ id, name: editName.trim() });
+      updateMemberMutation.mutate({
+        id,
+        name: editName.trim(),
+        expectedMonthly: editExpected.trim() ? editExpected.trim() : null,
+      });
     }
   };
 
@@ -143,6 +151,7 @@ export default function Members() {
                     </div>
                     <div className="flex-1">
                       {isEditing ? (
+                        <div className="space-y-2">
                         <div className="flex items-center gap-2">
                           <input
                             type="text"
@@ -171,6 +180,20 @@ export default function Members() {
                           >
                             <X className="w-4 h-4" />
                           </button>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <label className="text-[11px] font-bold text-muted-foreground shrink-0">الاشتراك الشهري:</label>
+                          <input
+                            type="number"
+                            step="0.001"
+                            value={editExpected}
+                            onChange={(e) => setEditExpected(e.target.value)}
+                            placeholder="الافتراضي العائلي"
+                            className="flex-1 text-sm font-mono bg-muted/50 border border-primary/20 rounded-lg px-3 py-1 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                            data-testid={`input-edit-expected-${member.id}`}
+                          />
+                          <span className="text-[11px] text-muted-foreground">ر.ع</span>
+                        </div>
                         </div>
                       ) : (
                         <>

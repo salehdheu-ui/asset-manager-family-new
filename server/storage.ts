@@ -11,7 +11,13 @@ import {
   capitalAllocations,
   systemBackups,
   type PasswordResetRequest, passwordResetRequests,
-  type LoanVote, loanVotes
+  type LoanVote, loanVotes,
+  type ZakatCycle, zakatCycles,
+  type Investment, type InsertInvestment, investments,
+  type InvestmentValuation, type InsertInvestmentValuation, investmentValuations,
+  type Proposal, type InsertProposal, proposals,
+  type ProposalVote, proposalVotes,
+  type Attachment, attachments
 } from "@shared/schema";
 import { users } from "@shared/models/auth";
 import { db } from "./db";
@@ -85,6 +91,36 @@ export interface IStorage {
   getResetRequest(id: string): Promise<PasswordResetRequest | undefined>;
   getActiveResetRequestByUsername(username: string): Promise<PasswordResetRequest | undefined>;
   updateResetRequest(id: string, data: Partial<PasswordResetRequest>): Promise<PasswordResetRequest | undefined>;
+
+  // Zakat
+  getZakatCycles(): Promise<ZakatCycle[]>;
+  getZakatCycle(id: string): Promise<ZakatCycle | undefined>;
+  getOpenZakatCycle(): Promise<ZakatCycle | undefined>;
+  createZakatCycle(data: { cycleStart: Date; note?: string | null }): Promise<ZakatCycle>;
+  updateZakatCycle(id: string, data: Partial<ZakatCycle>): Promise<ZakatCycle | undefined>;
+
+  // Investments
+  getInvestments(): Promise<Investment[]>;
+  getInvestment(id: string): Promise<Investment | undefined>;
+  createInvestment(data: InsertInvestment): Promise<Investment>;
+  updateInvestment(id: string, data: Partial<Investment>): Promise<Investment | undefined>;
+  deleteInvestment(id: string): Promise<void>;
+  getInvestmentValuations(investmentId?: string): Promise<InvestmentValuation[]>;
+  createInvestmentValuation(data: InsertInvestmentValuation): Promise<InvestmentValuation>;
+
+  // Proposals (قرارات العائلة)
+  getProposals(): Promise<Proposal[]>;
+  getProposal(id: string): Promise<Proposal | undefined>;
+  createProposal(data: InsertProposal): Promise<Proposal>;
+  updateProposal(id: string, data: Partial<Proposal>): Promise<Proposal | undefined>;
+  getProposalVotes(proposalId: string): Promise<ProposalVote[]>;
+  castProposalVote(data: { proposalId: string; userId: string; voterName: string; vote: string }): Promise<ProposalVote>;
+
+  // Attachments (إيصالات وفواتير)
+  getAttachments(entityType: string, entityId: string): Promise<Omit<Attachment, "content">[]>;
+  getAttachment(id: string): Promise<Attachment | undefined>;
+  createAttachment(data: Omit<Attachment, "id" | "createdAt">): Promise<Omit<Attachment, "content">>;
+  deleteAttachment(id: string): Promise<void>;
 
   // System Reset
   resetSystemData(): Promise<void>;
@@ -386,6 +422,149 @@ export class DatabaseStorage implements IStorage {
     return updated;
   }
 
+  // Zakat
+  async getZakatCycles(): Promise<ZakatCycle[]> {
+    return await db.select().from(zakatCycles).orderBy(desc(zakatCycles.cycleStart));
+  }
+
+  async getZakatCycle(id: string): Promise<ZakatCycle | undefined> {
+    const [row] = await db.select().from(zakatCycles).where(eq(zakatCycles.id, id));
+    return row;
+  }
+
+  // الدورة الجارية: أي دورة لم تُخرَج زكاتها بعد
+  async getOpenZakatCycle(): Promise<ZakatCycle | undefined> {
+    const [row] = await db.select().from(zakatCycles)
+      .where(sql`${zakatCycles.status} <> 'paid'`)
+      .orderBy(desc(zakatCycles.cycleStart)).limit(1);
+    return row;
+  }
+
+  async createZakatCycle(data: { cycleStart: Date; note?: string | null }): Promise<ZakatCycle> {
+    const [created] = await db.insert(zakatCycles).values({
+      cycleStart: data.cycleStart,
+      note: data.note ?? null,
+    }).returning();
+    return created;
+  }
+
+  async updateZakatCycle(id: string, data: Partial<ZakatCycle>): Promise<ZakatCycle | undefined> {
+    const [updated] = await db.update(zakatCycles).set(data).where(eq(zakatCycles.id, id)).returning();
+    return updated;
+  }
+
+  // Investments
+  async getInvestments(): Promise<Investment[]> {
+    return await db.select().from(investments).orderBy(desc(investments.startedAt));
+  }
+
+  async getInvestment(id: string): Promise<Investment | undefined> {
+    const [row] = await db.select().from(investments).where(eq(investments.id, id));
+    return row;
+  }
+
+  async createInvestment(data: InsertInvestment): Promise<Investment> {
+    const [created] = await db.insert(investments).values(data).returning();
+    return created;
+  }
+
+  async updateInvestment(id: string, data: Partial<Investment>): Promise<Investment | undefined> {
+    const [updated] = await db.update(investments).set(data).where(eq(investments.id, id)).returning();
+    return updated;
+  }
+
+  async deleteInvestment(id: string): Promise<void> {
+    await db.delete(investmentValuations).where(eq(investmentValuations.investmentId, id));
+    await db.delete(investments).where(eq(investments.id, id));
+  }
+
+  async getInvestmentValuations(investmentId?: string): Promise<InvestmentValuation[]> {
+    const query = db.select().from(investmentValuations);
+    const rows = investmentId
+      ? await query.where(eq(investmentValuations.investmentId, investmentId))
+      : await query;
+    return rows.sort((a, b) => new Date(a.valuedAt).getTime() - new Date(b.valuedAt).getTime());
+  }
+
+  async createInvestmentValuation(data: InsertInvestmentValuation): Promise<InvestmentValuation> {
+    const [created] = await db.insert(investmentValuations).values(data).returning();
+    return created;
+  }
+
+  // Proposals
+  async getProposals(): Promise<Proposal[]> {
+    return await db.select().from(proposals).orderBy(desc(proposals.createdAt));
+  }
+
+  async getProposal(id: string): Promise<Proposal | undefined> {
+    const [row] = await db.select().from(proposals).where(eq(proposals.id, id));
+    return row;
+  }
+
+  async createProposal(data: InsertProposal): Promise<Proposal> {
+    const [created] = await db.insert(proposals).values(data).returning();
+    return created;
+  }
+
+  async updateProposal(id: string, data: Partial<Proposal>): Promise<Proposal | undefined> {
+    const [updated] = await db.update(proposals).set(data).where(eq(proposals.id, id)).returning();
+    return updated;
+  }
+
+  async getProposalVotes(proposalId: string): Promise<ProposalVote[]> {
+    return await db.select().from(proposalVotes).where(eq(proposalVotes.proposalId, proposalId));
+  }
+
+  // الصوت الواحد لكل عضو — تغيير الرأي يستبدل الصوت لا يضيف صوتاً جديداً
+  async castProposalVote(data: { proposalId: string; userId: string; voterName: string; vote: string }): Promise<ProposalVote> {
+    const [row] = await db.insert(proposalVotes).values(data)
+      .onConflictDoUpdate({
+        target: [proposalVotes.proposalId, proposalVotes.userId],
+        set: { vote: data.vote, voterName: data.voterName, createdAt: new Date() },
+      })
+      .returning();
+    return row;
+  }
+
+  // Attachments — المحتوى ثقيل، فلا يُجلب إلا عند التنزيل
+  async getAttachments(entityType: string, entityId: string): Promise<Omit<Attachment, "content">[]> {
+    return await db.select({
+      id: attachments.id,
+      entityType: attachments.entityType,
+      entityId: attachments.entityId,
+      fileName: attachments.fileName,
+      mimeType: attachments.mimeType,
+      sizeBytes: attachments.sizeBytes,
+      createdAt: attachments.createdAt,
+      createdBy: attachments.createdBy,
+    }).from(attachments)
+      .where(and(eq(attachments.entityType, entityType), eq(attachments.entityId, entityId)))
+      .orderBy(desc(attachments.createdAt));
+  }
+
+  async getAttachment(id: string): Promise<Attachment | undefined> {
+    const [row] = await db.select().from(attachments).where(eq(attachments.id, id));
+    return row;
+  }
+
+  async createAttachment(data: Omit<Attachment, "id" | "createdAt">): Promise<Omit<Attachment, "content">> {
+    const [created] = await db.insert(attachments).values(data).returning({
+      id: attachments.id,
+      entityType: attachments.entityType,
+      entityId: attachments.entityId,
+      fileName: attachments.fileName,
+      mimeType: attachments.mimeType,
+      sizeBytes: attachments.sizeBytes,
+      createdAt: attachments.createdAt,
+      createdBy: attachments.createdBy,
+    });
+    return created;
+  }
+
+  async deleteAttachment(id: string): Promise<void> {
+    await db.delete(attachments).where(eq(attachments.id, id));
+  }
+
   async resetSystemData(): Promise<void> {
     await db.transaction(async (tx: any) => {
       await tx.update(familySettings).set({
@@ -404,6 +583,12 @@ export class DatabaseStorage implements IStorage {
 
       await tx.delete(auditLogs);
       await tx.delete(systemBackups);
+      await tx.delete(attachments);
+      await tx.delete(proposalVotes);
+      await tx.delete(proposals);
+      await tx.delete(investmentValuations);
+      await tx.delete(investments);
+      await tx.delete(zakatCycles);
       await tx.delete(capitalAllocations);
       await tx.delete(loanPayments);
       await tx.delete(loanRepayments);

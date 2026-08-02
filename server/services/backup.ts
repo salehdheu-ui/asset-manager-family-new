@@ -3,7 +3,7 @@ import { randomUUID } from "crypto";
 import bcrypt from "bcryptjs";
 import path from "path";
 import { db } from "../db";
-import { auditLogs, capitalAllocations, contributions, expenses, familySettings, fundAdjustments, loanPayments, loanRepayments, loans, members, systemBackups } from "@shared/schema";
+import { attachments, auditLogs, capitalAllocations, contributions, expenses, familySettings, fundAdjustments, investmentValuations, investments, loanPayments, loanRepayments, loans, members, proposalVotes, proposals, systemBackups, zakatCycles } from "@shared/schema";
 import { users } from "@shared/models/auth";
 import { asc, desc, eq } from "drizzle-orm";
 
@@ -58,7 +58,7 @@ export async function createBackupSnapshot(createdBy?: string | null, backupLeve
   await ensureBackupDirectory();
 
   const backupDate = new Date();
-  const [settingsRows, memberRows, contributionRows, loanRows, repaymentRows, paymentRows, expenseRows, adjustmentRows, allocationRows, userRows, auditLogRows] = await Promise.all([
+  const [settingsRows, memberRows, contributionRows, loanRows, repaymentRows, paymentRows, expenseRows, adjustmentRows, allocationRows, userRows, auditLogRows, zakatRows, investmentRows, valuationRows, proposalRows, proposalVoteRows, attachmentRows] = await Promise.all([
     db.select().from(familySettings).limit(1),
     db.select().from(members).orderBy(asc(members.createdAt)),
     db.select().from(contributions).orderBy(asc(contributions.createdAt)),
@@ -71,6 +71,12 @@ export async function createBackupSnapshot(createdBy?: string | null, backupLeve
     // تشمل كلمة المرور (مشفرة bcrypt) — بدونها تستحيل استعادة الحسابات بعد كارثة
     db.select().from(users).orderBy(asc(users.createdAt)),
     db.select().from(auditLogs).orderBy(asc(auditLogs.createdAt)),
+    db.select().from(zakatCycles).orderBy(asc(zakatCycles.cycleStart)),
+    db.select().from(investments).orderBy(asc(investments.startedAt)),
+    db.select().from(investmentValuations).orderBy(asc(investmentValuations.valuedAt)),
+    db.select().from(proposals).orderBy(asc(proposals.createdAt)),
+    db.select().from(proposalVotes).orderBy(asc(proposalVotes.createdAt)),
+    db.select().from(attachments).orderBy(asc(attachments.createdAt)),
   ]);
 
   const payload = {
@@ -90,6 +96,12 @@ export async function createBackupSnapshot(createdBy?: string | null, backupLeve
       capitalAllocations: allocationRows,
       users: userRows,
       auditLogs: auditLogRows,
+      zakatCycles: zakatRows,
+      investments: investmentRows,
+      investmentValuations: valuationRows,
+      proposals: proposalRows,
+      proposalVotes: proposalVoteRows,
+      attachments: attachmentRows,
     },
   };
 
@@ -182,6 +194,12 @@ type BackupPayload = {
     capitalAllocations?: Record<string, unknown>[];
     users?: Record<string, unknown>[];
     auditLogs?: Record<string, unknown>[];
+    zakatCycles?: Record<string, unknown>[];
+    investments?: Record<string, unknown>[];
+    investmentValuations?: Record<string, unknown>[];
+    proposals?: Record<string, unknown>[];
+    proposalVotes?: Record<string, unknown>[];
+    attachments?: Record<string, unknown>[];
   };
 };
 
@@ -210,6 +228,11 @@ export function summarizeBackupPayload(payload: unknown): BackupSummary {
       fundAdjustments: countOf(data.fundAdjustments),
       capitalAllocations: countOf(data.capitalAllocations),
       auditLogs: countOf(data.auditLogs),
+      zakatCycles: countOf(data.zakatCycles),
+      investments: countOf(data.investments),
+      investmentValuations: countOf(data.investmentValuations),
+      proposals: countOf(data.proposals),
+      attachments: countOf(data.attachments),
     },
   };
 }
@@ -217,6 +240,8 @@ export function summarizeBackupPayload(payload: unknown): BackupSummary {
 const ARRAY_KEYS = [
   "members", "users", "contributions", "loans", "loanRepayments",
   "loanPayments", "expenses", "fundAdjustments", "capitalAllocations", "auditLogs",
+  "zakatCycles", "investments", "investmentValuations",
+  "proposals", "proposalVotes", "attachments",
 ] as const;
 
 // فحص سلامة ملف النسخة قبل قبول استعادته — يرفض الملفات التالفة أو الغريبة
@@ -253,6 +278,8 @@ export function validateBackupPayload(payload: unknown): { valid: boolean; reaso
 const DATE_FIELDS = new Set([
   "createdAt", "updatedAt", "approvedAt", "paidAt", "dueDate",
   "lockedAt", "resetAt", "backupLastRunAt", "backupDate", "expire",
+  "cycleStart", "dueAt", "startedAt", "exitedAt", "valuedAt",
+  "closesAt", "decidedAt",
 ]);
 
 function reviveDates<T extends Record<string, unknown>>(row: T): T {
@@ -296,6 +323,12 @@ async function restoreFromPayload(payload: BackupPayload): Promise<{ lockedAccou
     await tx.delete(expenses);
     await tx.delete(fundAdjustments);
     await tx.delete(auditLogs);
+    await tx.delete(attachments);
+    await tx.delete(proposalVotes);
+    await tx.delete(proposals);
+    await tx.delete(investmentValuations);
+    await tx.delete(investments);
+    await tx.delete(zakatCycles);
     await tx.delete(capitalAllocations);
     await tx.delete(members);
     await tx.delete(familySettings);
@@ -320,6 +353,12 @@ async function restoreFromPayload(payload: BackupPayload): Promise<{ lockedAccou
     if (data.fundAdjustments?.length) await tx.insert(fundAdjustments).values(reviveRows(data.fundAdjustments) as never);
     if (data.auditLogs?.length) await tx.insert(auditLogs).values(reviveRows(data.auditLogs) as never);
     if (data.capitalAllocations?.length) await tx.insert(capitalAllocations).values(reviveRows(data.capitalAllocations) as never);
+    if (data.zakatCycles?.length) await tx.insert(zakatCycles).values(reviveRows(data.zakatCycles) as never);
+    if (data.investments?.length) await tx.insert(investments).values(reviveRows(data.investments) as never);
+    if (data.investmentValuations?.length) await tx.insert(investmentValuations).values(reviveRows(data.investmentValuations) as never);
+    if (data.proposals?.length) await tx.insert(proposals).values(reviveRows(data.proposals) as never);
+    if (data.proposalVotes?.length) await tx.insert(proposalVotes).values(reviveRows(data.proposalVotes) as never);
+    if (data.attachments?.length) await tx.insert(attachments).values(reviveRows(data.attachments) as never);
   });
 
   return { lockedAccounts };

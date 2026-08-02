@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { Switch, Route } from "wouter";
+import { Switch, Route, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -26,6 +26,8 @@ const MemberDetail = lazy(() => import("@/pages/member-detail"));
 const AuditLog = lazy(() => import("@/pages/audit-log"));
 const AnnualReport = lazy(() => import("@/pages/annual-report"));
 const ReportBuilder = lazy(() => import("@/pages/report-builder"));
+const Investments = lazy(() => import("@/pages/investments"));
+const Proposals = lazy(() => import("@/pages/proposals"));
 
 function PageLoader() {
   return (
@@ -63,7 +65,8 @@ function Router() {
         <Route path="/members">{() => <ProtectedRoute component={Members} />}</Route>
         <Route path="/settings">{() => <ProtectedRoute component={FamilySettings} />}</Route>
         <Route path="/payments">{() => <ProtectedRoute component={PaymentList} />}</Route>
-        <Route path="/reports">{() => <ProtectedRoute component={Analytics} />}</Route>
+        {/* /reports مسار قديم — يوجّه للمسار الرسمي حتى تبقى الروابط المحفوظة تعمل */}
+        <Route path="/reports">{() => <Redirect to="/analytics" replace />}</Route>
         <Route path="/analytics">{() => <ProtectedRoute component={Analytics} />}</Route>
         <Route path="/admin">{() => <AdminRoute component={AdminDashboard} />}</Route>
         <Route path="/fund-ops">{() => <AdminRoute component={FundOps} />}</Route>
@@ -72,6 +75,8 @@ function Router() {
         <Route path="/audit-log">{() => <ProtectedRoute component={AuditLog} />}</Route>
         <Route path="/annual-report">{() => <AdminRoute component={AnnualReport} />}</Route>
         <Route path="/report-builder">{() => <AdminRoute component={ReportBuilder} />}</Route>
+        <Route path="/investments">{() => <AdminRoute component={Investments} />}</Route>
+        <Route path="/proposals">{() => <ProtectedRoute component={Proposals} />}</Route>
         <Route component={NotFound} />
       </Switch>
     </Suspense>

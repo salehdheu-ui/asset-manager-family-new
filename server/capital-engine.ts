@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { contributions, loans, expenses, familySettings, capitalAllocations, loanPayments, fundAdjustments, type Contribution, type Loan, type Expense, type FundAdjustment, type LoanPayment } from "@shared/schema";
+import { contributions, loans, expenses, familySettings, capitalAllocations, loanPayments, fundAdjustments, investments, type Contribution, type Loan, type Expense, type FundAdjustment, type LoanPayment, type Investment } from "@shared/schema";
 import { computeNetAssets, splitAllocation } from "@shared/finance";
 import { eq, and, sql } from "drizzle-orm";
 
@@ -82,6 +82,16 @@ async function computeUsedAmounts(year: number) {
   const emergencyExpenses = yearExpenses.filter((e: Expense) => e.category === 'emergency').reduce((sum: number, e: Expense) => sum + Number(e.amount), 0);
   const generalExpenses = yearExpenses.filter((e: Expense) => e.category !== 'emergency').reduce((sum: number, e: Expense) => sum + Number(e.amount), 0);
 
+  // الاستثمارات القائمة تستهلك طبقة النمو حتى تُصفّى
+  const allInvestments: Investment[] = await db.select().from(investments);
+  const growthUsed = allInvestments
+    .filter((i: Investment) => {
+      if (i.status !== "active") return false;
+      const d = i.startedAt;
+      return d && d >= yearStart && d < yearEnd;
+    })
+    .reduce((sum: number, i: Investment) => sum + Number(i.amount), 0);
+
   const allPaidRepayments: LoanPayment[] = await db.select().from(loanPayments);
   const yearLoanIds = new Set(yearLoans.map((l: Loan) => l.id));
   const totalRepayments = allPaidRepayments
@@ -90,7 +100,7 @@ async function computeUsedAmounts(year: number) {
 
   return {
     flexibleUsed: Math.max(0, loansTotal - totalRepayments + generalExpenses),
-    growthUsed: 0,
+    growthUsed,
     emergencyUsed: emergencyExpenses,
   };
 }
