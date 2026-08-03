@@ -14,7 +14,7 @@ interface Props {
 
 const TONES: Record<Tone, string> = {
   in: "text-primary",
-  out: "text-amber-700",
+  out: "text-fund-out",
   due: "text-destructive",
   neutral: "text-foreground",
 };

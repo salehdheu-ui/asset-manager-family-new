@@ -179,7 +179,7 @@ export default function YearlyPaymentMatrix() {
     return (
       <MobileLayout title="سجل المساهمات والاعتمادات">
         <div className="space-y-4 pt-6">
-          <div className="rounded-3xl border border-dashed border-border bg-muted/20 p-8 text-center">
+          <div className="rounded-xl border border-dashed border-border bg-muted/20 p-8 text-center">
             <AlertCircle className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
             <p className="text-sm font-bold text-foreground">لا يوجد أعضاء متاحون لعرض سجل المساهمات</p>
             <p className="mt-2 text-sm text-muted-foreground">أضف عضوًا أولًا أو تأكد من ربط حسابك بعضو في النظام.</p>
@@ -194,11 +194,11 @@ export default function YearlyPaymentMatrix() {
       <div className="space-y-5 pt-2 pb-16">
         
         {/* Year Selector */}
-        <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/15 rounded-3xl p-5 shadow-sm">
+        <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/15 rounded-xl p-5 shadow-sm">
           <div className="flex items-center justify-between">
             <button 
               onClick={() => setSelectedYear(prev => Math.max(2020, prev - 1))}
-              className="w-11 h-11 flex items-center justify-center bg-card hover:bg-primary/10 rounded-2xl transition-all border border-border/50 active:scale-90 shadow-sm"
+              className="w-11 h-11 flex items-center justify-center bg-card hover:bg-primary/10 rounded-lg transition-all border border-border/50 active:scale-90 shadow-sm"
               data-testid="button-prev-year"
             >
               <ChevronRight className="w-5 h-5 text-primary" />
@@ -227,14 +227,14 @@ export default function YearlyPaymentMatrix() {
 
             <button 
               onClick={() => setSelectedYear(prev => Math.min(2099, prev + 1))}
-              className="w-11 h-11 flex items-center justify-center bg-card hover:bg-primary/10 rounded-2xl transition-all border border-border/50 active:scale-90 shadow-sm"
+              className="w-11 h-11 flex items-center justify-center bg-card hover:bg-primary/10 rounded-lg transition-all border border-border/50 active:scale-90 shadow-sm"
               data-testid="button-next-year"
             >
               <ChevronLeft className="w-5 h-5 text-primary" />
             </button>
           </div>
 
-          <div className="mt-4 flex items-center justify-center gap-2 rounded-2xl bg-card/70 border border-primary/10 px-3 py-2" data-testid="due-day-hint">
+          <div className="mt-4 flex items-center justify-center gap-2 rounded-lg bg-card/70 border border-primary/10 px-3 py-2" data-testid="due-day-hint">
             <Calendar className="w-3.5 h-3.5 text-primary/60 shrink-0" />
             <p className="text-xs text-muted-foreground leading-relaxed">
               مهلة مساهمة كل شهر حتى يوم <b className="text-primary">{MONTHLY_DUE_DAY}</b> منه — لا يُحتسب تأخير قبل ذلك.
@@ -247,34 +247,34 @@ export default function YearlyPaymentMatrix() {
           <motion.div 
             initial={{ opacity: 0, y: 10 }} 
             animate={{ opacity: 1, y: 0 }}
-            className="bg-emerald-500/5 border border-emerald-500/15 rounded-2xl p-4 flex items-center gap-3"
+            className="bg-fund-in/8 border border-fund-in/15 rounded-lg p-4 flex items-center gap-3"
           >
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
-              <TrendingUp className="w-5 h-5 text-emerald-600" />
+            <div className="w-10 h-10 rounded-xl bg-fund-in/14 flex items-center justify-center">
+              <TrendingUp className="w-5 h-5 text-fund-in" />
             </div>
             <div>
-              <p className="text-xs text-emerald-600/70 font-bold">إجمالي المعتمد</p>
-              <p className="text-lg font-mono font-bold text-emerald-700" data-testid="text-total-approved">{totalAllApproved.toLocaleString()} <span className="text-xs font-sans">ر.ع</span></p>
+              <p className="text-xs text-fund-in/70 font-bold">إجمالي المعتمد</p>
+              <p className="text-lg font-mono font-bold text-fund-in" data-testid="text-total-approved">{totalAllApproved.toLocaleString()} <span className="text-xs font-sans">ر.ع</span></p>
             </div>
           </motion.div>
           <motion.div 
             initial={{ opacity: 0, y: 10 }} 
             animate={{ opacity: 1, y: 0 }} 
             transition={{ delay: 0.05 }}
-            className="bg-amber-500/5 border border-amber-500/15 rounded-2xl p-4 flex items-center gap-3"
+            className="bg-fund-out/8 border border-fund-out/15 rounded-lg p-4 flex items-center gap-3"
           >
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center">
-              <Clock className="w-5 h-5 text-amber-600" />
+            <div className="w-10 h-10 rounded-xl bg-fund-out/14 flex items-center justify-center">
+              <Clock className="w-5 h-5 text-fund-out" />
             </div>
             <div>
-              <p className="text-xs text-amber-600/70 font-bold">طلبات معلقة</p>
-              <p className="text-lg font-mono font-bold text-amber-700" data-testid="text-total-pending">{totalPending}</p>
+              <p className="text-xs text-fund-out/70 font-bold">طلبات معلقة</p>
+              <p className="text-lg font-mono font-bold text-fund-out" data-testid="text-total-pending">{totalPending}</p>
             </div>
           </motion.div>
         </div>
 
         {members.length === 0 ? (
-          <div className="text-center py-16 bg-muted/10 rounded-3xl border border-dashed border-border/60">
+          <div className="text-center py-16 bg-muted/10 rounded-xl border border-dashed border-border/60">
             <Coins className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
             <p className="text-sm text-muted-foreground font-bold">لا يوجد أعضاء</p>
             <p className="text-xs text-muted-foreground/70 mt-1">يرجى إضافة أعضاء من صفحة الأعضاء أولاً</p>
@@ -296,19 +296,19 @@ export default function YearlyPaymentMatrix() {
                   initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: mIdx * 0.06 }}
-                  className="bg-card border border-border/50 rounded-3xl overflow-hidden shadow-sm"
+                  className="bg-card border border-border/50 rounded-xl overflow-hidden shadow-sm"
                   data-testid={`card-member-${member.id}`}
                 >
                   {/* Member Header */}
                   <div className="p-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center font-bold text-primary text-lg border border-primary/15">
+                      <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center font-bold text-primary text-lg border border-primary/15">
                         {member.avatar || member.name.substring(0, 2)}
                       </div>
                       <div>
                         <h4 className="font-bold text-sm" data-testid={`text-member-name-${member.id}`}>{member.name}</h4>
                         <div className="flex items-center gap-3 mt-1">
-                          <span className="text-xs text-emerald-600 font-bold bg-emerald-500/10 px-2 py-0.5 rounded-md">
+                          <span className="text-xs text-fund-in font-bold bg-fund-in/14 px-2 py-0.5 rounded-md">
                             {totalApproved.toLocaleString()} ر.ع
                           </span>
                           <span className="text-xs text-muted-foreground font-medium">
@@ -411,7 +411,7 @@ export default function YearlyPaymentMatrix() {
                                     type="number"
                                     value={bulkAmounts[member.id] ?? "100"}
                                     onChange={(e) => setBulkAmounts((prev) => ({ ...prev, [member.id]: e.target.value }))}
-                                    className="w-full h-16 text-2xl font-mono px-4 border-2 border-primary/10 rounded-2xl text-center focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all"
+                                    className="w-full h-16 text-2xl font-mono px-4 border-2 border-primary/10 rounded-lg text-center focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all"
                                     placeholder="0"
                                     data-testid={`input-bulk-amount-${member.id}`}
                                   />
@@ -447,9 +447,9 @@ export default function YearlyPaymentMatrix() {
                       )}
                       {memberPending.length > 0 && (
                         <div className="flex items-center gap-2">
-                          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200/60">
-                            <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse" />
-                            <span className="text-xs font-bold text-amber-600">{memberPending.length} معلق</span>
+                          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-fund-out/8 border border-fund-out/15">
+                            <span className="w-1.5 h-1.5 bg-fund-out rounded-full animate-pulse" />
+                            <span className="text-xs font-bold text-fund-out">{memberPending.length} معلق</span>
                           </div>
                           {isGuardian && (
                             <button
@@ -460,7 +460,7 @@ export default function YearlyPaymentMatrix() {
                                 })
                               }
                               disabled={approvingAllFor === member.id}
-                              className="tap-target flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-700 text-xs font-bold hover:bg-emerald-500/20 transition-all active:scale-95 disabled:opacity-50"
+                              className="tap-target flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-fund-in/14 border border-fund-in/25 text-fund-in text-xs font-bold hover:bg-fund-in/20 transition-all active:scale-95 disabled:opacity-50"
                               data-testid={`button-approve-all-${member.id}`}
                             >
                               <Check className="w-3.5 h-3.5" />
@@ -479,7 +479,7 @@ export default function YearlyPaymentMatrix() {
                         initial={{ width: 0 }}
                         animate={{ width: `${(paidMonths / 12) * 100}%` }}
                         transition={{ duration: 0.8, delay: mIdx * 0.1 }}
-                        className="h-full bg-gradient-to-l from-emerald-400 to-emerald-500 rounded-full"
+                        className="h-full bg-gradient-to-l from-fund-in/60 to-fund-in rounded-full"
                       />
                     </div>
                   </div>
@@ -503,11 +503,11 @@ export default function YearlyPaymentMatrix() {
                           <DialogTrigger asChild>
                             <button 
                               className={cn(
-                                "relative flex flex-col items-center justify-center py-3 px-1 gap-0.5 transition-all rounded-2xl border",
+                                "relative flex flex-col items-center justify-center py-3 px-1 gap-0.5 transition-all rounded-lg border",
                                 isApproved 
-                                  ? "bg-emerald-500/8 border-emerald-500/20 hover:bg-emerald-500/15" 
+                                  ? "bg-fund-in/8 border-fund-in/25 hover:bg-fund-in/15" 
                                   : isPending 
-                                    ? "bg-amber-500/8 border-amber-400/25 hover:bg-amber-500/15" 
+                                    ? "bg-fund-out/8 border-fund-out/15 hover:bg-fund-out/15" 
                                     : isCurrentMonth
                                       ? "bg-primary/5 border-primary/20 hover:bg-primary/10"
                                       : "bg-muted/20 border-transparent hover:bg-muted/40 hover:border-border/30"
@@ -516,15 +516,15 @@ export default function YearlyPaymentMatrix() {
                             >
                               <span className={cn(
                                 "text-xs font-bold",
-                                isApproved ? "text-emerald-600" : isPending ? "text-amber-600" : isCurrentMonth ? "text-primary" : "text-muted-foreground/70"
+                                isApproved ? "text-fund-in" : isPending ? "text-fund-out" : isCurrentMonth ? "text-primary" : "text-muted-foreground/70"
                               )}>
                                 {month.name}
                               </span>
                               
                               {isApproved ? (
-                                <CheckCircle2 className="w-5 h-5 text-emerald-500 mt-0.5" />
+                                <CheckCircle2 className="w-5 h-5 text-fund-in mt-0.5" />
                               ) : isPending ? (
-                                <Clock className="w-5 h-5 text-amber-500 mt-0.5 animate-pulse" />
+                                <Clock className="w-5 h-5 text-fund-out mt-0.5 animate-pulse" />
                               ) : (
                                 <span className="text-xs font-mono text-muted-foreground/40 mt-0.5">---</span>
                               )}
@@ -532,7 +532,7 @@ export default function YearlyPaymentMatrix() {
                               {amount > 0 && (
                                 <span className={cn(
                                   "text-xs font-mono font-bold mt-0.5",
-                                  isApproved ? "text-emerald-700" : "text-amber-700"
+                                  isApproved ? "text-fund-in" : "text-fund-out"
                                 )}>
                                   {amount.toLocaleString()}
                                 </span>
@@ -556,14 +556,14 @@ export default function YearlyPaymentMatrix() {
                             <div className="py-6 space-y-4">
                               {isApproved ? (
                                 <div className="space-y-4">
-                                  <div className="bg-emerald-50 text-emerald-800 p-8 rounded-[2rem] flex flex-col items-center gap-3 text-center border border-emerald-100">
-                                    <CheckCircle2 className="w-16 h-16 text-emerald-500" />
+                                  <div className="bg-fund-in/8 text-fund-in p-8 rounded-xl flex flex-col items-center gap-3 text-center border border-fund-in/14">
+                                    <CheckCircle2 className="w-16 h-16 text-fund-in" />
                                     <div className="text-4xl font-mono font-bold tracking-tighter">{amount.toLocaleString()} <span className="text-base font-sans font-normal">ر.ع</span></div>
                                     <p className="text-sm font-bold opacity-80">تم الاعتماد والتوثيق</p>
                                   </div>
 
                                   {contribution && (
-                                    <div className="bg-muted/30 rounded-2xl p-4">
+                                    <div className="bg-muted/30 rounded-lg p-4">
                                       <AttachmentBox entityType="contribution" entityId={contribution.id} canDelete={isGuardian} label="إثبات التحويل" />
                                     </div>
                                   )}
@@ -571,7 +571,7 @@ export default function YearlyPaymentMatrix() {
                                   {isGuardian && contribution && (
                                     <>
                                       {confirmDeleteId === contribution.id ? (
-                                        <div className="bg-destructive/5 border border-destructive/20 rounded-2xl p-5 space-y-4">
+                                        <div className="bg-destructive/5 border border-destructive/20 rounded-lg p-5 space-y-4">
                                           <div className="flex items-center gap-2 text-destructive">
                                             <AlertCircle className="w-5 h-5" />
                                             <p className="text-sm font-bold">هل أنت متأكد من حذف هذه المساهمة؟</p>
@@ -599,7 +599,7 @@ export default function YearlyPaymentMatrix() {
                                       ) : (
                                         <button 
                                           onClick={() => setConfirmDeleteId(contribution.id)}
-                                          className="w-full bg-destructive/10 text-destructive py-4 rounded-2xl font-bold hover:bg-destructive/20 transition-all flex items-center justify-center gap-2 text-base active:scale-95"
+                                          className="w-full bg-destructive/10 text-destructive py-4 rounded-lg font-bold hover:bg-destructive/20 transition-all flex items-center justify-center gap-2 text-base active:scale-95"
                                           data-testid="button-delete-contribution"
                                         >
                                           <Trash2 className="w-5 h-5" />
@@ -611,8 +611,8 @@ export default function YearlyPaymentMatrix() {
                                 </div>
                               ) : isPending ? (
                                 <div className="space-y-4">
-                                  <div className="bg-amber-50 text-amber-800 p-8 rounded-[2rem] flex flex-col items-center gap-3 text-center border border-amber-100">
-                                    <Clock className="w-16 h-16 text-amber-500" />
+                                  <div className="bg-fund-out/8 text-fund-out p-8 rounded-xl flex flex-col items-center gap-3 text-center border border-fund-out/14">
+                                    <Clock className="w-16 h-16 text-fund-out" />
                                     <div className="text-4xl font-mono font-bold tracking-tighter">{amount.toLocaleString()} <span className="text-base font-sans font-normal">ر.ع</span></div>
                                     <p className="text-sm font-bold opacity-80">بانتظار تأكيد الوصي</p>
                                   </div>
@@ -622,7 +622,7 @@ export default function YearlyPaymentMatrix() {
                                       <button 
                                         onClick={() => approveMutation.mutate(contribution.id)}
                                         disabled={approveMutation.isPending}
-                                        className="w-full bg-primary text-primary-foreground py-5 rounded-2xl font-bold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2 text-lg active:scale-95 disabled:opacity-50"
+                                        className="w-full bg-primary text-primary-foreground py-5 rounded-lg font-bold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2 text-lg active:scale-95 disabled:opacity-50"
                                         data-testid="button-approve-contribution"
                                       >
                                         <UserCheck className="w-6 h-6" />
@@ -630,7 +630,7 @@ export default function YearlyPaymentMatrix() {
                                       </button>
 
                                       {confirmDeleteId === contribution.id ? (
-                                        <div className="bg-destructive/5 border border-destructive/20 rounded-2xl p-5 space-y-4">
+                                        <div className="bg-destructive/5 border border-destructive/20 rounded-lg p-5 space-y-4">
                                           <div className="flex items-center gap-2 text-destructive">
                                             <AlertCircle className="w-5 h-5" />
                                             <p className="text-sm font-bold">هل أنت متأكد من إلغاء هذا الطلب؟</p>
@@ -657,7 +657,7 @@ export default function YearlyPaymentMatrix() {
                                       ) : (
                                         <button 
                                           onClick={() => setConfirmDeleteId(contribution.id)}
-                                          className="w-full bg-destructive/10 text-destructive py-4 rounded-2xl font-bold hover:bg-destructive/20 transition-all flex items-center justify-center gap-2 text-base active:scale-95"
+                                          className="w-full bg-destructive/10 text-destructive py-4 rounded-lg font-bold hover:bg-destructive/20 transition-all flex items-center justify-center gap-2 text-base active:scale-95"
                                           data-testid="button-cancel-contribution"
                                         >
                                           <XCircle className="w-5 h-5" />
@@ -676,14 +676,14 @@ export default function YearlyPaymentMatrix() {
                                         type="number" 
                                         defaultValue={100}
                                         id={`amount-${member.id}-${month.id}`}
-                                        className="w-full text-4xl font-mono p-6 border-2 border-primary/10 rounded-3xl text-center focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all" 
+                                        className="w-full text-4xl font-mono p-6 border-2 border-primary/10 rounded-xl text-center focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all" 
                                         placeholder="0"
                                         data-testid="input-amount"
                                       />
                                       <div className="absolute left-6 top-1/2 -translate-y-1/2 text-primary font-bold text-lg">ر.ع</div>
                                     </div>
                                   </div>
-                                  <div className="bg-primary/5 p-5 rounded-2xl text-xs flex gap-3 items-start border border-primary/10">
+                                  <div className="bg-primary/5 p-5 rounded-lg text-xs flex gap-3 items-start border border-primary/10">
                                     <AlertCircle className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                                     <p className="leading-relaxed font-medium">سيتم إرسال طلب للوصي لتأكيد وصول المبلغ. لن يظهر المبلغ في الرصيد الإجمالي إلا بعد الموافقة الرسمية.</p>
                                   </div>
@@ -701,7 +701,7 @@ export default function YearlyPaymentMatrix() {
                                       }
                                     }}
                                     disabled={createMutation.isPending}
-                                    className="w-full bg-primary text-primary-foreground py-5 rounded-2xl font-bold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 text-lg active:scale-95 disabled:opacity-50"
+                                    className="w-full bg-primary text-primary-foreground py-5 rounded-lg font-bold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 text-lg active:scale-95 disabled:opacity-50"
                                     data-testid="button-submit-payment"
                                   >
                                     تقديم طلب دفع

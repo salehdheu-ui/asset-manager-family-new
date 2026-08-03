@@ -96,7 +96,7 @@ export default function Proposals() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: idx * 0.05 }}
-        className="bg-card border border-border rounded-[1.5rem] p-5 space-y-3 shadow-sm"
+        className="bg-card border border-border rounded-xl p-5 space-y-3 shadow-sm"
         data-testid={`card-proposal-${p.id}`}
       >
         <div className="flex items-start gap-3">
@@ -114,10 +114,10 @@ export default function Proposals() {
         {p.description && <p className="text-xs text-muted-foreground leading-relaxed">{p.description}</p>}
 
         <div className="flex items-center gap-3 text-xs pt-2 border-t border-border/40">
-          <span className="flex items-center gap-1 text-emerald-600 font-bold">
+          <span className="flex items-center gap-1 text-fund-in font-bold">
             <ThumbsUp className="w-3.5 h-3.5" /> {p.approve}
           </span>
-          <span className="flex items-center gap-1 text-red-500 font-bold">
+          <span className="flex items-center gap-1 text-fund-due font-bold">
             <ThumbsDown className="w-3.5 h-3.5" /> {p.reject}
           </span>
           <span className="text-muted-foreground mr-auto">
@@ -130,7 +130,7 @@ export default function Proposals() {
             {p.voters.map((v, i) => (
               <span key={i} className={cn(
                 "text-xs px-2 py-0.5 rounded-full border",
-                v.vote === "approve" ? "bg-emerald-500/5 border-emerald-500/20 text-emerald-700" : "bg-red-500/5 border-red-500/20 text-red-600",
+                v.vote === "approve" ? "bg-fund-in/8 border-fund-in/25 text-fund-in" : "bg-fund-due/8 border-fund-due/25 text-fund-due",
               )}>
                 {v.name} {v.vote === "approve" ? "✓" : "✗"}
               </span>
@@ -145,7 +145,7 @@ export default function Proposals() {
               disabled={voteMutation.isPending}
               className={cn("tap-target", 
                 "flex-1 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1 active:scale-95 transition-transform",
-                p.myVote === "approve" ? "bg-emerald-600 text-white" : "bg-emerald-500/10 text-emerald-700",
+                p.myVote === "approve" ? "bg-fund-in text-white" : "bg-fund-in/14 text-fund-in",
               )}
               data-testid={`button-approve-${p.id}`}
             >
@@ -156,7 +156,7 @@ export default function Proposals() {
               disabled={voteMutation.isPending}
               className={cn("tap-target", 
                 "flex-1 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1 active:scale-95 transition-transform",
-                p.myVote === "reject" ? "bg-red-600 text-white" : "bg-red-500/10 text-red-600",
+                p.myVote === "reject" ? "bg-fund-due text-white" : "bg-fund-due/14 text-fund-due",
               )}
               data-testid={`button-reject-${p.id}`}
             >
@@ -197,7 +197,7 @@ export default function Proposals() {
 
         <div className="grid gap-4">
           {open.length === 0 ? (
-            <div className="text-center py-12 bg-muted/20 rounded-3xl border border-dashed border-border">
+            <div className="text-center py-12 bg-muted/20 rounded-xl border border-dashed border-border">
               <Clock className="w-8 h-8 text-muted-foreground/40 mx-auto mb-2" />
               <p className="text-sm text-muted-foreground font-medium">لا اقتراحات مطروحة حالياً</p>
             </div>
@@ -217,7 +217,7 @@ export default function Proposals() {
       </div>
 
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent dir="rtl" className="max-w-sm rounded-3xl">
+        <DialogContent dir="rtl" className="max-w-sm rounded-xl">
           <DialogHeader>
             <DialogTitle>اقتراح جديد</DialogTitle>
             <DialogDescription>يمرّ بالنصاب نفسه المعتمد للسلف الكبيرة: 3 موافقين أو كل المؤهلين</DialogDescription>

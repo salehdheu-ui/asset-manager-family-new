@@ -144,10 +144,10 @@ export default function Investments() {
     <MobileLayout title="الاستثمار والزكاة">
       <div className="space-y-6 pt-2 pb-12">
         {/* الزكاة */}
-        <div className="bg-purple-500/5 border border-purple-500/20 rounded-3xl p-5 space-y-3" data-testid="card-zakat">
+        <div className="bg-secondary/5 border border-secondary/20 rounded-xl p-5 space-y-3" data-testid="card-zakat">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-purple-600" />
-            <h3 className="font-bold text-purple-700 font-heading">زكاة مال الصندوق</h3>
+            <Sparkles className="w-5 h-5 text-primary" />
+            <h3 className="font-bold text-primary font-heading">زكاة مال الصندوق</h3>
           </div>
 
           {!cycle ? (
@@ -158,7 +158,7 @@ export default function Investments() {
               <button
                 onClick={() => startCycleMutation.mutate()}
                 disabled={startCycleMutation.isPending}
-                className="tap-target w-full py-2.5 bg-purple-600 text-white rounded-xl text-sm font-bold active:scale-95 transition-transform disabled:opacity-50"
+                className="tap-target w-full py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-bold active:scale-95 transition-transform disabled:opacity-50"
                 data-testid="button-start-hawl"
               >
                 بدء حول جديد من اليوم
@@ -187,14 +187,14 @@ export default function Investments() {
 
               <div className={cn(
                 "rounded-xl p-3 text-center border",
-                zakat?.estimate.reachesNisab ? "bg-purple-600/10 border-purple-500/30" : "bg-muted/40 border-border",
+                zakat?.estimate.reachesNisab ? "bg-secondary/10 border-secondary/30" : "bg-muted/40 border-border",
               )}>
                 {zakat?.nisab === 0 ? (
                   <p className="text-xs text-muted-foreground">حدّد قيمة النصاب من الإعدادات ليحسب النظام الزكاة</p>
                 ) : zakat?.estimate.reachesNisab ? (
                   <>
                     <p className="text-xs text-muted-foreground mb-1">الزكاة الواجبة (2.5٪)</p>
-                    <p className="text-2xl font-bold font-mono text-purple-700" data-testid="text-zakat-due">{fmt(zakat.estimate.amount)} <span className="text-xs">ر.ع</span></p>
+                    <p className="text-2xl font-bold font-mono text-primary" data-testid="text-zakat-due">{fmt(zakat.estimate.amount)} <span className="text-xs">ر.ع</span></p>
                   </>
                 ) : (
                   <p className="text-xs text-muted-foreground">صافي الأصول دون النصاب — لا زكاة واجبة</p>
@@ -204,7 +204,7 @@ export default function Investments() {
               {cycle.hawlComplete && (zakat?.estimate.amount ?? 0) > 0 && (
                 <button
                   onClick={() => { setZakatAmount(String(zakat!.estimate.amount)); setZakatOpen(true); }}
-                  className="tap-target w-full py-2.5 bg-purple-600 text-white rounded-xl text-sm font-bold active:scale-95 transition-transform"
+                  className="tap-target w-full py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-bold active:scale-95 transition-transform"
                   data-testid="button-pay-zakat"
                 >
                   إخراج الزكاة وتسجيلها مصروفاً
@@ -216,12 +216,12 @@ export default function Investments() {
 
         {/* طبقة النمو */}
         {growth && (
-          <div className="bg-card border border-border rounded-3xl p-5 space-y-2">
+          <div className="bg-card border border-border rounded-xl p-5 space-y-2">
             <h3 className="font-bold text-sm font-heading">طبقة النمو ({growth.percent}٪)</h3>
             <div className="grid grid-cols-3 gap-2 text-center text-xs">
               <div><p className="text-muted-foreground mb-1">المخصص</p><p className="font-bold font-mono">{fmt(growth.amount)}</p></div>
-              <div><p className="text-muted-foreground mb-1">المستثمر</p><p className="font-bold font-mono text-blue-600">{fmt(growth.used)}</p></div>
-              <div><p className="text-muted-foreground mb-1">المتاح</p><p className="font-bold font-mono text-emerald-600" data-testid="text-growth-available">{fmt(growth.available)}</p></div>
+              <div><p className="text-muted-foreground mb-1">المستثمر</p><p className="font-bold font-mono text-fund-loan">{fmt(growth.used)}</p></div>
+              <div><p className="text-muted-foreground mb-1">المتاح</p><p className="font-bold font-mono text-fund-in" data-testid="text-growth-available">{fmt(growth.available)}</p></div>
             </div>
           </div>
         )}
@@ -240,24 +240,24 @@ export default function Investments() {
 
         {data && investments.length > 0 && (
           <div className="grid grid-cols-3 gap-2 text-center text-xs">
-            <div className="bg-blue-500/5 border border-blue-500/10 rounded-2xl p-3">
-              <p className="text-blue-700 font-bold mb-1">المستثمر</p>
-              <p className="font-bold font-mono text-blue-600">{fmt(data.totals.invested)}</p>
+            <div className="bg-fund-loan/8 border border-fund-loan/14 rounded-lg p-3">
+              <p className="text-fund-loan font-bold mb-1">المستثمر</p>
+              <p className="font-bold font-mono text-fund-loan">{fmt(data.totals.invested)}</p>
             </div>
-            <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-2xl p-3">
-              <p className="text-emerald-700 font-bold mb-1">القيمة الحالية</p>
-              <p className="font-bold font-mono text-emerald-600">{fmt(data.totals.currentValue)}</p>
+            <div className="bg-fund-in/8 border border-fund-in/14 rounded-lg p-3">
+              <p className="text-fund-in font-bold mb-1">القيمة الحالية</p>
+              <p className="font-bold font-mono text-fund-in">{fmt(data.totals.currentValue)}</p>
             </div>
-            <div className="bg-amber-500/5 border border-amber-500/10 rounded-2xl p-3">
-              <p className="text-amber-700 font-bold mb-1">أرباح محققة</p>
-              <p className="font-bold font-mono text-amber-600">{fmt(data.totals.realizedGain)}</p>
+            <div className="bg-fund-out/8 border border-fund-out/14 rounded-lg p-3">
+              <p className="text-fund-out font-bold mb-1">أرباح محققة</p>
+              <p className="font-bold font-mono text-fund-out">{fmt(data.totals.realizedGain)}</p>
             </div>
           </div>
         )}
 
         <div className="grid gap-4">
           {investments.length === 0 ? (
-            <div className="text-center py-12 bg-muted/20 rounded-3xl border border-dashed border-border">
+            <div className="text-center py-12 bg-muted/20 rounded-xl border border-dashed border-border">
               <p className="text-sm text-muted-foreground font-medium">لا استثمارات مسجلة</p>
               <p className="text-xs text-muted-foreground mt-1">طبقة النمو مخصصة ولم تُستثمر بعد</p>
             </div>
@@ -271,11 +271,11 @@ export default function Investments() {
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.05 }}
-                  className="bg-card border border-border rounded-[1.5rem] p-5 space-y-3 shadow-sm"
+                  className="bg-card border border-border rounded-xl p-5 space-y-3 shadow-sm"
                   data-testid={`card-investment-${inv.id}`}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-2xl bg-primary/10 flex items-center justify-center">
+                    <div className="w-11 h-11 rounded-lg bg-primary/10 flex items-center justify-center">
                       <Icon className="w-5 h-5 text-primary" />
                     </div>
                     <div className="flex-1">
@@ -286,7 +286,7 @@ export default function Investments() {
                     </div>
                     <span className={cn(
                       "text-xs font-bold px-2 py-1 rounded-full border",
-                      inv.status === "active" ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-700" : "bg-muted border-border text-muted-foreground",
+                      inv.status === "active" ? "bg-fund-in/14 border-fund-in/25 text-fund-in" : "bg-muted border-border text-muted-foreground",
                     )}>
                       {inv.status === "active" ? "قائم" : "مُصفّى"}
                     </span>
@@ -297,7 +297,7 @@ export default function Investments() {
                     <div><p className="text-muted-foreground mb-1">القيمة</p><p className="font-bold font-mono">{fmt(inv.currentValue)}</p></div>
                     <div>
                       <p className="text-muted-foreground mb-1">العائد</p>
-                      <p className={cn("font-bold font-mono flex items-center justify-center gap-1", positive ? "text-emerald-600" : "text-red-600")}>
+                      <p className={cn("font-bold font-mono flex items-center justify-center gap-1", positive ? "text-fund-in" : "text-fund-due")}>
                         {positive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
                         {inv.returnPercent}٪
                       </p>
@@ -326,7 +326,7 @@ export default function Investments() {
                       </button>
                       <button
                         onClick={() => { setExitTarget(inv); setExitValue(String(inv.currentValue)); }}
-                        className="tap-target flex-1 py-2 bg-amber-500/10 text-amber-700 rounded-xl text-xs font-bold flex items-center justify-center gap-1 active:scale-95 transition-transform"
+                        className="tap-target flex-1 py-2 bg-fund-out/14 text-fund-out rounded-xl text-xs font-bold flex items-center justify-center gap-1 active:scale-95 transition-transform"
                         data-testid={`button-exit-${inv.id}`}
                       >
                         <LogOut className="w-3 h-3" /> تصفية
@@ -349,7 +349,7 @@ export default function Investments() {
 
       {/* استثمار جديد */}
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent dir="rtl" className="max-w-sm rounded-3xl">
+        <DialogContent dir="rtl" className="max-w-sm rounded-xl">
           <DialogHeader>
             <DialogTitle>استثمار جديد</DialogTitle>
             <DialogDescription>يُخصم من طبقة النمو ولا يتجاوز المتاح فيها</DialogDescription>
@@ -380,7 +380,7 @@ export default function Investments() {
 
       {/* تقييم */}
       <Dialog open={!!valuationTarget} onOpenChange={(o) => !o && setValuationTarget(null)}>
-        <DialogContent dir="rtl" className="max-w-sm rounded-3xl">
+        <DialogContent dir="rtl" className="max-w-sm rounded-xl">
           <DialogHeader>
             <DialogTitle>تقييم {valuationTarget?.title}</DialogTitle>
             <DialogDescription>القيمة السوقية الحالية لهذا الاستثمار</DialogDescription>
@@ -404,7 +404,7 @@ export default function Investments() {
 
       {/* تصفية */}
       <Dialog open={!!exitTarget} onOpenChange={(o) => !o && setExitTarget(null)}>
-        <DialogContent dir="rtl" className="max-w-sm rounded-3xl">
+        <DialogContent dir="rtl" className="max-w-sm rounded-xl">
           <DialogHeader>
             <DialogTitle>تصفية {exitTarget?.title}</DialogTitle>
             <DialogDescription>الربح يُسجَّل إيداعاً في الصندوق والخسارة سحباً</DialogDescription>
@@ -416,7 +416,7 @@ export default function Investments() {
             <button
               onClick={() => exitMutation.mutate()}
               disabled={!exitValue.trim() || exitMutation.isPending}
-              className="w-full py-3 bg-amber-500 text-white rounded-xl font-bold text-sm disabled:opacity-50"
+              className="w-full py-3 bg-fund-out text-white rounded-xl font-bold text-sm disabled:opacity-50"
               data-testid="button-confirm-exit"
             >
               تأكيد التصفية
@@ -427,7 +427,7 @@ export default function Investments() {
 
       {/* إخراج الزكاة */}
       <Dialog open={zakatOpen} onOpenChange={setZakatOpen}>
-        <DialogContent dir="rtl" className="max-w-sm rounded-3xl">
+        <DialogContent dir="rtl" className="max-w-sm rounded-xl">
           <DialogHeader>
             <DialogTitle>إخراج الزكاة</DialogTitle>
             <DialogDescription>يُسجَّل المبلغ مصروفاً بتصنيف «زكاة» ويُوثَّق في سجل التدقيق</DialogDescription>
@@ -441,7 +441,7 @@ export default function Investments() {
             <button
               onClick={() => payZakatMutation.mutate()}
               disabled={!zakatAmount.trim() || payZakatMutation.isPending}
-              className="w-full py-3 bg-purple-600 text-white rounded-xl font-bold text-sm disabled:opacity-50"
+              className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold text-sm disabled:opacity-50"
               data-testid="button-confirm-zakat"
             >
               {payZakatMutation.isPending ? "جاري التسجيل..." : "تأكيد الإخراج"}

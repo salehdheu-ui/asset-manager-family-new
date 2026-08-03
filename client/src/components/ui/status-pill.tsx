@@ -6,7 +6,7 @@ export type StatusTone = "positive" | "pending" | "danger" | "neutral";
 // أخضر = تمّ واعتُمد · كهرماني = ينتظر قراراً · أحمر = متأخر أو مرفوض · رمادي = معلومة محايدة
 const TONES: Record<StatusTone, string> = {
   positive: "bg-primary/10 border-primary/20 text-primary",
-  pending: "bg-amber-500/10 border-amber-500/25 text-amber-800",
+  pending: "bg-fund-out/14 border-fund-out/25 text-fund-out",
   danger: "bg-destructive/10 border-destructive/25 text-destructive",
   neutral: "bg-muted border-border text-muted-foreground",
 };

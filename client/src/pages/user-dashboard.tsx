@@ -74,7 +74,7 @@ export default function UserDashboard() {
   if (!profile) {
     return (
       <MobileLayout title="حسابي">
-        <div className="text-center py-12 bg-muted/20 rounded-3xl border border-dashed border-border">
+        <div className="text-center py-12 bg-muted/20 rounded-xl border border-dashed border-border">
           <User className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
           <p className="text-sm text-muted-foreground font-medium">لم يتم العثور على الملف الشخصي</p>
         </div>
@@ -102,7 +102,7 @@ export default function UserDashboard() {
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center space-y-4 py-8 bg-card border border-border/40 rounded-[2.5rem] shadow-sm relative overflow-hidden"
+          className="text-center space-y-4 py-8 bg-card border border-border/40 rounded-xl shadow-sm relative overflow-hidden"
         >
           <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
           
@@ -129,7 +129,7 @@ export default function UserDashboard() {
                 {profile.role === 'admin' ? 'مشرف' : 'مستخدم'}
               </span>
               {profile.member && (
-                <span className="text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-700">
+                <span className="text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full bg-fund-in/14 border border-fund-in/25 text-fund-in">
                   عضو: {profile.member.name}
                 </span>
               )}
@@ -140,38 +140,38 @@ export default function UserDashboard() {
         {/* Stats Cards */}
         {profile.memberId && (
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-emerald-50/50 border border-emerald-100 rounded-3xl p-5 flex flex-col gap-1 relative overflow-hidden">
+            <div className="bg-fund-in/5 border border-fund-in/14 rounded-xl p-5 flex flex-col gap-1 relative overflow-hidden">
               <div className="absolute -right-2 -bottom-2 opacity-5">
                 <CreditCard className="w-16 h-16" />
               </div>
-              <span className="text-xs text-emerald-700 font-bold uppercase tracking-wider flex items-center gap-1">
+              <span className="text-xs text-fund-in font-bold uppercase tracking-wider flex items-center gap-1">
                 <CreditCard className="w-3 h-3" /> المساهمات
               </span>
-              <span className="text-2xl font-bold font-mono text-emerald-600">
+              <span className="text-2xl font-bold font-mono text-fund-in">
                 {totalContributed.toLocaleString()} <span className="text-xs">ر.ع</span>
               </span>
             </div>
-            <div className="bg-blue-50/50 border border-blue-100 rounded-3xl p-5 flex flex-col gap-1 relative overflow-hidden">
+            <div className="bg-fund-loan/5 border border-fund-loan/14 rounded-xl p-5 flex flex-col gap-1 relative overflow-hidden">
               <div className="absolute -right-2 -bottom-2 opacity-5">
                 <HandCoins className="w-16 h-16" />
               </div>
-              <span className="text-xs text-blue-700 font-bold uppercase tracking-wider flex items-center gap-1">
+              <span className="text-xs text-fund-loan font-bold uppercase tracking-wider flex items-center gap-1">
                 <HandCoins className="w-3 h-3" /> المتبقي من السلف
               </span>
-              <span className="text-2xl font-bold font-mono text-blue-600">
+              <span className="text-2xl font-bold font-mono text-fund-loan">
                 {totalBorrowed.toLocaleString()} <span className="text-xs">ر.ع</span>
               </span>
               {totalBorrowed === 0 && memberLoans.length > 0 && (
-                <span className="text-xs font-bold text-emerald-600">الذمة صفر — كل السلف مسددة ✓</span>
+                <span className="text-xs font-bold text-fund-in">الذمة صفر — كل السلف مسددة ✓</span>
               )}
             </div>
           </div>
         )}
 
         {!profile.memberId && (
-          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-center">
-            <p className="text-amber-700 text-sm font-medium">حسابك غير مرتبط بعضو في الصندوق</p>
-            <p className="text-amber-600 text-xs mt-1">تواصل مع المشرف لربط حسابك</p>
+          <div className="bg-fund-out/8 border border-fund-out/25 rounded-lg p-4 text-center">
+            <p className="text-fund-out text-sm font-medium">حسابك غير مرتبط بعضو في الصندوق</p>
+            <p className="text-fund-out text-xs mt-1">تواصل مع المشرف لربط حسابك</p>
           </div>
         )}
 
@@ -183,7 +183,7 @@ export default function UserDashboard() {
             </h3>
           </div>
 
-          <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
+          <div className="bg-card border border-border rounded-lg p-5 space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-bold text-muted-foreground">الاسم الأول</label>
               <input 
@@ -232,7 +232,7 @@ export default function UserDashboard() {
                       {c.createdAt ? new Date(c.createdAt).toLocaleDateString('ar-OM') : ''}
                     </p>
                   </div>
-                  <span className="text-sm font-bold font-mono text-emerald-600">
+                  <span className="text-sm font-bold font-mono text-fund-in">
                     +{Number(c.amount).toLocaleString()} ر.ع
                   </span>
                 </div>
@@ -250,7 +250,7 @@ export default function UserDashboard() {
               setLocation("/");
             }
           }}
-          className="w-full bg-red-600 text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform"
+          className="w-full bg-fund-due text-white py-4 rounded-lg font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform"
         >
           <LogOut className="w-5 h-5" />
           تسجيل الخروج

@@ -14,7 +14,7 @@ interface CapitalDistributionChartProps {
   delay?: number;
 }
 
-const defaultColors = ["#3b82f6", "#f59e0b", "#10b981", "#6366f1"];
+const defaultColors = ["var(--chart-loan)", "var(--chart-out)", "var(--chart-in)", "var(--chart-loan)"];
 const formatCompactCurrency = (value: number) =>
   value >= 1000 ? `${(value / 1000).toFixed(value >= 10000 ? 0 : 1)}k` : value.toLocaleString("en-US");
 
@@ -50,7 +50,7 @@ export function CapitalDistributionChart({
       const item = payload[0].payload;
       const percentage = total > 0 ? Math.round((item.value / total) * 100) : 0;
       return (
-        <div className="rounded-2xl border border-border/60 bg-background/95 px-3 py-2 text-xs shadow-xl backdrop-blur">
+        <div className="rounded-lg border border-border/60 bg-background/95 px-3 py-2 text-xs shadow-xl backdrop-blur">
           <p className="mb-1 font-bold text-foreground">{item.name}</p>
           <p className="text-muted-foreground">
             {item.value.toLocaleString()} ر.ع
@@ -68,13 +68,13 @@ export function CapitalDistributionChart({
       icon={<PieChartIcon className="w-6 h-6" />}
       delay={delay}
     >
-      <div className="mb-5 rounded-[1.5rem] border border-border/40 bg-gradient-to-l from-primary/[0.04] via-card to-card px-4 py-4">
+      <div className="mb-5 rounded-xl border border-border/40 bg-gradient-to-l from-primary/[0.04] via-card to-card px-4 py-4">
         <div className="flex items-center justify-between gap-4">
           <div>
             <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">أكبر مكوّن</p>
             <p className="mt-1.5 text-xl font-bold leading-tight text-foreground">{highestSlice?.name || "لا يوجد"}</p>
           </div>
-          <div className="min-w-[80px] rounded-2xl bg-gradient-to-br from-primary to-emerald-600 px-4 py-2.5 text-center shadow-lg">
+          <div className="min-w-[80px] rounded-lg bg-gradient-to-br from-primary to-fund-in px-4 py-2.5 text-center shadow-lg">
             <p className="text-2xl font-extrabold font-mono text-white">
               {highestSlice && total > 0 ? `${Math.round((highestSlice.value / total) * 100)}%` : "0%"}
             </p>
@@ -84,7 +84,7 @@ export function CapitalDistributionChart({
       </div>
 
       <div className="space-y-4">
-        <div className="rounded-2xl border border-border/30 bg-gradient-to-b from-muted/20 to-card p-4">
+        <div className="rounded-lg border border-border/30 bg-gradient-to-b from-muted/20 to-card p-4">
           <div className="mx-auto h-[250px] max-w-[320px] rounded-xl bg-card">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -115,7 +115,7 @@ export function CapitalDistributionChart({
             return (
               <div
                 key={item.name}
-                className="rounded-2xl border border-border/30 bg-card px-4 py-3 shadow-sm"
+                className="rounded-lg border border-border/30 bg-card px-4 py-3 shadow-sm"
                 style={{ boxShadow: `inset 0 0 0 1px ${item.fill}20` }}
               >
                 <div className="flex items-start justify-between gap-3">
@@ -136,7 +136,7 @@ export function CapitalDistributionChart({
         </div>
       </div>
 
-      <div className="mt-5 rounded-2xl bg-gradient-to-r from-primary to-emerald-600 px-5 py-4 text-center shadow-lg">
+      <div className="mt-5 rounded-lg bg-gradient-to-r from-primary to-fund-in px-5 py-4 text-center shadow-lg">
         <p className="text-3xl font-extrabold font-mono text-white">
           {total.toLocaleString("en-US")} <span className="text-sm font-sans font-bold text-white/70">ر.ع</span>
         </p>

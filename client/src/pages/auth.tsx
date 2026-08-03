@@ -77,7 +77,7 @@ export default function Auth() {
             transition={{ duration: 0.6 }}
             className="flex flex-col items-center gap-4"
           >
-            <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center p-2 border border-primary/20 shadow-lg">
+            <div className="w-20 h-20 rounded-lg bg-primary/10 flex items-center justify-center p-2 border border-primary/20 shadow-lg">
               <img src={logo} alt="Family Fund OS" className="w-full h-full object-contain" />
             </div>
             <div>
@@ -103,7 +103,7 @@ export default function Auth() {
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.4, delay: 0.3 + idx * 0.1 }}
-                  className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-2xl p-4 text-center hover:shadow-md transition-shadow"
+                  className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-lg p-4 text-center hover:shadow-md transition-shadow"
                 >
                   <div className="w-10 h-10 mx-auto rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-2">
                     <feature.icon className="w-5 h-5" />
@@ -119,7 +119,7 @@ export default function Auth() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.7 }}
-              className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-2xl p-6 space-y-4"
+              className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-lg p-6 space-y-4"
             >
               <h2 className="text-xl font-bold text-center text-foreground">تسجيل الدخول</h2>
               

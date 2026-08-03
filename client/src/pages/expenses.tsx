@@ -111,7 +111,7 @@ export default function Expenses() {
       subtitle: 'الصدقة والبر',
       description: 'مساهمات تطوعية لدعم المجتمع والمحتاجين.',
       icon: Heart,
-      color: 'bg-emerald-600 text-white',
+      color: 'bg-fund-in text-white',
       details: 'بحد أقصى 3% من إجمالي الصندوق سنوياً للحفاظ على الاستدامة.',
       category: 'charity',
       available: availableFlexible,
@@ -122,7 +122,7 @@ export default function Expenses() {
       subtitle: 'إدارة النفقات',
       description: 'تتبع مصروفات الصندوق الإدارية والتشغيلية.',
       icon: Wallet,
-      color: 'bg-amber-600 text-white',
+      color: 'bg-fund-out text-white',
       details: 'مرتبطة بأهداف العائلة السنوية المعتمدة.',
       category: 'general',
       available: availableFlexible,
@@ -153,7 +153,7 @@ export default function Expenses() {
     <MobileLayout title="الإنفاق والمبرات">
       <div className="space-y-6 pt-2 pb-12">
         <div className="grid grid-cols-2 gap-3">
-          <div className="col-span-2 bg-card border border-border rounded-2xl p-4 flex justify-between items-center shadow-sm">
+          <div className="col-span-2 bg-card border border-border rounded-lg p-4 flex justify-between items-center shadow-sm">
             <div>
               <p className="text-xs text-muted-foreground">الرصيد القابل للإنفاق (مرن)</p>
               <h3 className="text-2xl font-bold font-mono text-primary" data-testid="text-available-flexible">{availableFlexible.toLocaleString()} ر.ع</h3>
@@ -174,7 +174,7 @@ export default function Expenses() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: idx * 0.1 }}
-                  className="bg-card border border-border rounded-2xl p-5 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+                  className="bg-card border border-border rounded-lg p-5 shadow-sm hover:shadow-md transition-all cursor-pointer group"
                   data-testid={`card-expense-${section.id}`}
                 >
                   <div className="flex items-start gap-4">
@@ -257,7 +257,7 @@ export default function Expenses() {
           </div>
           
           {expenses.length === 0 ? (
-            <div className="text-center py-12 bg-muted/20 rounded-3xl border border-dashed border-border">
+            <div className="text-center py-12 bg-muted/20 rounded-xl border border-dashed border-border">
               <p className="text-sm text-muted-foreground font-medium">لا توجد مصروفات مسجلة</p>
             </div>
           ) : (
@@ -267,7 +267,7 @@ export default function Expenses() {
                   key={expense.id}
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="bg-card border border-border/60 rounded-2xl p-4 shadow-sm"
+                  className="bg-card border border-border/60 rounded-lg p-4 shadow-sm"
                   data-testid={`card-expense-record-${expense.id}`}
                 >
                   <div className="flex justify-between items-start">
@@ -275,7 +275,7 @@ export default function Expenses() {
                       <div className={cn(
                         "w-10 h-10 rounded-xl flex items-center justify-center",
                         expense.category === 'zakat' ? "bg-primary/10 text-primary" :
-                        expense.category === 'charity' ? "bg-emerald-100 text-emerald-600" : "bg-amber-100 text-amber-600"
+                        expense.category === 'charity' ? "bg-fund-in/14 text-fund-in" : "bg-fund-out/14 text-fund-out"
                       )}>
                         {expense.category === 'zakat' ? <Scale className="w-5 h-5" /> :
                          expense.category === 'charity' ? <Heart className="w-5 h-5" /> : <Wallet className="w-5 h-5" />}
@@ -291,7 +291,7 @@ export default function Expenses() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-lg font-mono font-bold text-amber-600">
+                      <div className="text-lg font-mono font-bold text-fund-out">
                         -{Number(expense.amount).toLocaleString()} <span className="text-xs font-sans">ر.ع</span>
                       </div>
                     </div>

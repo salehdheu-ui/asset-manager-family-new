@@ -26,9 +26,9 @@ export default class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       return (
         <div dir="rtl" className="min-h-screen bg-background flex items-center justify-center p-6">
-          <div className="max-w-sm w-full bg-card border border-border rounded-3xl p-8 text-center space-y-4 shadow-sm">
-            <div className="w-16 h-16 mx-auto rounded-full bg-red-50 flex items-center justify-center">
-              <AlertTriangle className="w-8 h-8 text-red-500" />
+          <div className="max-w-sm w-full bg-card border border-border rounded-xl p-8 text-center space-y-4 shadow-sm">
+            <div className="w-16 h-16 mx-auto rounded-full bg-fund-due/8 flex items-center justify-center">
+              <AlertTriangle className="w-8 h-8 text-fund-due" />
             </div>
             <div>
               <h2 className="font-bold text-lg">حدث خطأ غير متوقع</h2>
@@ -43,7 +43,7 @@ export default class ErrorBoundary extends Component<Props, State> {
             </div>
             <button
               onClick={() => window.location.reload()}
-              className="w-full bg-primary text-primary-foreground py-3 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors"
+              className="w-full bg-primary text-primary-foreground py-3 rounded-lg font-bold flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors"
             >
               <RotateCcw className="w-4 h-4" />
               إعادة تحميل الصفحة
