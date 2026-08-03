@@ -78,12 +78,12 @@ export function MemberComparisonChart({
             <Trophy className="w-5 h-5" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">الأعلى مساهمة</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">الأعلى مساهمة</p>
             <p className="mt-0.5 truncate text-base font-bold text-foreground leading-tight">{limitedData[0].name}</p>
           </div>
           <div className="text-left shrink-0">
             <p className="text-lg font-extrabold font-mono text-amber-600">{limitedData[0].amount.toLocaleString("en-US")}</p>
-            <p className="text-[9px] text-muted-foreground text-left">ر.ع</p>
+            <p className="text-xs text-muted-foreground text-left">ر.ع</p>
           </div>
         </div>
       )}
@@ -95,7 +95,7 @@ export function MemberComparisonChart({
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" opacity={0.6} vertical={false} />
             <XAxis
               dataKey="name"
-              tick={{ fontSize: 9, fill: "#94a3b8" }}
+              tick={{ fontSize: 12, fill: "#94a3b8" }}
               axisLine={false}
               tickLine={false}
               interval={0}
@@ -104,7 +104,7 @@ export function MemberComparisonChart({
               height={46}
             />
             <YAxis
-              tick={{ fontSize: 9, fill: "#94a3b8" }}
+              tick={{ fontSize: 12, fill: "#94a3b8" }}
               axisLine={false}
               tickLine={false}
               width={30}
@@ -122,7 +122,7 @@ export function MemberComparisonChart({
 
       {/* ranked list */}
       <div className="mt-4 space-y-2">
-        <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">ترتيب الأعضاء</p>
+        <p className="mb-2 text-xs font-bold uppercase tracking-widest text-muted-foreground">ترتيب الأعضاء</p>
         {limitedData.map((member, index) => {
           const cfg = rankConfig[index] || rankConfig[rankConfig.length - 1];
           const pct = maxAmount > 0 ? Math.round((member.amount / maxAmount) * 100) : 0;
@@ -131,7 +131,7 @@ export function MemberComparisonChart({
               key={member.name}
               className="flex items-center gap-3 rounded-xl border border-border/30 bg-card px-3 py-2.5 transition-colors hover:bg-muted/20"
             >
-              <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[11px] font-extrabold ${cfg.badge}`}>
+              <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-extrabold ${cfg.badge}`}>
                 {cfg.icon}
               </span>
               <div className="flex-1 min-w-0">
@@ -145,7 +145,7 @@ export function MemberComparisonChart({
               </div>
               <p className="shrink-0 text-[12px] font-extrabold font-mono text-foreground">
                 {member.amount.toLocaleString("en-US")}
-                <span className="text-[9px] font-sans text-muted-foreground mr-0.5"> ر.ع</span>
+                <span className="text-xs font-sans text-muted-foreground mr-0.5"> ر.ع</span>
               </p>
             </div>
           );

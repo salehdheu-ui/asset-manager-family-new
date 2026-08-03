@@ -42,7 +42,7 @@ export default function CapitalLayerCard({ layer, delay = 0 }: CapitalLayerCardP
         </div>
         <div className="text-right">
           <h3 className="text-sm font-bold text-foreground font-heading">{layer.arabicName}</h3>
-          <p className="text-[10px] text-muted-foreground font-sans opacity-70">{layer.name}</p>
+          <p className="text-xs text-muted-foreground font-sans opacity-70">{layer.name}</p>
         </div>
       </div>
 
@@ -69,7 +69,7 @@ export default function CapitalLayerCard({ layer, delay = 0 }: CapitalLayerCardP
               />
             )}
           </div>
-          <div className="flex justify-between text-[10px] font-bold text-muted-foreground">
+          <div className="flex justify-between text-xs font-bold text-muted-foreground">
             <span>{layer.percentage}%</span>
             {hasUsage ? (
               <span data-testid={`text-available-${layer.id}`} className="text-emerald-600">

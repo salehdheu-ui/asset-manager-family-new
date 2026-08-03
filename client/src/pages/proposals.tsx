@@ -9,6 +9,8 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { extractErrorMessage } from "@/lib/errors";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import StatusPill, { type StatusTone } from "@/components/ui/status-pill";
+import Money from "@/components/ui/money";
 
 const CATEGORY_LABELS: Record<string, string> = {
   allocation: "تغيير نسب التوزيع",
@@ -17,14 +19,12 @@ const CATEGORY_LABELS: Record<string, string> = {
   general: "اقتراح عام",
 };
 
-const STATUS: Record<string, { label: string; className: string }> = {
-  open: { label: "قيد التصويت", className: "bg-amber-500/10 border-amber-500/20 text-amber-700" },
-  approved: { label: "وافقت العائلة ✓", className: "bg-emerald-500/10 border-emerald-500/20 text-emerald-700" },
-  rejected: { label: "مرفوض", className: "bg-red-500/10 border-red-500/20 text-red-600" },
-  cancelled: { label: "ملغى", className: "bg-muted border-border text-muted-foreground" },
+const STATUS: Record<string, { label: string; tone: StatusTone }> = {
+  open: { label: "قيد التصويت", tone: "pending" },
+  approved: { label: "وافقت العائلة ✓", tone: "positive" },
+  rejected: { label: "مرفوض", tone: "danger" },
+  cancelled: { label: "ملغى", tone: "neutral" },
 };
-
-const fmt = (n: number) => n.toLocaleString("ar-OM", { minimumFractionDigits: 3, maximumFractionDigits: 3 });
 
 export default function Proposals() {
   const { toast } = useToast();
@@ -102,15 +102,13 @@ export default function Proposals() {
         <div className="flex items-start gap-3">
           <div className="flex-1">
             <h4 className="font-bold leading-tight">{p.title}</h4>
-            <p className="text-[11px] text-muted-foreground mt-1">
-              {CATEGORY_LABELS[p.category] ?? p.category}
-              {p.amount ? ` · ${fmt(Number(p.amount))} ر.ع` : ""}
-              {p.createdByName ? ` · طرحه ${p.createdByName}` : ""}
+            <p className="text-xs text-muted-foreground mt-1 flex flex-wrap items-center gap-x-1.5">
+              <span>{CATEGORY_LABELS[p.category] ?? p.category}</span>
+              {p.amount && <><span>·</span><Money amount={p.amount} size="sm" /></>}
+              {p.createdByName && <><span>·</span><span>طرحه {p.createdByName}</span></>}
             </p>
           </div>
-          <span className={cn("text-[9px] font-bold px-2 py-1 rounded-full border shrink-0", status.className)}>
-            {status.label}
-          </span>
+          <StatusPill tone={status.tone} className="shrink-0">{status.label}</StatusPill>
         </div>
 
         {p.description && <p className="text-xs text-muted-foreground leading-relaxed">{p.description}</p>}
@@ -131,7 +129,7 @@ export default function Proposals() {
           <div className="flex flex-wrap gap-1">
             {p.voters.map((v, i) => (
               <span key={i} className={cn(
-                "text-[10px] px-2 py-0.5 rounded-full border",
+                "text-xs px-2 py-0.5 rounded-full border",
                 v.vote === "approve" ? "bg-emerald-500/5 border-emerald-500/20 text-emerald-700" : "bg-red-500/5 border-red-500/20 text-red-600",
               )}>
                 {v.name} {v.vote === "approve" ? "✓" : "✗"}
@@ -145,7 +143,7 @@ export default function Proposals() {
             <button
               onClick={() => voteMutation.mutate({ id: p.id, vote: "approve" })}
               disabled={voteMutation.isPending}
-              className={cn(
+              className={cn("tap-target", 
                 "flex-1 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1 active:scale-95 transition-transform",
                 p.myVote === "approve" ? "bg-emerald-600 text-white" : "bg-emerald-500/10 text-emerald-700",
               )}
@@ -156,7 +154,7 @@ export default function Proposals() {
             <button
               onClick={() => voteMutation.mutate({ id: p.id, vote: "reject" })}
               disabled={voteMutation.isPending}
-              className={cn(
+              className={cn("tap-target", 
                 "flex-1 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1 active:scale-95 transition-transform",
                 p.myVote === "reject" ? "bg-red-600 text-white" : "bg-red-500/10 text-red-600",
               )}
@@ -189,7 +187,7 @@ export default function Proposals() {
           {isAdmin && (
             <button
               onClick={() => setAddOpen(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-xs font-bold shadow-lg shadow-primary/20 active:scale-95 transition-transform"
+              className="tap-target flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-xs font-bold shadow-lg shadow-primary/20 active:scale-95 transition-transform"
               data-testid="button-add-proposal"
             >
               <Plus className="w-4 h-4" /> اقتراح جديد

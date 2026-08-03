@@ -255,7 +255,7 @@ export default function FamilySettings() {
               />
               <span className="text-sm text-muted-foreground font-bold">ر.ع</span>
             </div>
-            <p className="text-[11px] text-muted-foreground leading-relaxed">
+            <p className="text-xs text-muted-foreground leading-relaxed">
               يُستخدم لحساب المتأخرات بالريال لكل عضو لم يُحدد له مبلغ خاص من صفحة الأعضاء. اتركه صفراً لتعطيل حساب المتأخرات.
             </p>
           </div>
@@ -277,7 +277,7 @@ export default function FamilySettings() {
               />
               <span className="text-sm text-muted-foreground font-bold">ر.ع</span>
             </div>
-            <p className="text-[11px] text-muted-foreground leading-relaxed">
+            <p className="text-xs text-muted-foreground leading-relaxed">
               قيمة 85 غراماً من الذهب بالريال العُماني — تتغير بتغير سعر الذهب، فحدّثها عند حلول الحول. اتركها صفراً ليتوقف حساب الزكاة.
             </p>
           </div>
@@ -377,7 +377,7 @@ export default function FamilySettings() {
             <Upload className="w-4 h-4" />
             استيراد نسخة من ملف (استعادة كاملة)
           </button>
-          <p className="text-[11px] text-muted-foreground leading-relaxed -mt-2 px-1">
+          <p className="text-xs text-muted-foreground leading-relaxed -mt-2 px-1">
             نزّل نسخة دورياً واحفظها خارج الخادم (جهازك أو سحابة خاصة). عند أي كارثة تفقد فيها الخادم نفسه، هذا الملف هو طريق الاستعادة الوحيد.
           </p>
 
@@ -573,7 +573,7 @@ export default function FamilySettings() {
                   {member.name.substring(0, 2)}
                 </div>
                 <div className="text-xs font-medium truncate">{member.name}</div>
-                <div className="text-[9px] text-muted-foreground">
+                <div className="text-xs text-muted-foreground">
                   {member.role === "guardian" ? "الوصي" : member.role === "custodian" ? "الأمين" : "عضو"}
                 </div>
               </motion.div>

@@ -157,7 +157,7 @@ export default function Expenses() {
             <div>
               <p className="text-xs text-muted-foreground">الرصيد القابل للإنفاق (مرن)</p>
               <h3 className="text-2xl font-bold font-mono text-primary" data-testid="text-available-flexible">{availableFlexible.toLocaleString()} ر.ع</h3>
-              <p className="text-[10px] text-muted-foreground mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 رصيد الطوارئ: <span className="font-mono font-bold">{availableEmergency.toLocaleString()}</span> ر.ع
               </p>
             </div>
@@ -199,7 +199,7 @@ export default function Expenses() {
                 </DialogHeader>
                 <div className="py-4 space-y-4">
                   <div className="bg-muted/30 p-3 rounded-xl text-center">
-                    <p className="text-[10px] text-muted-foreground mb-1">الحد المتاح</p>
+                    <p className="text-xs text-muted-foreground mb-1">الحد المتاح</p>
                     <p className="text-lg font-mono font-bold text-primary">{section.available.toLocaleString()} ر.ع</p>
                   </div>
                   <div>
@@ -282,17 +282,17 @@ export default function Expenses() {
                       </div>
                       <div>
                         <h4 className="font-bold text-sm leading-none">{expense.title}</h4>
-                        <p className="text-[10px] text-muted-foreground mt-1 font-medium">
+                        <p className="text-xs text-muted-foreground mt-1 font-medium">
                           {getCategoryLabel(expense.category)} • {expense.createdAt ? new Date(expense.createdAt).toLocaleDateString('ar-OM') : ''}
                         </p>
                         {expense.description && (
-                          <p className="text-[10px] text-muted-foreground mt-1">{expense.description}</p>
+                          <p className="text-xs text-muted-foreground mt-1">{expense.description}</p>
                         )}
                       </div>
                     </div>
                     <div className="text-right">
                       <div className="text-lg font-mono font-bold text-amber-600">
-                        -{Number(expense.amount).toLocaleString()} <span className="text-[10px] font-sans">ر.ع</span>
+                        -{Number(expense.amount).toLocaleString()} <span className="text-xs font-sans">ر.ع</span>
                       </div>
                     </div>
                   </div>
@@ -303,7 +303,7 @@ export default function Expenses() {
                   <button 
                     onClick={() => deleteMutation.mutate(expense.id)}
                     disabled={deleteMutation.isPending}
-                    className="w-full text-[10px] text-muted-foreground flex items-center justify-center gap-1 pt-3 mt-3 border-t border-border/40 hover:text-red-500 transition-colors disabled:opacity-50"
+                    className="tap-target w-full text-xs text-muted-foreground flex items-center justify-center gap-1 pt-3 mt-3 border-t border-border/40 hover:text-destructive transition-colors disabled:opacity-50"
                     data-testid={`button-delete-expense-${expense.id}`}
                   >
                     <Trash2 className="w-3 h-3" /> حذف السجل

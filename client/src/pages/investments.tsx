@@ -158,7 +158,7 @@ export default function Investments() {
               <button
                 onClick={() => startCycleMutation.mutate()}
                 disabled={startCycleMutation.isPending}
-                className="w-full py-2.5 bg-purple-600 text-white rounded-xl text-sm font-bold active:scale-95 transition-transform disabled:opacity-50"
+                className="tap-target w-full py-2.5 bg-purple-600 text-white rounded-xl text-sm font-bold active:scale-95 transition-transform disabled:opacity-50"
                 data-testid="button-start-hawl"
               >
                 بدء حول جديد من اليوم
@@ -193,7 +193,7 @@ export default function Investments() {
                   <p className="text-xs text-muted-foreground">حدّد قيمة النصاب من الإعدادات ليحسب النظام الزكاة</p>
                 ) : zakat?.estimate.reachesNisab ? (
                   <>
-                    <p className="text-[11px] text-muted-foreground mb-1">الزكاة الواجبة (2.5٪)</p>
+                    <p className="text-xs text-muted-foreground mb-1">الزكاة الواجبة (2.5٪)</p>
                     <p className="text-2xl font-bold font-mono text-purple-700" data-testid="text-zakat-due">{fmt(zakat.estimate.amount)} <span className="text-xs">ر.ع</span></p>
                   </>
                 ) : (
@@ -204,7 +204,7 @@ export default function Investments() {
               {cycle.hawlComplete && (zakat?.estimate.amount ?? 0) > 0 && (
                 <button
                   onClick={() => { setZakatAmount(String(zakat!.estimate.amount)); setZakatOpen(true); }}
-                  className="w-full py-2.5 bg-purple-600 text-white rounded-xl text-sm font-bold active:scale-95 transition-transform"
+                  className="tap-target w-full py-2.5 bg-purple-600 text-white rounded-xl text-sm font-bold active:scale-95 transition-transform"
                   data-testid="button-pay-zakat"
                 >
                   إخراج الزكاة وتسجيلها مصروفاً
@@ -231,7 +231,7 @@ export default function Investments() {
           <h3 className="font-bold text-lg text-primary font-heading">سجل الاستثمارات</h3>
           <button
             onClick={() => setAddOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-xs font-bold shadow-lg shadow-primary/20 active:scale-95 transition-transform"
+            className="tap-target flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-xs font-bold shadow-lg shadow-primary/20 active:scale-95 transition-transform"
             data-testid="button-add-investment"
           >
             <Plus className="w-4 h-4" /> استثمار جديد
@@ -280,12 +280,12 @@ export default function Investments() {
                     </div>
                     <div className="flex-1">
                       <h4 className="font-bold leading-tight">{inv.title}</h4>
-                      <p className="text-[11px] text-muted-foreground">
+                      <p className="text-xs text-muted-foreground">
                         {TYPE_LABELS[inv.type] ?? inv.type} · بدأ {fmtDate(inv.startedAt)}
                       </p>
                     </div>
                     <span className={cn(
-                      "text-[9px] font-bold px-2 py-1 rounded-full border",
+                      "text-xs font-bold px-2 py-1 rounded-full border",
                       inv.status === "active" ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-700" : "bg-muted border-border text-muted-foreground",
                     )}>
                       {inv.status === "active" ? "قائم" : "مُصفّى"}
@@ -305,7 +305,7 @@ export default function Investments() {
                   </div>
 
                   {inv.valuations.length > 0 && (
-                    <div className="text-[11px] text-muted-foreground space-y-1 pt-1">
+                    <div className="text-xs text-muted-foreground space-y-1 pt-1">
                       {inv.valuations.slice(-3).map((v) => (
                         <div key={v.id} className="flex justify-between">
                           <span>تقييم {fmtDate(v.valuedAt)}</span>
@@ -319,21 +319,21 @@ export default function Investments() {
                     <div className="flex gap-2 pt-1">
                       <button
                         onClick={() => { setValuationTarget(inv); setValuationValue(String(inv.currentValue)); }}
-                        className="flex-1 py-2 bg-muted rounded-xl text-xs font-bold active:scale-95 transition-transform"
+                        className="tap-target flex-1 py-2 bg-muted rounded-xl text-xs font-bold active:scale-95 transition-transform"
                         data-testid={`button-value-${inv.id}`}
                       >
                         تقييم جديد
                       </button>
                       <button
                         onClick={() => { setExitTarget(inv); setExitValue(String(inv.currentValue)); }}
-                        className="flex-1 py-2 bg-amber-500/10 text-amber-700 rounded-xl text-xs font-bold flex items-center justify-center gap-1 active:scale-95 transition-transform"
+                        className="tap-target flex-1 py-2 bg-amber-500/10 text-amber-700 rounded-xl text-xs font-bold flex items-center justify-center gap-1 active:scale-95 transition-transform"
                         data-testid={`button-exit-${inv.id}`}
                       >
                         <LogOut className="w-3 h-3" /> تصفية
                       </button>
                       <button
                         onClick={() => deleteMutation.mutate(inv.id)}
-                        className="p-2 bg-muted/50 text-muted-foreground rounded-xl hover:text-destructive transition-colors"
+                        className="tap-target p-2 bg-muted/50 text-muted-foreground rounded-xl hover:text-destructive transition-colors"
                         data-testid={`button-delete-investment-${inv.id}`}
                       >
                         <Trash2 className="w-4 h-4" />
@@ -435,7 +435,7 @@ export default function Investments() {
           <div className="space-y-3">
             <input type="number" step="0.001" value={zakatAmount} onChange={(e) => setZakatAmount(e.target.value)}
               className="w-full p-3 border rounded-xl bg-background text-sm font-mono" data-testid="input-zakat-amount" />
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               المحسوب {fmt(zakat?.estimate.amount ?? 0)} ر.ع — يمكنك تعديله (تقريباً أو زيادةً تطوعاً).
             </p>
             <button

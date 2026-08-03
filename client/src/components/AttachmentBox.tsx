@@ -46,13 +46,13 @@ export default function AttachmentBox({ entityType, entityId, canDelete = false,
   return (
     <div className="space-y-2" data-testid={`attachments-${entityType}-${entityId}`}>
       <div className="flex items-center justify-between">
-        <span className="text-[11px] font-bold text-muted-foreground flex items-center gap-1">
+        <span className="text-xs font-bold text-muted-foreground flex items-center gap-1">
           <Paperclip className="w-3 h-3" /> {label}
         </span>
         <button
           onClick={() => fileInput.current?.click()}
           disabled={uploadMutation.isPending}
-          className="text-[11px] font-bold text-primary flex items-center gap-1 disabled:opacity-50"
+          className="tap-target px-2 text-xs font-bold text-primary flex items-center gap-1 disabled:opacity-50"
           data-testid="button-upload-attachment"
         >
           <Upload className="w-3 h-3" /> {uploadMutation.isPending ? "جاري الرفع..." : "إرفاق"}
@@ -71,7 +71,7 @@ export default function AttachmentBox({ entityType, entityId, canDelete = false,
       </div>
 
       {items.length === 0 ? (
-        <p className="text-[11px] text-muted-foreground/70">لا مرفقات — الحد الأقصى 1 ميغابايت للملف (صورة أو PDF)</p>
+        <p className="text-xs text-muted-foreground/70">لا مرفقات — الحد الأقصى 1 ميغابايت للملف (صورة أو PDF)</p>
       ) : (
         <div className="space-y-1">
           {items.map((a) => (
@@ -81,12 +81,12 @@ export default function AttachmentBox({ entityType, entityId, canDelete = false,
                 href={attachmentUrl(a.id)}
                 target="_blank"
                 rel="noreferrer"
-                className="flex-1 text-[11px] font-medium truncate hover:text-primary"
+                className="flex-1 text-xs font-medium truncate hover:text-primary"
                 data-testid={`link-attachment-${a.id}`}
               >
                 {a.fileName}
               </a>
-              <span className="text-[10px] text-muted-foreground shrink-0">{Math.round(a.sizeBytes / 1024)} ك.ب</span>
+              <span className="text-xs text-muted-foreground shrink-0">{Math.round(a.sizeBytes / 1024)} ك.ب</span>
               {canDelete && (
                 <button
                   onClick={() => deleteMutation.mutate(a.id)}

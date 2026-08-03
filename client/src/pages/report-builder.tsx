@@ -166,7 +166,7 @@ export default function ReportBuilder() {
             {SECTIONS.map((s) => (
               <button key={s.key}
                 onClick={() => setSections((p) => ({ ...p, [s.key]: !p[s.key] }))}
-                className={cn(
+                className={cn("tap-target", 
                   "text-right rounded-xl border px-3 py-2.5 transition-colors",
                   sections[s.key] ? "border-emerald-500 bg-emerald-50" : "border-gray-200 bg-white opacity-60",
                 )}
@@ -179,7 +179,7 @@ export default function ReportBuilder() {
                   </span>
                   {s.label}
                 </span>
-                <span className="block text-[11px] text-gray-500 mt-0.5 pr-6">{s.desc}</span>
+                <span className="block text-xs text-gray-500 mt-0.5 pr-6">{s.desc}</span>
               </button>
             ))}
           </div>
@@ -187,12 +187,12 @@ export default function ReportBuilder() {
           {statement && (
             <div className="flex gap-2">
               <button onClick={() => window.print()}
-                className="flex-1 bg-emerald-600 text-white py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 hover:bg-emerald-700"
+                className="tap-target flex-1 bg-emerald-600 text-white py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 hover:bg-emerald-700"
                 data-testid="button-print-statement">
                 <Printer className="w-4 h-4" /> طباعة / PDF
               </button>
               <button onClick={exportExcel}
-                className="flex-1 border border-emerald-600 text-emerald-700 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 hover:bg-emerald-50"
+                className="tap-target flex-1 border border-emerald-600 text-emerald-700 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 hover:bg-emerald-50"
                 data-testid="button-export-statement">
                 <FileSpreadsheet className="w-4 h-4" /> تصدير Excel
               </button>
@@ -234,7 +234,7 @@ export default function ReportBuilder() {
                     <p className={cn("text-xl font-mono font-bold mt-1", statement.summary.currentDebt > 0 ? "text-red-600" : "text-emerald-600")}>
                       {fmt(statement.summary.currentDebt)} <span className="text-xs">ر.ع</span>
                     </p>
-                    {statement.summary.currentDebt === 0 && <p className="text-[10px] font-bold text-emerald-600">الذمة صفر ✓</p>}
+                    {statement.summary.currentDebt === 0 && <p className="text-xs font-bold text-emerald-600">الذمة صفر ✓</p>}
                   </div>
                   <div className="border border-gray-200 rounded-2xl p-4 text-center">
                     <p className="text-xs text-gray-500 font-bold">إجمالي ما تسلّف</p>
@@ -277,7 +277,7 @@ export default function ReportBuilder() {
                       <div className="flex justify-between"><span className="text-gray-500">أشهر لم يدفع فيها</span><span className="font-mono font-bold">{statement.arrears.missedMonths}</span></div>
                     </div>
                     {statement.arrears.partialMonths > 0 && (
-                      <p className="text-[11px] text-amber-700 bg-amber-50 rounded-lg px-3 py-2">
+                      <p className="text-xs text-amber-700 bg-amber-50 rounded-lg px-3 py-2">
                         {statement.arrears.partialMonths} شهراً دفع فيها أقل من المتوقع
                       </p>
                     )}
@@ -307,7 +307,7 @@ export default function ReportBuilder() {
                         <div className="flex justify-between"><span className="text-gray-500">مقابلها من صافي الأصول</span><span className="font-mono font-bold">{fmt(share.value)} ر.ع</span></div>
                         <div className="flex justify-between"><span className="text-gray-500">إجمالي مساهماته</span><span className="font-mono font-bold">{fmt(share.contributed)} ر.ع</span></div>
                       </div>
-                      <p className="text-[11px] text-gray-400 leading-relaxed">{sharesReport?.note}</p>
+                      <p className="text-xs text-gray-400 leading-relaxed">{sharesReport?.note}</p>
                     </div>
                   );
                 })()}
@@ -335,7 +335,7 @@ export default function ReportBuilder() {
                           <tr key={i} className="border-t border-gray-100">
                             <td className="py-2.5 px-3 whitespace-nowrap text-gray-500">{fmtDate(e.date)}</td>
                             <td className="py-2.5 px-3">
-                              <span className={cn("inline-block rounded-full px-2 py-0.5 text-[10px] font-bold ml-2",
+                              <span className={cn("inline-block rounded-full px-2 py-0.5 text-xs font-bold ml-2",
                                 e.type === "contribution" ? "bg-emerald-100 text-emerald-700" :
                                 e.type === "loan" ? "bg-blue-100 text-blue-700" : "bg-teal-100 text-teal-700")}>
                                 {typeLabel[e.type]}
@@ -374,7 +374,7 @@ export default function ReportBuilder() {
                           </div>
                           <div className="text-left">
                             <p className="font-mono font-bold text-blue-600">{fmt(l.amount)} ر.ع</p>
-                            <span className={cn("inline-block rounded-full px-2 py-0.5 text-[10px] font-bold mt-1",
+                            <span className={cn("inline-block rounded-full px-2 py-0.5 text-xs font-bold mt-1",
                               l.settled ? "bg-emerald-100 text-emerald-700" :
                               l.status === "approved" ? "bg-amber-100 text-amber-700" :
                               l.status === "pending" ? "bg-gray-100 text-gray-600" : "bg-red-100 text-red-600")}>
@@ -412,9 +412,9 @@ export default function ReportBuilder() {
                         {y.months.map((m) => (
                           <div key={m.month} className={cn("rounded-xl border p-2.5 text-center",
                             m.status === "approved" ? "border-emerald-200 bg-emerald-50/50" : "border-amber-200 bg-amber-50/50")}>
-                            <p className="text-[11px] font-bold text-gray-500">{MONTH_NAMES[m.month - 1]}</p>
+                            <p className="text-xs font-bold text-gray-500">{MONTH_NAMES[m.month - 1]}</p>
                             <p className="font-mono font-bold text-sm mt-0.5">{fmt(m.amount)}</p>
-                            <p className={cn("text-[9px] font-bold", m.status === "approved" ? "text-emerald-600" : "text-amber-600")}>
+                            <p className={cn("text-xs font-bold", m.status === "approved" ? "text-emerald-600" : "text-amber-600")}>
                               {m.status === "approved" ? "معتمدة ✓" : "قيد الاعتماد"}
                             </p>
                           </div>
@@ -426,7 +426,7 @@ export default function ReportBuilder() {
               </section>
             )}
 
-            <footer className="text-center text-[11px] text-gray-400 border-t border-gray-200 pt-4">
+            <footer className="text-center text-xs text-gray-400 border-t border-gray-200 pt-4">
               أُعد آلياً من سجلات النظام الموثقة — {statement.member.name} · {fmtDate(statement.generatedAt)}
             </footer>
           </div>

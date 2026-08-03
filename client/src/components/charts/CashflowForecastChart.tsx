@@ -57,9 +57,9 @@ export function CashflowForecastChart({ data, loading = false, delay = 0 }: { da
             <Wallet className="w-4 h-4" />
           </div>
           <div>
-            <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">الرصيد المتوقع بعد 6 أشهر</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">الرصيد المتوقع بعد 6 أشهر</p>
             <p className="mt-0.5 text-sm font-extrabold font-mono text-emerald-600">
-              {last ? last.projectedBalance.toLocaleString("en-US") : "—"} <span className="text-[10px] font-sans text-muted-foreground">ر.ع</span>
+              {last ? last.projectedBalance.toLocaleString("en-US") : "—"} <span className="text-xs font-sans text-muted-foreground">ر.ع</span>
             </p>
           </div>
         </div>
@@ -68,9 +68,9 @@ export function CashflowForecastChart({ data, loading = false, delay = 0 }: { da
             <CalendarClock className="w-4 h-4" />
           </div>
           <div>
-            <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">متوسط المساهمات الشهري</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">متوسط المساهمات الشهري</p>
             <p className="mt-0.5 text-sm font-extrabold font-mono text-foreground">
-              {data.avgMonthlyContributions.toLocaleString("en-US")} <span className="text-[10px] text-muted-foreground">ر.ع</span>
+              {data.avgMonthlyContributions.toLocaleString("en-US")} <span className="text-xs text-muted-foreground">ر.ع</span>
             </p>
           </div>
         </div>
@@ -86,8 +86,8 @@ export function CashflowForecastChart({ data, loading = false, delay = 0 }: { da
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" opacity={0.6} vertical={false} />
-            <XAxis dataKey="month" tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fontSize: 9, fill: "#94a3b8" }} axisLine={false} tickLine={false} width={36}
+            <XAxis dataKey="month" tick={{ fontSize: 12, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fontSize: 12, fill: "#94a3b8" }} axisLine={false} tickLine={false} width={36}
               tickFormatter={(v) => (v >= 1000 ? `${(v / 1000).toFixed(1)}k` : String(v))} />
             <Tooltip content={<CustomTooltip />} />
             <ReferenceLine y={data.currentBalance} stroke="#94a3b8" strokeDasharray="5 4" strokeOpacity={0.4} strokeWidth={1.5} />
@@ -105,7 +105,7 @@ export function CashflowForecastChart({ data, loading = false, delay = 0 }: { da
         </ResponsiveContainer>
       </div>
 
-      <p className="mt-3 text-[10px] leading-5 text-muted-foreground bg-muted/30 rounded-xl px-3 py-2">
+      <p className="mt-3 text-xs leading-5 text-muted-foreground bg-muted/30 rounded-xl px-3 py-2">
         {data.note}
       </p>
     </ChartCard>

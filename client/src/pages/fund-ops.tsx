@@ -135,14 +135,14 @@ export default function FundOps() {
           <div className="bg-card border border-border/60 rounded-2xl p-4">
             <div className="flex items-center gap-2 mb-1">
               <TrendingUp className="w-4 h-4 text-primary" />
-              <p className="text-[10px] font-bold text-muted-foreground">المتاح للسلف</p>
+              <p className="text-xs font-bold text-muted-foreground">المتاح للسلف</p>
             </div>
             <p className="text-lg font-mono font-bold text-primary">{availableFlexible.toFixed(3)} ر.ع</p>
           </div>
           <div className="bg-card border border-border/60 rounded-2xl p-4">
             <div className="flex items-center gap-2 mb-1">
               <TrendingDown className="w-4 h-4 text-amber-600" />
-              <p className="text-[10px] font-bold text-muted-foreground">المتاح للطوارئ</p>
+              <p className="text-xs font-bold text-muted-foreground">المتاح للطوارئ</p>
             </div>
             <p className="text-lg font-mono font-bold text-amber-600">{availableEmergency.toFixed(3)} ر.ع</p>
           </div>
@@ -160,7 +160,7 @@ export default function FundOps() {
             </div>
             <div className="text-right">
               <p className="font-bold text-sm">إضافة سلفة مباشرة</p>
-              <p className="text-[11px] opacity-75">تُعتمد فورًا بعد التحقق من الرصيد</p>
+              <p className="text-xs opacity-75">تُعتمد فورًا بعد التحقق من الرصيد</p>
             </div>
             <Plus className="w-5 h-5 mr-auto" />
           </button>
@@ -175,7 +175,7 @@ export default function FundOps() {
             </div>
             <div className="text-right">
               <p className="font-bold text-sm">إضافة مصروف</p>
-              <p className="text-[11px] opacity-75">يُسجل ضمن قائمة المصروفات</p>
+              <p className="text-xs opacity-75">يُسجل ضمن قائمة المصروفات</p>
             </div>
             <Plus className="w-5 h-5 mr-auto" />
           </button>
@@ -190,7 +190,7 @@ export default function FundOps() {
             </div>
             <div className="text-right">
               <p className="font-bold text-sm">إضافة مبلغ وارد</p>
-              <p className="text-[11px] opacity-75">إيداع عام — معلوم أو غير معروف المصدر</p>
+              <p className="text-xs opacity-75">إيداع عام — معلوم أو غير معروف المصدر</p>
             </div>
             <Plus className="w-5 h-5 mr-auto" />
           </button>
@@ -241,7 +241,7 @@ export default function FundOps() {
                   onChange={(e) => setAdminLoanAmount(e.target.value)}
                   className="w-full bg-background border border-border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/50"
                   placeholder="0.000" required />
-                <p className="text-[11px] text-muted-foreground">الرصيد المتاح: {selectedLoanAvailable.toFixed(3)} ر.ع</p>
+                <p className="text-xs text-muted-foreground">الرصيد المتاح: {selectedLoanAvailable.toFixed(3)} ر.ع</p>
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">طريقة السداد</label>
@@ -314,7 +314,7 @@ export default function FundOps() {
                   onChange={(e) => setExpenseAmount(e.target.value)}
                   className="w-full bg-background border border-border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/50"
                   placeholder="0.000" required />
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   الرصيد المتاح: {(expenseCategory === "emergency" ? availableEmergency : availableFlexible).toFixed(3)} ر.ع
                 </p>
               </div>
@@ -385,7 +385,7 @@ export default function FundOps() {
           <div className="space-y-3">
             <h3 className="font-bold text-lg text-green-700 font-heading px-1 flex items-center gap-2">
               <Coins className="w-5 h-5" /> السجل العام للإيداعات
-              <span className="text-[10px] bg-muted px-2 py-0.5 rounded-full font-bold text-muted-foreground mr-auto">{depositRecords.length}</span>
+              <span className="text-xs bg-muted px-2 py-0.5 rounded-full font-bold text-muted-foreground mr-auto">{depositRecords.length}</span>
             </h3>
             {depositRecords.map((adj: any, idx: number) => (
               <motion.div key={adj.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.04 }}
@@ -399,7 +399,7 @@ export default function FundOps() {
                     <span className="font-bold text-sm font-mono">{Number(adj.amount).toFixed(3)} ر.ع</span>
                   </div>
                   {adj.description && <p className="text-xs text-muted-foreground mt-1 truncate">{adj.description}</p>}
-                  <p className="text-[10px] text-muted-foreground mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     {adj.createdAt ? new Date(adj.createdAt).toLocaleDateString("ar-OM", { year: "numeric", month: "short", day: "numeric" }) : ""}
                   </p>
                 </div>

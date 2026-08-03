@@ -69,9 +69,9 @@ export function ContributionsTrendChart({
             <Star className="w-4 h-4" />
           </div>
           <div>
-            <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">أفضل شهر</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">أفضل شهر</p>
             <p className="mt-0.5 text-sm font-bold text-foreground leading-tight">{bestMonth?.month || "—"}</p>
-            <p className="text-[10px] font-mono text-emerald-600">
+            <p className="text-xs font-mono text-emerald-600">
               {bestMonth ? `${bestMonth.amount.toLocaleString("en-US")} ر.ع` : ""}
             </p>
           </div>
@@ -81,11 +81,11 @@ export function ContributionsTrendChart({
             {isUpward ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
           </div>
           <div>
-            <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">اتجاه الحركة</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">اتجاه الحركة</p>
             <p className={`mt-0.5 text-sm font-bold leading-tight ${isUpward ? "text-emerald-600" : "text-amber-600"}`}>
               {isUpward ? "تصاعدي" : "متذبذب"}
             </p>
-            <p className="text-[10px] text-muted-foreground">آخر {data.length} فترات</p>
+            <p className="text-xs text-muted-foreground">آخر {data.length} فترات</p>
           </div>
         </div>
       </div>
@@ -103,12 +103,12 @@ export function ContributionsTrendChart({
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" opacity={0.6} vertical={false} />
             <XAxis
               dataKey="month"
-              tick={{ fontSize: 10, fill: "#94a3b8" }}
+              tick={{ fontSize: 12, fill: "#94a3b8" }}
               axisLine={false}
               tickLine={false}
             />
             <YAxis
-              tick={{ fontSize: 9, fill: "#94a3b8" }}
+              tick={{ fontSize: 12, fill: "#94a3b8" }}
               axisLine={false}
               tickLine={false}
               width={32}
@@ -142,9 +142,9 @@ export function ContributionsTrendChart({
             <Sigma className="w-3.5 h-3.5" />
           </div>
           <div>
-            <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">المجموع</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">المجموع</p>
             <p className="text-sm font-extrabold font-mono text-foreground">
-              {totalAmount.toLocaleString("en-US")} <span className="text-[10px] text-muted-foreground">ر.ع</span>
+              {totalAmount.toLocaleString("en-US")} <span className="text-xs text-muted-foreground">ر.ع</span>
             </p>
           </div>
         </div>
@@ -153,9 +153,9 @@ export function ContributionsTrendChart({
             <BarChart2 className="w-3.5 h-3.5" />
           </div>
           <div>
-            <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">المتوسط الشهري</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">المتوسط الشهري</p>
             <p className="text-sm font-extrabold font-mono text-foreground">
-              {Math.round(avgAmount).toLocaleString("en-US")} <span className="text-[10px] text-muted-foreground">ر.ع</span>
+              {Math.round(avgAmount).toLocaleString("en-US")} <span className="text-xs text-muted-foreground">ر.ع</span>
             </p>
           </div>
         </div>

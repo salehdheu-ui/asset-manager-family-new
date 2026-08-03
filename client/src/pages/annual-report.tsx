@@ -38,7 +38,7 @@ export default function AnnualReport() {
         </select>
         <button
           onClick={() => window.print()}
-          className="mr-auto bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-emerald-700"
+          className="tap-target mr-auto bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-emerald-700"
           data-testid="button-print-report"
         >
           <Printer className="w-4 h-4" /> طباعة / حفظ PDF
@@ -61,22 +61,22 @@ export default function AnnualReport() {
             <div className="border border-gray-200 rounded-2xl p-5 text-center">
               <p className="text-xs text-gray-500 font-bold">إجمالي المساهمات</p>
               <p className="text-2xl font-mono font-bold text-emerald-600 mt-1">{fmt(yearly?.summary.totalContributions ?? 0)} <span className="text-xs">ر.ع</span></p>
-              <p className="text-[11px] text-gray-400 mt-1">{yearly?.summary.contributionCount ?? 0} مساهمة</p>
+              <p className="text-xs text-gray-400 mt-1">{yearly?.summary.contributionCount ?? 0} مساهمة</p>
             </div>
             <div className="border border-gray-200 rounded-2xl p-5 text-center">
               <p className="text-xs text-gray-500 font-bold">السلف الممنوحة</p>
               <p className="text-2xl font-mono font-bold text-blue-600 mt-1">{fmt(yearly?.summary.totalLoans ?? 0)} <span className="text-xs">ر.ع</span></p>
-              <p className="text-[11px] text-gray-400 mt-1">{yearly?.summary.loanCount ?? 0} سلفة</p>
+              <p className="text-xs text-gray-400 mt-1">{yearly?.summary.loanCount ?? 0} سلفة</p>
             </div>
             <div className="border border-gray-200 rounded-2xl p-5 text-center">
               <p className="text-xs text-gray-500 font-bold">المصروفات</p>
               <p className="text-2xl font-mono font-bold text-amber-600 mt-1">{fmt(yearly?.summary.totalExpenses ?? 0)} <span className="text-xs">ر.ع</span></p>
-              <p className="text-[11px] text-gray-400 mt-1">{yearly?.summary.expenseCount ?? 0} عملية</p>
+              <p className="text-xs text-gray-400 mt-1">{yearly?.summary.expenseCount ?? 0} عملية</p>
             </div>
             <div className="border border-gray-200 rounded-2xl p-5 text-center">
               <p className="text-xs text-gray-500 font-bold">صافي رأس مال الصندوق الآن</p>
               <p className="text-2xl font-mono font-bold text-gray-900 mt-1">{fmt(summary?.netCapital ?? 0)} <span className="text-xs">ر.ع</span></p>
-              <p className={`text-[11px] mt-1 font-bold ${netFlow >= 0 ? "text-emerald-600" : "text-red-500"}`}>
+              <p className={`text-xs mt-1 font-bold ${netFlow >= 0 ? "text-emerald-600" : "text-red-500"}`}>
                 صافي تدفق السنة: {fmt(netFlow)} ر.ع
               </p>
             </div>
@@ -158,7 +158,7 @@ export default function AnnualReport() {
           </table>
         </section>
 
-        <footer className="text-center text-[11px] text-gray-400 border-t border-gray-200 pt-6 pb-10">
+        <footer className="text-center text-xs text-gray-400 border-t border-gray-200 pt-6 pb-10">
           كل الأرقام مستخرجة من سجل النظام الموثق — سجل التدقيق يحفظ تاريخ كل عملية ولا يمكن تعديله.
         </footer>
       </div>

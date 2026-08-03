@@ -74,10 +74,10 @@ export default function AuditLog() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2 mb-1">
-                      <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-[10px] font-bold text-primary">
+                      <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-bold text-primary">
                         {getActionLabel(log.action)}
                       </span>
-                      <span className="text-[10px] text-muted-foreground">
+                      <span className="text-xs text-muted-foreground">
                         {log.createdAt ? new Date(log.createdAt).toLocaleString("ar-OM") : ""}
                       </span>
                     </div>

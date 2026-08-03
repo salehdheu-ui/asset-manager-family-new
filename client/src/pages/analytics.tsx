@@ -113,7 +113,7 @@ function KPICard({ title, value, subtitle, change, trend, icon, gradient, iconBg
         </div>
         {trend && (
           <span className={cn(
-            "flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold backdrop-blur-sm",
+            "flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold backdrop-blur-sm",
             trend === "up" ? "bg-white/20 text-white" :
             trend === "down" ? "bg-black/15 text-white/90" : "bg-white/15 text-white/80"
           )}>
@@ -123,9 +123,9 @@ function KPICard({ title, value, subtitle, change, trend, icon, gradient, iconBg
           </span>
         )}
       </div>
-      <p className="relative text-[10px] font-bold uppercase tracking-widest text-white/70 mb-1">{title}</p>
+      <p className="relative text-xs font-bold uppercase tracking-widest text-white/70 mb-1">{title}</p>
       <h4 className="relative text-2xl font-extrabold font-mono text-white leading-tight">{value}</h4>
-      {subtitle && <p className="relative mt-1.5 text-[11px] text-white/55">{subtitle}</p>}
+      {subtitle && <p className="relative mt-1.5 text-xs text-white/55">{subtitle}</p>}
     </motion.div>
   );
 }
@@ -386,7 +386,7 @@ export default function Analytics() {
           <div className="pointer-events-none absolute right-12 top-6 h-20 w-20 rounded-full bg-white/5 blur-xl" />
           <div className="relative flex items-start justify-between gap-4">
             <div className="space-y-3">
-              <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3.5 py-1.5 text-[11px] font-bold text-white/90 backdrop-blur-sm ring-1 ring-white/10">
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3.5 py-1.5 text-xs font-bold text-white/90 backdrop-blur-sm ring-1 ring-white/10">
                 <Sparkles className="h-3.5 w-3.5" />
                 تقارير وتحليلات مالية متكاملة
               </div>
@@ -417,8 +417,8 @@ export default function Analytics() {
                   <Icon className="h-4.5 w-4.5" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[11px] font-bold mb-1">{card.title}</p>
-                  <p className="text-[11px] leading-5 opacity-80">{card.desc}</p>
+                  <p className="text-xs font-bold mb-1">{card.title}</p>
+                  <p className="text-xs leading-5 opacity-80">{card.desc}</p>
                 </div>
               </motion.div>
             );
@@ -432,12 +432,12 @@ export default function Analytics() {
               <h2 className="font-bold text-base text-primary font-heading flex items-center gap-2">
                 <Calendar className="w-4 h-4" /> نظرة تحليلية عامة
               </h2>
-              <p className="mt-0.5 text-[11px] text-muted-foreground">غيّر السنة والفترة لمقارنة المؤشرات.</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">غيّر السنة والفترة لمقارنة المؤشرات.</p>
             </div>
             <div className="flex gap-1.5 rounded-2xl bg-muted/60 p-1">
               {availableYears.slice(0, 3).map(year => (
                 <button key={year} onClick={() => setSelectedYear(year)}
-                  className={cn("px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-200",
+                  className={cn("tap-target", "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-200",
                     selectedYear === year
                       ? "bg-primary text-primary-foreground shadow-md"
                       : "text-muted-foreground hover:text-foreground hover:bg-white/60")}>
@@ -507,9 +507,9 @@ export default function Analytics() {
                   <card.Icon className="h-5 w-5" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className={cn("text-[10px] font-bold uppercase tracking-wider", card.labelColor)}>{card.label}</p>
+                  <p className={cn("text-xs font-bold uppercase tracking-wider", card.labelColor)}>{card.label}</p>
                   <p className={cn("truncate text-[15px] font-bold leading-snug mt-0.5", card.nameColor)}>{card.name}</p>
-                  <p className={cn("text-[11px] font-medium mt-0.5", card.valueColor)}>{card.value}</p>
+                  <p className={cn("text-xs font-medium mt-0.5", card.valueColor)}>{card.value}</p>
                 </div>
               </div>
             </motion.div>
@@ -528,7 +528,7 @@ export default function Analytics() {
             <div className="flex gap-1 rounded-2xl bg-muted/60 p-1">
               {[{ label: "3 أشهر", value: "3months" }, { label: "6 أشهر", value: "6months" }, { label: "سنة", value: "12months" }].map((p) => (
                 <button key={p.value} onClick={() => setSelectedPeriod(p.value as typeof selectedPeriod)}
-                  className={cn("rounded-xl px-3 py-1.5 text-[10px] font-bold transition-all duration-200",
+                  className={cn("tap-target", "rounded-xl px-3 py-1.5 text-xs font-bold transition-all duration-200",
                     selectedPeriod === p.value ? "bg-primary text-primary-foreground shadow-md" : "text-muted-foreground hover:text-foreground")}>
                   {p.label}
                 </button>
@@ -564,27 +564,27 @@ export default function Analytics() {
                     <div className={cn("flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br text-white shadow-md", item.gradient)}>
                       <item.icon className="w-4.5 h-4.5" />
                     </div>
-                    <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">{item.label}</p>
+                    <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{item.label}</p>
                     <p className="text-base font-extrabold font-mono text-foreground">{item.value.toLocaleString()}</p>
-                    <p className="text-[9px] text-muted-foreground/70">ر.ع</p>
+                    <p className="text-xs text-muted-foreground/70">ر.ع</p>
                   </div>
                 ))}
               </div>
               {/* Monthly bars */}
               <div className="border-t border-border/30 bg-gradient-to-b from-muted/20 to-transparent p-5">
-                <p className="mb-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">التطور الشهري للمساهمات</p>
+                <p className="mb-4 text-xs font-bold uppercase tracking-widest text-muted-foreground">التطور الشهري للمساهمات</p>
                 <div className="flex items-end gap-1.5 h-24">
                   {yearlyReport.monthlyData.map((month, idx) => {
                     const maxVal = Math.max(...yearlyReport.monthlyData.map((m) => m.contributions));
                     const height = maxVal > 0 ? (month.contributions / maxVal) * 100 : 0;
                     return (
                       <div key={idx} className="flex-1 flex flex-col items-center gap-1.5 group cursor-default">
-                        <span className="text-[8px] font-bold font-mono text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span className="text-xs font-bold font-mono text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
                           {month.contributions > 0 ? month.contributions.toLocaleString() : ""}
                         </span>
                         <div className="w-full rounded-lg bg-gradient-to-t from-emerald-500 to-emerald-400 shadow-sm transition-all duration-300 group-hover:from-emerald-600 group-hover:to-emerald-500 group-hover:shadow-emerald-200"
                           style={{ height: `${height}%`, minHeight: height > 0 ? "6px" : "0" }} />
-                        <span className="text-[7px] font-medium text-muted-foreground/70 group-hover:text-foreground transition-colors">{month.monthName}</span>
+                        <span className="text-xs font-medium text-muted-foreground/70 group-hover:text-foreground transition-colors">{month.monthName}</span>
                       </div>
                     );
                   })}
@@ -609,21 +609,21 @@ export default function Analytics() {
                   <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg">
                     <CreditCard className="w-5 h-5" />
                   </div>
-                  <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">إجمالي السلف</p>
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">إجمالي السلف</p>
                   <p className="text-4xl font-extrabold font-mono text-blue-600">{loansAnalysis.summary.totalLoans}</p>
-                  <p className="text-[10px] text-muted-foreground/70">سلفة</p>
+                  <p className="text-xs text-muted-foreground/70">سلفة</p>
                 </div>
                 <div className="flex flex-col items-center gap-2 p-6">
                   <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg">
                     <Wallet className="w-5 h-5" />
                   </div>
-                  <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">المبلغ الإجمالي</p>
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">المبلغ الإجمالي</p>
                   <p className="text-2xl font-extrabold font-mono text-emerald-600">{loansAnalysis.summary.totalAmount.toLocaleString()}</p>
-                  <p className="text-[10px] text-muted-foreground/70">ر.ع</p>
+                  <p className="text-xs text-muted-foreground/70">ر.ع</p>
                 </div>
               </div>
               <div className="border-t border-border/30 bg-gradient-to-b from-muted/20 to-transparent p-5 space-y-4">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">التوزيع حسب النوع</p>
+                <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">التوزيع حسب النوع</p>
                 {Object.entries(loansAnalysis.byType).map(([type, data]) => {
                   const labels: Record<string, string> = { urgent: "عاجلة", standard: "عادية", emergency: "طوارئ" };
                   const gradients: Record<string, string> = { urgent: "from-red-500 to-rose-500", standard: "from-blue-500 to-indigo-500", emergency: "from-amber-500 to-orange-500" };
@@ -660,10 +660,10 @@ export default function Analytics() {
                 </div>
                 الفلاتر والتصدير
               </h3>
-              <p className="mt-1 text-[11px] text-muted-foreground">اختر السنة والشهر ثم نزّل تقرير Excel مفصلاً.</p>
+              <p className="mt-1 text-xs text-muted-foreground">اختر السنة والشهر ثم نزّل تقرير Excel مفصلاً.</p>
             </div>
             <button onClick={() => setShowFilters(!showFilters)}
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-border/50 bg-muted/40 text-muted-foreground transition-all hover:bg-muted/70">
+              className="flex h-11 w-11 items-center justify-center rounded-xl border border-border/50 bg-muted/40 text-muted-foreground transition-all hover:bg-muted/70">
               <ChevronDown className={cn("h-4 w-4 transition-transform duration-300", showFilters && "rotate-180")} />
             </button>
           </div>
@@ -674,14 +674,14 @@ export default function Analytics() {
                 transition={{ duration: 0.3 }} className="overflow-hidden">
                 <div className="grid grid-cols-1 gap-4 pt-1 pb-2">
                   <div>
-                    <label className="mb-2 block text-[11px] font-bold text-muted-foreground">السنة</label>
+                    <label className="mb-2 block text-xs font-bold text-muted-foreground">السنة</label>
                     <select value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))}
                       className="h-11 w-full rounded-2xl border border-border/50 bg-background px-4 text-sm font-medium outline-none transition-colors focus:border-primary/50 focus:ring-2 focus:ring-primary/10">
                       {availableYears.map((y) => <option key={y} value={y}>{y}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="mb-2 block text-[11px] font-bold text-muted-foreground">الشهر</label>
+                    <label className="mb-2 block text-xs font-bold text-muted-foreground">الشهر</label>
                     <select value={filterMonth || ""} onChange={(e) => setFilterMonth(e.target.value ? Number(e.target.value) : null)}
                       className="h-11 w-full rounded-2xl border border-border/50 bg-background px-4 text-sm font-medium outline-none transition-colors focus:border-primary/50 focus:ring-2 focus:ring-primary/10">
                       <option value="">كل الأشهر</option>
@@ -723,7 +723,7 @@ export default function Analytics() {
                 <div key={s.label} className="rounded-2xl border border-border/40 bg-background/80 px-3.5 py-3">
                   <div className="flex items-center gap-1.5 mb-1.5">
                     <SIcon className="w-3 h-3 text-muted-foreground/60" />
-                    <p className="text-[10px] font-bold text-muted-foreground">{s.label}</p>
+                    <p className="text-xs font-bold text-muted-foreground">{s.label}</p>
                   </div>
                   <p className={cn("text-sm font-extrabold font-mono", s.colored ? (s.positive ? "text-emerald-600" : "text-rose-600") : "text-foreground")}>
                     {s.value}
@@ -741,7 +741,7 @@ export default function Analytics() {
               <User className="w-4 h-4" />
             </div>
             كشف الأعضاء
-            <span className="mr-auto text-[10px] bg-muted/70 px-2.5 py-1 rounded-full font-bold text-muted-foreground">
+            <span className="mr-auto text-xs bg-muted/70 px-2.5 py-1 rounded-full font-bold text-muted-foreground">
               {filteredMemberStats.length} عضو
             </span>
           </h3>
@@ -765,26 +765,26 @@ export default function Analytics() {
                             <div className={cn("flex h-11 w-11 items-center justify-center rounded-full font-bold text-sm shadow-md", rankBg)}>
                               {(m as any).avatar || m.name.substring(0, 2)}
                             </div>
-                            <span className={cn("absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-extrabold ring-2 ring-card",
+                            <span className={cn("absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full text-xs font-extrabold ring-2 ring-card",
                               idx < 3 ? `bg-gradient-to-br ${rankColors[idx]} text-white` : "bg-muted text-muted-foreground")}>
                               {idx + 1}
                             </span>
                           </div>
                           <div>
                             <h4 className="font-bold text-sm">{m.name}</h4>
-                            <p className="text-[11px] text-muted-foreground">
+                            <p className="text-xs text-muted-foreground">
                               {m.role === "guardian" ? "الوصي" : "عضو"} • {m.contributionCount} مساهمة • {m.loanCount} سلفة
                             </p>
                           </div>
                         </div>
                         <div className="flex flex-col items-end gap-1.5">
-                          <span className={cn("rounded-xl px-3 py-1.5 text-[10px] font-bold shadow-sm",
+                          <span className={cn("rounded-xl px-3 py-1.5 text-xs font-bold shadow-sm",
                             m.netPosition >= 0 ? "bg-emerald-50 text-emerald-700 border border-emerald-100" : "bg-amber-50 text-amber-700 border border-amber-100")}>
                             {m.netPosition >= 0 ? "إيجابي" : "مديونية"}
                           </span>
                           <button
                             onClick={() => setLocation(`/members/${m.id}`)}
-                            className="flex items-center gap-1 rounded-xl border border-primary/20 bg-primary/5 px-2.5 py-1 text-[10px] font-bold text-primary hover:bg-primary/10 transition-colors">
+                            className="tap-target flex items-center gap-1 rounded-xl border border-primary/20 bg-primary/5 px-2.5 py-1 text-xs font-bold text-primary hover:bg-primary/10 transition-colors">
                             <FileSearch className="w-3 h-3" /> تقرير مفصل
                           </button>
                         </div>
@@ -797,7 +797,7 @@ export default function Analytics() {
                           { label: "الرصيد المتبقي", value: formatCurrency(m.totalBorrowed), border: m.totalBorrowed > 0 ? "border-amber-100" : "border-gray-100", bg: m.totalBorrowed > 0 ? "bg-amber-50/70" : "bg-gray-50/70", color: m.totalBorrowed > 0 ? "text-amber-700" : "text-gray-500" },
                         ].map((s) => (
                           <div key={s.label} className={cn("rounded-xl border p-2.5", s.border, s.bg)}>
-                            <p className={cn("text-[9px] font-bold uppercase tracking-wider", s.color)}>{s.label}</p>
+                            <p className={cn("text-xs font-bold uppercase tracking-wider", s.color)}>{s.label}</p>
                             <div className={cn("mt-1 text-[13px] font-extrabold font-mono", s.color)}>{s.value}</div>
                           </div>
                         ))}
@@ -822,7 +822,7 @@ export default function Analytics() {
           {/* Selector card */}
           <div className="rounded-[1.75rem] border border-border/50 bg-card/50 p-4 space-y-3">
             <div>
-              <label className="mb-2 block text-[11px] font-bold text-muted-foreground">اختر العضو</label>
+              <label className="mb-2 block text-xs font-bold text-muted-foreground">اختر العضو</label>
               <select
                 value={selectedMemberId || ""}
                 onChange={(e) => setSelectedMemberId(e.target.value || null)}
@@ -836,11 +836,11 @@ export default function Analytics() {
             </div>
             {selectedMemberId && (
               <div>
-                <label className="mb-2 block text-[11px] font-bold text-muted-foreground">السنة</label>
+                <label className="mb-2 block text-xs font-bold text-muted-foreground">السنة</label>
                 <div className="flex gap-1.5 rounded-2xl bg-muted/60 p-1">
                   {availableYears.slice(0, 4).map(yr => (
                     <button key={yr} onClick={() => setMemberReportYear(yr)}
-                      className={cn("px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 flex-1",
+                      className={cn("tap-target", "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 flex-1",
                         memberReportYear === yr
                           ? "bg-primary text-primary-foreground shadow-md"
                           : "text-muted-foreground hover:text-foreground hover:bg-white/60")}>
@@ -873,7 +873,7 @@ export default function Analytics() {
                   <div className="pointer-events-none absolute -bottom-6 -right-6 h-24 w-24 rounded-full bg-white/8 blur-xl" />
                   <div className="relative flex items-center justify-between gap-4">
                     <div>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-white/70 mb-1">كشف حساب</p>
+                      <p className="text-xs font-bold uppercase tracking-widest text-white/70 mb-1">كشف حساب</p>
                       <h3 className="text-xl font-extrabold text-white">{memberReport.member.name}</h3>
                       <p className="text-[12px] text-white/70 mt-1">
                         {memberReport.member.role === 'guardian' ? 'الوصي' : 'عضو'} • سنة {memberReport.year}
@@ -882,9 +882,9 @@ export default function Analytics() {
                     <div className="text-center shrink-0">
                       <div className="flex h-16 w-16 flex-col items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm ring-1 ring-white/20">
                         <span className="text-xl font-extrabold font-mono text-white leading-none">{memberReport.performance.commitmentRate}%</span>
-                        <span className="text-[9px] font-bold text-white/70 mt-0.5">التزام</span>
+                        <span className="text-xs font-bold text-white/70 mt-0.5">التزام</span>
                       </div>
-                      <span className="mt-2 block text-[11px] font-bold text-white/90">{memberReport.performance.rating}</span>
+                      <span className="mt-2 block text-xs font-bold text-white/90">{memberReport.performance.rating}</span>
                     </div>
                   </div>
                   <div className="relative mt-4">
@@ -896,7 +896,7 @@ export default function Analytics() {
                         className="h-full rounded-full bg-white/80"
                       />
                     </div>
-                    <p className="mt-1.5 text-[10px] text-white/60">
+                    <p className="mt-1.5 text-xs text-white/60">
                       {memberReport.performance.paidMonths} من {memberReport.performance.expectedMonths} أشهر مدفوعة لسنة {memberReport.year}
                     </p>
                   </div>
@@ -912,7 +912,7 @@ export default function Analytics() {
                   ].map((s) => (
                     <div key={s.label} className={cn("rounded-2xl border p-3.5", s.bg)}>
                       <s.Icon className={cn("w-4 h-4 mb-2", s.color)} />
-                      <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">{s.label}</p>
+                      <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{s.label}</p>
                       <p className={cn("mt-1 text-sm font-extrabold font-mono", s.color)}>{s.value}</p>
                     </div>
                   ))}
@@ -924,7 +924,7 @@ export default function Analytics() {
                     <h4 className="font-bold text-sm text-primary flex items-center gap-2">
                       <Calendar className="w-4 h-4" /> سجل المساهمات {memberReport.year}
                     </h4>
-                    <div className="flex items-center gap-3 text-[9px] font-bold text-muted-foreground">
+                    <div className="flex items-center gap-3 text-xs font-bold text-muted-foreground">
                       <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />مدفوع</span>
                       <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-400 inline-block" />معلق</span>
                       <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-400 inline-block" />غائب</span>
@@ -939,7 +939,7 @@ export default function Analytics() {
                           mg.status === 'missing' ? "bg-red-50 border-red-200" :
                           "bg-muted/20 border-border/20"
                         )}>
-                        <p className={cn("text-[9px] font-bold",
+                        <p className={cn("text-xs font-bold",
                           mg.status === 'approved' ? "text-emerald-700" :
                           mg.status === 'pending_approval' ? "text-amber-700" :
                           mg.status === 'missing' ? "text-red-600" :
@@ -949,7 +949,7 @@ export default function Analytics() {
                         {mg.status === 'missing' && <AlertCircle className="w-4 h-4 mx-auto mt-1 text-red-400" />}
                         {mg.status === 'upcoming' && <Minus className="w-4 h-4 mx-auto mt-1 opacity-20" />}
                         {mg.amount > 0 && (
-                          <p className={cn("text-[8px] font-mono font-bold mt-1",
+                          <p className={cn("text-xs font-mono font-bold mt-1",
                             mg.status === 'approved' ? "text-emerald-600" : "text-amber-600")}>
                             {mg.amount.toLocaleString()}
                           </p>
@@ -966,7 +966,7 @@ export default function Analytics() {
                       <h4 className="font-bold text-sm text-primary flex items-center gap-2">
                         <HandCoins className="w-4 h-4" />
                         سجل السلف
-                        <span className="mr-auto text-[10px] bg-muted/70 px-2.5 py-1 rounded-full font-bold text-muted-foreground">
+                        <span className="mr-auto text-xs bg-muted/70 px-2.5 py-1 rounded-full font-bold text-muted-foreground">
                           {memberReport.loans.length} سلفة
                         </span>
                       </h4>
@@ -983,44 +983,44 @@ export default function Analytics() {
                             <div className="flex items-start justify-between gap-2">
                               <div className="min-w-0">
                                 <h5 className="font-bold text-sm leading-tight truncate">{loan.title}</h5>
-                                <p className="text-[11px] text-muted-foreground mt-0.5">
+                                <p className="text-xs text-muted-foreground mt-0.5">
                                   طلب: {loan.createdAt ? new Date(loan.createdAt).toLocaleDateString('ar-OM') : '—'}
                                   {loan.approvedAt ? ` • اعتماد: ${new Date(loan.approvedAt).toLocaleDateString('ar-OM')}` : ''}
                                 </p>
                               </div>
                               <div className="flex flex-col items-end gap-1 shrink-0">
-                                <span className={cn("rounded-lg border px-2 py-0.5 text-[9px] font-bold", loanTypeColors[loan.type] || "bg-muted text-muted-foreground border-border")}>
+                                <span className={cn("rounded-lg border px-2 py-0.5 text-xs font-bold", loanTypeColors[loan.type] || "bg-muted text-muted-foreground border-border")}>
                                   {loanTypeLabels[loan.type] || loan.type}
                                 </span>
-                                <span className={cn("rounded-lg border px-2 py-0.5 text-[9px] font-bold", statusColors[loan.status] || "bg-muted text-muted-foreground border-border")}>
+                                <span className={cn("rounded-lg border px-2 py-0.5 text-xs font-bold", statusColors[loan.status] || "bg-muted text-muted-foreground border-border")}>
                                   {statusLabels[loan.status] || loan.status}
                                 </span>
                               </div>
                             </div>
                             <div className="grid grid-cols-3 gap-2">
                               <div className="rounded-xl bg-blue-50 border border-blue-100 p-2 text-center">
-                                <p className="text-[8px] font-bold text-blue-500 mb-0.5">المبلغ</p>
+                                <p className="text-xs font-bold text-blue-500 mb-0.5">المبلغ</p>
                                 <p className="text-xs font-extrabold font-mono text-blue-700">{loan.amount.toLocaleString()}</p>
-                                <p className="text-[8px] text-blue-400">ر.ع</p>
+                                <p className="text-xs text-blue-400">ر.ع</p>
                               </div>
                               <div className="rounded-xl bg-emerald-50 border border-emerald-100 p-2 text-center">
-                                <p className="text-[8px] font-bold text-emerald-500 mb-0.5">المسدد</p>
+                                <p className="text-xs font-bold text-emerald-500 mb-0.5">المسدد</p>
                                 <p className="text-xs font-extrabold font-mono text-emerald-700">{loan.totalPaid.toLocaleString()}</p>
-                                <p className="text-[8px] text-emerald-400">ر.ع</p>
+                                <p className="text-xs text-emerald-400">ر.ع</p>
                               </div>
                               <div className="rounded-xl bg-amber-50 border border-amber-100 p-2 text-center">
-                                <p className="text-[8px] font-bold text-amber-500 mb-0.5">المتبقي</p>
+                                <p className="text-xs font-bold text-amber-500 mb-0.5">المتبقي</p>
                                 <p className="text-xs font-extrabold font-mono text-amber-700">{loan.remaining.toLocaleString()}</p>
-                                <p className="text-[8px] text-amber-400">ر.ع</p>
+                                <p className="text-xs text-amber-400">ر.ع</p>
                               </div>
                             </div>
                             {loan.status === 'approved' && (
                               <div>
                                 <div className="flex justify-between mb-1.5">
-                                  <span className="text-[9px] text-muted-foreground">
+                                  <span className="text-xs text-muted-foreground">
                                     {loan.repaymentType === 'scheduled' ? `مجدول • ${loan.repaymentMonths} شهر` : 'مفتوح'}
                                   </span>
-                                  <span className="text-[9px] font-bold text-primary">{repaymentPct}% مسدد</span>
+                                  <span className="text-xs font-bold text-primary">{repaymentPct}% مسدد</span>
                                 </div>
                                 <div className="h-1.5 w-full rounded-full bg-muted/60 overflow-hidden">
                                   <motion.div
@@ -1051,7 +1051,7 @@ export default function Analytics() {
               <FileText className="w-4 h-4" />
             </div>
             السجل العام للمعاملات
-            <span className="mr-auto text-[10px] bg-primary/10 px-2.5 py-1 rounded-full font-bold text-primary">
+            <span className="mr-auto text-xs bg-primary/10 px-2.5 py-1 rounded-full font-bold text-primary">
               {filteredTransactions.length} حركة
             </span>
           </h3>
@@ -1082,11 +1082,11 @@ export default function Analytics() {
                             <div className="min-w-0">
                               <div className="flex flex-wrap items-center gap-2">
                                 <h5 className="text-[13px] font-bold leading-tight">{t.title}</h5>
-                                <span className={cn("rounded-lg border px-2 py-0.5 text-[9px] font-bold", typeConfig.badge)}>
+                                <span className={cn("rounded-lg border px-2 py-0.5 text-xs font-bold", typeConfig.badge)}>
                                   {getTransactionTypeLabel(t.type)}
                                 </span>
                               </div>
-                              <p className="text-[11px] text-muted-foreground mt-1">
+                              <p className="text-xs text-muted-foreground mt-1">
                                 {t.memberName} • {t.date}{t.month ? ` • ${monthNames[t.month - 1]}` : ""}
                               </p>
                             </div>
@@ -1094,11 +1094,11 @@ export default function Analytics() {
                           <div className="text-right shrink-0">
                             <div className={cn("text-[15px] font-extrabold font-mono tracking-tighter", getTransactionColor(t.type))}>
                               {t.type === "contribution" ? "+" : "−"}{t.amount.toLocaleString("en-US")}
-                              <span className="text-[9px] font-sans font-bold opacity-70"> ر.ع</span>
+                              <span className="text-xs font-sans font-bold opacity-70"> ر.ع</span>
                             </div>
                             {t.type === "loan" && (
                               <button onClick={() => loadRepayments(t.id)}
-                                className="mt-1.5 inline-flex items-center gap-1 rounded-lg border border-primary/20 bg-primary/5 px-2 py-0.5 text-[10px] font-bold text-primary transition-colors hover:bg-primary/10">
+                                className="tap-target mt-1.5 inline-flex items-center gap-1 rounded-lg border border-primary/20 bg-primary/5 px-3 py-0.5 text-xs font-bold text-primary transition-colors hover:bg-primary/10">
                                 خطة السداد {expandedLoan === t.id ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                               </button>
                             )}
@@ -1111,7 +1111,7 @@ export default function Analytics() {
                             transition={{ duration: 0.3 }} className="overflow-hidden">
                             <div className="border-t border-border/30 bg-gradient-to-b from-muted/15 to-transparent px-4 pb-4 pt-3 space-y-3">
                               <div className="flex items-center justify-between">
-                                <span className="text-[10px] font-bold text-muted-foreground flex items-center gap-1.5">
+                                <span className="text-xs font-bold text-muted-foreground flex items-center gap-1.5">
                                   <Calendar className="w-3 h-3" /> جدولة الأقساط ({t.repaymentMonths || 12} شهر)
                                 </span>
                               </div>
@@ -1119,10 +1119,10 @@ export default function Analytics() {
                                 {repayments[t.id].slice(0, 4).map((step) => (
                                   <div key={step.id} className="flex items-center justify-between rounded-xl border border-border/30 bg-card p-2.5">
                                     <div>
-                                      <div className="text-[8px] font-bold uppercase tracking-wider text-muted-foreground">القسط {step.installmentNumber}</div>
+                                      <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">القسط {step.installmentNumber}</div>
                                       <div className="text-xs font-extrabold font-mono text-foreground">{Number(step.amount).toFixed(3)} ر.ع</div>
                                     </div>
-                                    <span className={cn("rounded-lg px-2 py-0.5 text-[8px] font-bold",
+                                    <span className={cn("rounded-lg px-2 py-0.5 text-xs font-bold",
                                       step.status === "paid" ? "bg-emerald-500 text-white shadow-sm" : "bg-muted text-muted-foreground")}>
                                       {step.status === "paid" ? "مدفوع" : "مجدول"}
                                     </span>
@@ -1130,7 +1130,7 @@ export default function Analytics() {
                                 ))}
                               </div>
                               {repayments[t.id].length > 4 && (
-                                <p className="text-center text-[9px] text-muted-foreground/70">
+                                <p className="text-center text-xs text-muted-foreground/70">
                                   تم عرض أول 4 أقساط • الإجمالي {repayments[t.id].length} قسطًا
                                 </p>
                               )}
