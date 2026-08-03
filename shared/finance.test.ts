@@ -9,6 +9,8 @@ import {
   computeNetAssets,
   computeZakat,
   rateForMonth,
+  overdueInstallments,
+  overdueAmount,
   nextMonthOf,
   daysUntilHawl,
   dueMonthsInYear,
@@ -352,5 +354,75 @@ describe("الاشتراك الشهري المتغيّر بين السنوات",
     });
     expect(r.arrears).toBe(25);
     expect(r.chargedMonths).toBe(2);
+  });
+});
+
+
+describe("الأقساط المتأخرة فعلاً", () => {
+  // سلفة 300 على 3 أقساط، كلها مضت مهلتها
+  const inst = [
+    { installmentNumber: 1, amount: 100, dueDate: new Date(2026, 0, 5), status: "scheduled" },
+    { installmentNumber: 2, amount: 100, dueDate: new Date(2026, 1, 5), status: "scheduled" },
+    { installmentNumber: 3, amount: 100, dueDate: new Date(2026, 2, 5), status: "scheduled" },
+  ];
+  const now = new Date(2026, 7, 1);
+
+  it("سلفة سُدّدت بالكامل لا أقساط متأخرة عليها", () => {
+    expect(overdueInstallments(inst, 300, now)).toHaveLength(0);
+    expect(overdueAmount(inst, 300, now)).toBe(0);
+  });
+
+  it("السداد الحر يغطي الأقساط بالترتيب", () => {
+    const late = overdueInstallments(inst, 100, now);
+    expect(late.map((i) => i.installmentNumber)).toEqual([2, 3]);
+    expect(overdueAmount(inst, 100, now)).toBe(200);
+  });
+
+  it("القسط المغطى جزئياً يُحسب متأخراً بما تبقّى منه فقط", () => {
+    expect(overdueAmount(inst, 150, now)).toBe(150); // 50 من الثاني + 100 الثالث
+    expect(overdueInstallments(inst, 150, now).map((i) => i.installmentNumber)).toEqual([2, 3]);
+  });
+
+  it("بلا سداد إطلاقاً كلها متأخرة", () => {
+    expect(overdueInstallments(inst, 0, now)).toHaveLength(3);
+    expect(overdueAmount(inst, 0, now)).toBe(300);
+  });
+
+  it("القسط الذي لم تمض مهلته ليس متأخراً وإن لم يُدفع", () => {
+    const future = [{ installmentNumber: 1, amount: 100, dueDate: new Date(2026, 8, 5), status: "scheduled" }];
+    expect(overdueInstallments(future, 0, now)).toHaveLength(0);
+  });
+
+  it("القسط المعلَّم مسدَّداً لا يُحسب ولا يستهلك الدفع", () => {
+    const mixed = [
+      { installmentNumber: 1, amount: 100, dueDate: new Date(2026, 0, 5), status: "paid" },
+      { installmentNumber: 2, amount: 100, dueDate: new Date(2026, 1, 5), status: "scheduled" },
+    ];
+    expect(overdueInstallments(mixed, 100, now)).toHaveLength(0); // الدفع غطّى الثاني
+    expect(overdueInstallments(mixed, 0, now).map((i) => i.installmentNumber)).toEqual([2]);
+  });
+});
+
+describe("الانضمام يحدّ من المتأخرات", () => {
+  const rates = [{ amount: 25, year: 2025, month: 1 }];
+  const dueMonths = [
+    { year: 2026, month: 4 }, { year: 2026, month: 5 },
+    { year: 2026, month: 6 }, { year: 2026, month: 7 },
+  ];
+
+  it("العضو لا يُحاسَب على شهر سبق انضمامه", () => {
+    const r = computeArrears({ rates, joinedAt: new Date(2026, 5, 10), dueMonths, paidByMonth: {} });
+    expect(r.chargedMonths).toBe(2);   // يونيو ويوليو فقط
+    expect(r.arrears).toBe(50);
+  });
+
+  it("عضو قديم يُحاسَب على كل الأشهر", () => {
+    const r = computeArrears({ rates, joinedAt: new Date(2024, 0, 1), dueMonths, paidByMonth: {} });
+    expect(r.chargedMonths).toBe(4);
+    expect(r.arrears).toBe(100);
+  });
+
+  it("بلا تاريخ انضمام تُحاسَب كل الأشهر كما كان", () => {
+    expect(computeArrears({ rates, dueMonths, paidByMonth: {} }).chargedMonths).toBe(4);
   });
 });

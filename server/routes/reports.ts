@@ -3,7 +3,7 @@ import { storage } from "../storage";
 import { isAuthenticated, isAdmin } from "../auth";
 import { computeDashboardSummary } from "../services/dashboard";
 import { loadRates } from "../services/rates";
-import { computeCommitmentScore, projectCashflow, dueMonthsInYear, isInstallmentLate, recentDueMonths, MONTHLY_DUE_DAY, computeArrears, computeMemberShares, computeZakat, isHawlComplete } from "@shared/finance";
+import { computeCommitmentScore, projectCashflow, dueMonthsInYear, isInstallmentLate, recentDueMonths, MONTHLY_DUE_DAY, computeArrears, computeMemberShares, computeZakat, isHawlComplete, overdueInstallments, overdueAmount } from "@shared/finance";
 import { rebalanceYear } from "../capital-engine";
 
 export function registerReportRoutes(app: Express) {
@@ -34,19 +34,22 @@ export function registerReportRoutes(app: Express) {
         const loanIds = new Set(memberLoans.map((l) => l.id));
         const totalBorrowed = memberLoans.reduce((s, l) => s + Number(l.amount), 0);
         const totalRepaid = payments.filter((p) => loanIds.has(p.loanId)).reduce((s, p) => s + Number(p.amount), 0);
-        const overdueInstallments = repayments.filter(
-          (r) => loanIds.has(r.loanId) && r.status === "scheduled" && r.dueDate && isInstallmentLate(r.dueDate, now),
-        ).length;
+        // الأقساط تُغطّى بما دُفع على سلفتها — سلفة مسدّدة لا أقساط متأخرة عليها
+        const lateCount = memberLoans.reduce((n, loan) => {
+          const paidOnLoan = payments.filter((p) => p.loanId === loan.id).reduce((s, p) => s + Number(p.amount), 0);
+          const own = repayments.filter((r) => r.loanId === loan.id);
+          return n + overdueInstallments(own, paidOnLoan, now).length;
+        }, 0);
 
         return {
           memberId: member.id,
           name: member.name,
-          score: computeCommitmentScore({ monthsConsidered: windowMonths, contributedMonths, totalBorrowed, totalRepaid, overdueInstallments }),
+          score: computeCommitmentScore({ monthsConsidered: windowMonths, contributedMonths, totalBorrowed, totalRepaid, overdueInstallments: lateCount }),
           contributedMonths,
           windowMonths,
           totalBorrowed: Number(totalBorrowed.toFixed(3)),
           totalRepaid: Number(totalRepaid.toFixed(3)),
-          overdueInstallments,
+          overdueInstallments: lateCount,
         };
       });
 
@@ -139,7 +142,7 @@ export function registerReportRoutes(app: Express) {
           memberId: member.id,
           name: member.name,
           expectedMonthly: rates.currentRate(member.id, now),
-          ...computeArrears({ rates: rates.ratesFor(member.id), dueMonths, paidByMonth }),
+          ...computeArrears({ rates: rates.ratesFor(member.id), joinedAt: member.createdAt, dueMonths, paidByMonth }),
         };
       });
 
@@ -287,6 +290,7 @@ export function registerReportRoutes(app: Express) {
       }
       const arrears = computeArrears({
         rates: rates.ratesFor(memberId),
+        joinedAt: member.createdAt,
         dueMonths: recentDueMonths(new Date(), 12),
         paidByMonth,
       });
@@ -348,9 +352,18 @@ export function registerReportRoutes(app: Express) {
       const approvedLoanIds = new Set(loans.filter((l) => l.status === "approved").map((l) => l.id));
 
       // أقساط متأخرة — بعد مرور مهلة يوم 26 من شهر الاستحقاق
-      const overdue = repayments.filter((r) => approvedLoanIds.has(r.loanId) && r.status === "scheduled" && r.dueDate && isInstallmentLate(r.dueDate, now));
+      const loanPayments = await storage.getAllLoanPayments();
+      const overdue: Array<{ loanId: string }> = [];
+      let overdueTotal = 0;
+      for (const loan of loans.filter((l) => approvedLoanIds.has(l.id))) {
+        const paidOnLoan = loanPayments.filter((p) => p.loanId === loan.id).reduce((s, p) => s + Number(p.amount), 0);
+        const own = repayments.filter((r) => r.loanId === loan.id);
+        const late = overdueInstallments(own, paidOnLoan, now);
+        overdue.push(...late.map(() => ({ loanId: loan.id })));
+        overdueTotal += overdueAmount(own, paidOnLoan, now);
+      }
       if (overdue.length > 0) {
-        const total = overdue.reduce((s, r) => s + Number(r.amount), 0);
+        const total = overdueTotal;
         const names = Array.from(new Set(overdue.map((r) => {
           const loan = loans.find((l) => l.id === r.loanId);
           return loan ? memberName(loan.memberId) : "عضو";
@@ -383,7 +396,7 @@ export function registerReportRoutes(app: Express) {
           const key = `${c.year}-${c.month}`;
           paidByMonth[key] = (paidByMonth[key] ?? 0) + Number(c.amount);
         }
-        return { name: m.name, ...computeArrears({ rates: rateBook.ratesFor(m.id), dueMonths: dueWindow, paidByMonth }) };
+        return { name: m.name, ...computeArrears({ rates: rateBook.ratesFor(m.id), joinedAt: m.createdAt, dueMonths: dueWindow, paidByMonth }) };
       }).filter((r) => r.arrears > 0);
 
       if (arrearsRows.length > 0) {
@@ -419,11 +432,17 @@ export function registerReportRoutes(app: Express) {
       }
 
       // استنفاد طبقات رأس المال
-      if (allocation.flexible.amount > 0 && allocation.flexible.used / allocation.flexible.amount > 0.8) {
+      const usedPercent = allocation.flexible.amount > 0 ? (allocation.flexible.used / allocation.flexible.amount) * 100 : 0;
+      const overspent = allocation.flexible.used > allocation.flexible.amount;
+      if (allocation.flexible.amount > 0 && usedPercent > 80) {
         alerts.push({
           severity: "high",
-          title: "رأس المال المرن اقترب من الاستنفاد",
-          detail: `المستخدم ${((allocation.flexible.used / allocation.flexible.amount) * 100).toFixed(0)}٪ — المتاح ${allocation.flexible.available.toFixed(3)} ر.ع فقط`,
+          title: overspent
+            ? `رأس المال المرن تجاوز المخصص له بـ ${(allocation.flexible.used - allocation.flexible.amount).toFixed(3)} ر.ع`
+            : "رأس المال المرن اقترب من الاستنفاد",
+          detail: overspent
+            ? `المستخدم ${allocation.flexible.used.toFixed(3)} ر.ع من مخصص ${allocation.flexible.amount.toFixed(3)} ر.ع — المخصص محسوب على صافي أصول السنة عند إقفالها، فأعد احتسابه من صفحة توزيع رأس المال إن نما الصندوق منذ ذلك الحين`
+            : `المستخدم ${usedPercent.toFixed(0)}٪ — المتاح ${allocation.flexible.available.toFixed(3)} ر.ع فقط`,
         });
       }
       if (allocation.emergency.amount > 0 && allocation.emergency.used / allocation.emergency.amount > 0.5) {

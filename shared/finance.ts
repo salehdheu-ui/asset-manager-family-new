@@ -155,6 +155,8 @@ export function nextMonthOf(year: number, month: number): { year: number; month:
 export interface ArrearsInput {
   /** سجل الأسعار بتواريخ سريانها — يُفضَّل على expectedMonthly */
   rates?: RatePeriod[];
+  /** تاريخ انضمام العضو — لا يُحاسَب على شهر سبق انضمامه */
+  joinedAt?: Date | string | null;
   /** سعر ثابت لكل الأشهر (للتوافق مع الاستدعاءات القديمة والاختبارات) */
   expectedMonthly?: number;
   dueMonths: Array<{ year: number; month: number }>; // الأشهر التي مضت مهلتها
@@ -185,7 +187,13 @@ export function computeArrears(input: ArrearsInput): ArrearsResult {
   let partialMonths = 0;
   let chargedMonths = 0;
 
+  const joined = input.joinedAt ? new Date(input.joinedAt) : null;
+  const joinedKey = joined ? joined.getFullYear() * 12 + (joined.getMonth() + 1) : null;
+
   for (const m of input.dueMonths) {
+    // شهر سبق انضمام العضو لا شأن له به
+    if (joinedKey !== null && m.year * 12 + m.month < joinedKey) continue;
+
     const expected = rates && rates.length > 0 ? rateForMonth(rates, m.year, m.month) : flat;
     const paid = input.paidByMonth[`${m.year}-${m.month}`] ?? 0;
     paidTotal += paid;
@@ -371,4 +379,63 @@ export function computeInvestmentReturn(input: InvestmentReturnInput): Investmen
     gain: Number(gain.toFixed(3)),
     returnPercent: input.amount > 0 ? Number(((gain / input.amount) * 100).toFixed(2)) : 0,
   };
+}
+
+// ــــ الأقساط المتأخرة فعلاً ــــ
+export interface InstallmentLike {
+  id?: string;
+  loanId?: string;
+  installmentNumber: number;
+  amount: number | string;
+  dueDate: Date | string | null;
+  status: string;
+}
+
+// السداد قد يُسجَّل كمبلغ حر لا كتعليم قسط، فتبقى الأقساط «مجدولة» رغم سداد السلفة.
+// لذا تُغطّى الأقساط بالترتيب بما دُفع على السلفة، ولا يُعد متأخراً إلا ما لم يغطّه الدفع
+// ومضت مهلته. سلفة سُدّدت بالكامل لا أقساط متأخرة عليها إطلاقاً.
+export function overdueInstallments<T extends InstallmentLike>(
+  installments: T[],
+  totalPaidOnLoan: number,
+  now: Date = new Date(),
+): T[] {
+  const ordered = [...installments].sort((a, b) => a.installmentNumber - b.installmentNumber);
+  let remainingPaid = Math.max(0, totalPaidOnLoan);
+  const late: T[] = [];
+
+  for (const inst of ordered) {
+    if (inst.status === "paid") continue;
+    const amount = Number(inst.amount) || 0;
+    if (remainingPaid >= amount) {
+      remainingPaid -= amount;   // غطّاه الدفع الحر
+      continue;
+    }
+    // مغطى جزئياً: الباقي عليه، ويُعد متأخراً إن مضت مهلته
+    remainingPaid = 0;
+    if (inst.dueDate && isInstallmentLate(inst.dueDate, now)) late.push(inst);
+  }
+
+  return late;
+}
+
+// المبلغ المتأخر فعلاً من قسط مغطى جزئياً يساوي ما لم يُدفع منه
+export function overdueAmount<T extends InstallmentLike>(
+  installments: T[],
+  totalPaidOnLoan: number,
+  now: Date = new Date(),
+): number {
+  const ordered = [...installments].sort((a, b) => a.installmentNumber - b.installmentNumber);
+  let remainingPaid = Math.max(0, totalPaidOnLoan);
+  let due = 0;
+
+  for (const inst of ordered) {
+    if (inst.status === "paid") continue;
+    const amount = Number(inst.amount) || 0;
+    const covered = Math.min(remainingPaid, amount);
+    remainingPaid -= covered;
+    const uncovered = amount - covered;
+    if (uncovered > 0 && inst.dueDate && isInstallmentLate(inst.dueDate, now)) due += uncovered;
+  }
+
+  return Number(due.toFixed(3));
 }
