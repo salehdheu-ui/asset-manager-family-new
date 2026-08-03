@@ -127,7 +127,7 @@ export default function Members() {
 
         <div className="grid gap-4 pb-12">
           {members.length === 0 ? (
-            <div className="text-center py-12 bg-muted/20 rounded-3xl border border-dashed border-border">
+            <div className="text-center py-12 bg-muted/20 rounded-xl border border-dashed border-border">
               <p className="text-sm text-muted-foreground font-medium">لا يوجد أعضاء حالياً</p>
               <p className="text-xs text-muted-foreground mt-1">اضغط على "إضافة عضو" للبدء</p>
             </div>
@@ -142,7 +142,7 @@ export default function Members() {
                   initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.05 }}
-                  className="bg-card border border-border rounded-[1.5rem] p-5 shadow-sm space-y-4"
+                  className="bg-card border border-border rounded-xl p-5 shadow-sm space-y-4"
                   data-testid={`card-member-${member.id}`}
                 >
                   <div className="flex items-center gap-4">
@@ -236,7 +236,7 @@ export default function Members() {
                   </div>
 
                   <div className="grid grid-cols-3 gap-3 pt-2 border-t border-border/40">
-                    <div className="bg-fund-in/8 rounded-2xl p-3 border border-fund-in/14">
+                    <div className="bg-fund-in/8 rounded-lg p-3 border border-fund-in/14">
                       <p className="text-xs text-fund-in font-bold mb-1 flex items-center gap-1">
                         <CreditCard className="w-3 h-3" /> المساهمات
                       </p>
@@ -244,7 +244,7 @@ export default function Members() {
                         {stats.totalApproved.toLocaleString()} <span className="text-xs font-sans">ر.ع</span>
                       </div>
                     </div>
-                    <div className="bg-fund-out/8 rounded-2xl p-3 border border-fund-out/14">
+                    <div className="bg-fund-out/8 rounded-lg p-3 border border-fund-out/14">
                       <p className="text-xs text-fund-out font-bold mb-1 flex items-center gap-1">
                         <History className="w-3 h-3" /> معلق
                       </p>
@@ -252,7 +252,7 @@ export default function Members() {
                         {stats.totalPending.toLocaleString()} <span className="text-xs font-sans">ر.ع</span>
                       </div>
                     </div>
-                    <div className="bg-fund-loan/8 rounded-2xl p-3 border border-fund-loan/14">
+                    <div className="bg-fund-loan/8 rounded-lg p-3 border border-fund-loan/14">
                       <p className="text-xs text-fund-loan font-bold mb-1 flex items-center gap-1">
                         <HandCoins className="w-3 h-3" /> السلف
                       </p>

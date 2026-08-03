@@ -90,7 +90,7 @@ export default function Governance() {
       <div className="space-y-6 pt-2">
         
         {/* Role Identity Card */}
-        <div className="bg-card border border-border rounded-3xl p-6 shadow-sm relative overflow-hidden">
+        <div className="bg-card border border-border rounded-xl p-6 shadow-sm relative overflow-hidden">
           <div className="absolute top-0 left-0 w-2 h-full bg-primary" />
           <div className="flex items-center gap-4 relative z-10">
             <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
@@ -127,7 +127,7 @@ export default function Governance() {
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: idx * 0.05 }}
-                    className="flex items-center gap-3 p-4 bg-primary/5 border border-primary/10 rounded-2xl"
+                    className="flex items-center gap-3 p-4 bg-primary/5 border border-primary/10 rounded-lg"
                   >
                     <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center shrink-0 shadow-sm">
                       <Check className="w-3.5 h-3.5 text-primary" strokeWidth={3} />
@@ -139,7 +139,7 @@ export default function Governance() {
 
               {/* Emergency Mode Banner */}
               {emergencyActive && (
-                <div className="bg-destructive/10 border border-destructive/30 p-4 rounded-2xl flex items-center gap-3" data-testid="banner-emergency">
+                <div className="bg-destructive/10 border border-destructive/30 p-4 rounded-lg flex items-center gap-3" data-testid="banner-emergency">
                   <ShieldAlert className="w-5 h-5 text-destructive shrink-0 animate-pulse" />
                   <p className="text-xs text-destructive font-bold leading-relaxed">
                     وضع الطوارئ مفعّل — طلبات السلف والمساهمات الجديدة من الأعضاء مجمّدة مؤقتاً.
@@ -153,7 +153,7 @@ export default function Governance() {
                   onClick={() => setEmergencyConfirmOpen(true)}
                   data-testid="button-emergency-mode"
                   className={cn(
-                    "py-4 rounded-2xl flex flex-col items-center gap-2 transition-colors border",
+                    "py-4 rounded-lg flex flex-col items-center gap-2 transition-colors border",
                     emergencyActive
                       ? "bg-destructive text-destructive-foreground border-destructive shadow-lg"
                       : "bg-destructive/10 text-destructive border-destructive/20 hover:bg-destructive/20"
@@ -164,7 +164,7 @@ export default function Governance() {
                 </button>
                 <Dialog open={custodianDialogOpen} onOpenChange={setCustodianDialogOpen}>
                   <DialogTrigger asChild>
-                    <button className="bg-primary text-primary-foreground py-4 rounded-2xl flex flex-col items-center gap-2 hover:bg-primary/90 transition-colors shadow-lg">
+                    <button className="bg-primary text-primary-foreground py-4 rounded-lg flex flex-col items-center gap-2 hover:bg-primary/90 transition-colors shadow-lg">
                       <User className="w-6 h-6" />
                       <span className="text-xs font-bold">تغيير الأمين</span>
                     </button>
@@ -235,7 +235,7 @@ export default function Governance() {
         </AnimatePresence>
 
         {/* Info Box */}
-        <div className="bg-fund-loan/8 border border-fund-loan/25 p-4 rounded-2xl flex items-start gap-3">
+        <div className="bg-fund-loan/8 border border-fund-loan/25 p-4 rounded-lg flex items-start gap-3">
           <Info className="w-5 h-5 text-fund-loan shrink-0" />
           <div className="text-xs text-fund-loan leading-relaxed">
             يتم توثيق كل عملية استخدام لصلاحيات الوصي في سجل الثقة مع "بصمة رقمية" فريدة. لا يمكن حذف أو تعديل أي إجراء يتم اتخاذه.
@@ -244,7 +244,7 @@ export default function Governance() {
 
         {/* Access Levels for others */}
         {!isGuardian && (
-          <div className="bg-card border border-border rounded-3xl p-6 text-center space-y-4">
+          <div className="bg-card border border-border rounded-xl p-6 text-center space-y-4">
              <div className="w-16 h-16 mx-auto rounded-full bg-muted flex items-center justify-center text-muted-foreground">
                <Shield className="w-8 h-8 opacity-40" />
              </div>

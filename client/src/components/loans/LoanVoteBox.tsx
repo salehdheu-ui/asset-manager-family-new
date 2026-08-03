@@ -28,7 +28,7 @@ export default function LoanVoteBox({ loanId }: { loanId: string }) {
   if (!tally) return null;
 
   return (
-    <div className="rounded-2xl border border-secondary/20 bg-secondary/5 p-3 space-y-2" data-testid={`vote-box-${loanId}`}>
+    <div className="rounded-lg border border-secondary/20 bg-secondary/5 p-3 space-y-2" data-testid={`vote-box-${loanId}`}>
       <div className="flex items-center gap-2 text-primary">
         <Vote className="w-4 h-4" />
         <span className="text-xs font-bold">سلفة كبيرة — تتطلب تصويت العائلة</span>

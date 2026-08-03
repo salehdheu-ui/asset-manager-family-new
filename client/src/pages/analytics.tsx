@@ -102,13 +102,13 @@ function KPICard({ title, value, subtitle, change, trend, icon, gradient, iconBg
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: delay * 0.08, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-      className={cn("group relative overflow-hidden rounded-[1.75rem] p-5 shadow-lg transition-shadow hover:shadow-xl", gradient)}
+      className={cn("group relative overflow-hidden rounded-xl p-5 shadow-lg transition-shadow hover:shadow-xl", gradient)}
     >
       <div className="pointer-events-none absolute -left-8 -top-8 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
       <div className="pointer-events-none absolute -bottom-6 -right-6 h-24 w-24 rounded-full bg-white/8 blur-xl" />
       <div className="pointer-events-none absolute right-4 top-4 h-16 w-16 rounded-full bg-white/5 blur-lg transition-transform group-hover:scale-110" />
       <div className="relative flex items-start justify-between mb-4">
-        <div className={cn("flex h-11 w-11 items-center justify-center rounded-2xl shadow-lg ring-1 ring-white/20", iconBg)}>
+        <div className={cn("flex h-11 w-11 items-center justify-center rounded-lg shadow-lg ring-1 ring-white/20", iconBg)}>
           {icon}
         </div>
         {trend && (
@@ -379,7 +379,7 @@ export default function Analytics() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-primary via-primary/90 to-fund-in p-6 shadow-xl"
+          className="relative overflow-hidden rounded-xl bg-gradient-to-br from-primary via-primary/90 to-fund-in p-6 shadow-xl"
         >
           <div className="pointer-events-none absolute -left-10 -top-10 h-40 w-40 rounded-full bg-white/10 blur-3xl" />
           <div className="pointer-events-none absolute -bottom-8 -right-8 h-32 w-32 rounded-full bg-fund-in/9 blur-2xl" />
@@ -395,7 +395,7 @@ export default function Analytics() {
                 مؤشرات، رسوم، كشف أعضاء، وسجل كامل للحركات مع تصدير Excel.
               </p>
             </div>
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/15 shadow-lg ring-1 ring-white/10 backdrop-blur-sm">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-white/15 shadow-lg ring-1 ring-white/10 backdrop-blur-sm">
               <BarChart3 className="h-7 w-7 text-white" />
             </div>
           </div>
@@ -411,7 +411,7 @@ export default function Analytics() {
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 + idx * 0.08, duration: 0.4 }}
-                className={cn("flex items-start gap-3 rounded-[1.5rem] border p-4", card.tone)}
+                className={cn("flex items-start gap-3 rounded-xl border p-4", card.tone)}
               >
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/60">
                   <Icon className="h-4.5 w-4.5" />
@@ -426,7 +426,7 @@ export default function Analytics() {
         </div>
 
         {/* ── Year + Period selector ── */}
-        <div className="rounded-[1.75rem] border border-border/50 bg-card/50 p-4 backdrop-blur-sm">
+        <div className="rounded-xl border border-border/50 bg-card/50 p-4 backdrop-blur-sm">
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div>
               <h2 className="font-bold text-base text-primary font-heading flex items-center gap-2">
@@ -434,7 +434,7 @@ export default function Analytics() {
               </h2>
               <p className="mt-0.5 text-xs text-muted-foreground">غيّر السنة والفترة لمقارنة المؤشرات.</p>
             </div>
-            <div className="flex gap-1.5 rounded-2xl bg-muted/60 p-1">
+            <div className="flex gap-1.5 rounded-lg bg-muted/60 p-1">
               {availableYears.slice(0, 3).map(year => (
                 <button key={year} onClick={() => setSelectedYear(year)}
                   className={cn("tap-target", "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-200",
@@ -499,11 +499,11 @@ export default function Analytics() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.2 + idx * 0.07, duration: 0.4 }}
-              className={cn("relative overflow-hidden rounded-[1.75rem] border p-4", card.border, card.bg)}
+              className={cn("relative overflow-hidden rounded-xl border p-4", card.border, card.bg)}
             >
               <div className="pointer-events-none absolute -right-4 -top-4 h-16 w-16 rounded-full bg-current opacity-[0.03]" />
               <div className="flex items-center gap-3.5">
-                <div className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl shadow-md", card.iconBg)}>
+                <div className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-lg shadow-md", card.iconBg)}>
                   <card.Icon className="h-5 w-5" />
                 </div>
                 <div className="min-w-0 flex-1">
@@ -525,7 +525,7 @@ export default function Analytics() {
               </div>
               الرسوم البيانية
             </h3>
-            <div className="flex gap-1 rounded-2xl bg-muted/60 p-1">
+            <div className="flex gap-1 rounded-lg bg-muted/60 p-1">
               {[{ label: "3 أشهر", value: "3months" }, { label: "6 أشهر", value: "6months" }, { label: "سنة", value: "12months" }].map((p) => (
                 <button key={p.value} onClick={() => setSelectedPeriod(p.value as typeof selectedPeriod)}
                   className={cn("tap-target", "rounded-xl px-3 py-1.5 text-xs font-bold transition-all duration-200",
@@ -552,7 +552,7 @@ export default function Analytics() {
               </div>
               التحليل السنوي {selectedYear}
             </h3>
-            <div className="overflow-hidden rounded-[2rem] border border-border/50 bg-card shadow-md">
+            <div className="overflow-hidden rounded-xl border border-border/50 bg-card shadow-md">
               {/* Summary row */}
               <div className="grid grid-cols-3">
                 {[
@@ -561,7 +561,7 @@ export default function Analytics() {
                   { label: "المصروفات", value: yearlyReport.summary.totalExpenses, gradient: "from-fund-out to-fund-out", icon: Wallet },
                 ].map((item, idx) => (
                   <div key={item.label} className={cn("flex flex-col items-center gap-1.5 p-5 relative", idx < 2 && "border-l border-border/30")}>
-                    <div className={cn("flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br text-white shadow-md", item.gradient)}>
+                    <div className={cn("flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br text-white shadow-md", item.gradient)}>
                       <item.icon className="w-4.5 h-4.5" />
                     </div>
                     <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{item.label}</p>
@@ -603,10 +603,10 @@ export default function Analytics() {
               </div>
               تحليل السلف
             </h3>
-            <div className="overflow-hidden rounded-[2rem] border border-border/50 bg-card shadow-md">
+            <div className="overflow-hidden rounded-xl border border-border/50 bg-card shadow-md">
               <div className="grid grid-cols-2">
                 <div className="flex flex-col items-center gap-2 p-6 border-l border-border/30">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-fund-loan to-fund-loan text-white shadow-lg">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-fund-loan to-fund-loan text-white shadow-lg">
                     <CreditCard className="w-5 h-5" />
                   </div>
                   <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">إجمالي السلف</p>
@@ -614,7 +614,7 @@ export default function Analytics() {
                   <p className="text-xs text-muted-foreground/70">سلفة</p>
                 </div>
                 <div className="flex flex-col items-center gap-2 p-6">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-fund-in to-fund-in text-white shadow-lg">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-fund-in to-fund-in text-white shadow-lg">
                     <Wallet className="w-5 h-5" />
                   </div>
                   <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">المبلغ الإجمالي</p>
@@ -651,7 +651,7 @@ export default function Analytics() {
         )}
 
         {/* ── Filter + Export ── */}
-        <div className="rounded-[2rem] border border-border/50 bg-gradient-to-b from-card via-card to-muted/10 p-5 shadow-md space-y-4">
+        <div className="rounded-xl border border-border/50 bg-gradient-to-b from-card via-card to-muted/10 p-5 shadow-md space-y-4">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h3 className="font-bold text-lg text-primary flex items-center gap-2 font-heading">
@@ -676,21 +676,21 @@ export default function Analytics() {
                   <div>
                     <label className="mb-2 block text-xs font-bold text-muted-foreground">السنة</label>
                     <select value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))}
-                      className="h-11 w-full rounded-2xl border border-border/50 bg-background px-4 text-sm font-medium outline-none transition-colors focus:border-primary/50 focus:ring-2 focus:ring-primary/10">
+                      className="h-11 w-full rounded-lg border border-border/50 bg-background px-4 text-sm font-medium outline-none transition-colors focus:border-primary/50 focus:ring-2 focus:ring-primary/10">
                       {availableYears.map((y) => <option key={y} value={y}>{y}</option>)}
                     </select>
                   </div>
                   <div>
                     <label className="mb-2 block text-xs font-bold text-muted-foreground">الشهر</label>
                     <select value={filterMonth || ""} onChange={(e) => setFilterMonth(e.target.value ? Number(e.target.value) : null)}
-                      className="h-11 w-full rounded-2xl border border-border/50 bg-background px-4 text-sm font-medium outline-none transition-colors focus:border-primary/50 focus:ring-2 focus:ring-primary/10">
+                      className="h-11 w-full rounded-lg border border-border/50 bg-background px-4 text-sm font-medium outline-none transition-colors focus:border-primary/50 focus:ring-2 focus:ring-primary/10">
                       <option value="">كل الأشهر</option>
                       {monthNames.map((m, i) => <option key={i + 1} value={i + 1}>{m}</option>)}
                     </select>
                   </div>
                   <div className="flex items-end gap-2">
                     <Button onClick={exportToExcel} disabled={isExporting}
-                      className="h-11 flex-1 rounded-2xl gap-2 bg-gradient-to-r from-primary to-fund-in px-6 text-sm font-bold text-white shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all">
+                      className="h-11 flex-1 rounded-lg gap-2 bg-gradient-to-r from-primary to-fund-in px-6 text-sm font-bold text-white shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all">
                       <FileSpreadsheet className="h-4 w-4" />
                       {isExporting ? "جاري التجهيز..." : "تنزيل Excel"}
                     </Button>
@@ -698,7 +698,7 @@ export default function Analytics() {
                       <Button
                         onClick={() => setLocation("/annual-report")}
                         variant="outline"
-                        className="h-11 rounded-2xl gap-2 px-4 text-sm font-bold"
+                        className="h-11 rounded-lg gap-2 px-4 text-sm font-bold"
                         data-testid="button-annual-report"
                       >
                         <Calendar className="h-4 w-4" />
@@ -720,7 +720,7 @@ export default function Analytics() {
             ].map((s) => {
               const SIcon = s.icon;
               return (
-                <div key={s.label} className="rounded-2xl border border-border/40 bg-background/80 px-3.5 py-3">
+                <div key={s.label} className="rounded-lg border border-border/40 bg-background/80 px-3.5 py-3">
                   <div className="flex items-center gap-1.5 mb-1.5">
                     <SIcon className="w-3 h-3 text-muted-foreground/60" />
                     <p className="text-xs font-bold text-muted-foreground">{s.label}</p>
@@ -746,7 +746,7 @@ export default function Analytics() {
             </span>
           </h3>
           {filteredMemberStats.length === 0 ? (
-            <div className="text-center py-10 bg-muted/10 rounded-[2rem] border border-dashed border-border/50">
+            <div className="text-center py-10 bg-muted/10 rounded-xl border border-dashed border-border/50">
               <Users className="w-8 h-8 mx-auto text-muted-foreground/40 mb-2" />
               <p className="text-sm text-muted-foreground font-medium">لا يوجد أعضاء</p>
             </div>
@@ -757,7 +757,7 @@ export default function Analytics() {
                 const rankBg = idx < 3 ? `bg-gradient-to-br ${rankColors[idx]} text-white` : "bg-primary/10 text-primary";
                 return (
                   <motion.div key={m.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.04 }}
-                    className="overflow-hidden rounded-[1.75rem] border border-border/40 bg-card shadow-md">
+                    className="overflow-hidden rounded-xl border border-border/40 bg-card shadow-md">
                     <div className="p-4">
                       <div className="mb-4 flex items-center justify-between gap-3">
                         <div className="flex items-center gap-3">
@@ -820,13 +820,13 @@ export default function Analytics() {
           </h3>
 
           {/* Selector card */}
-          <div className="rounded-[1.75rem] border border-border/50 bg-card/50 p-4 space-y-3">
+          <div className="rounded-xl border border-border/50 bg-card/50 p-4 space-y-3">
             <div>
               <label className="mb-2 block text-xs font-bold text-muted-foreground">اختر العضو</label>
               <select
                 value={selectedMemberId || ""}
                 onChange={(e) => setSelectedMemberId(e.target.value || null)}
-                className="h-11 w-full rounded-2xl border border-border/50 bg-background px-4 text-sm font-medium outline-none transition-colors focus:border-primary/50 focus:ring-2 focus:ring-primary/10"
+                className="h-11 w-full rounded-lg border border-border/50 bg-background px-4 text-sm font-medium outline-none transition-colors focus:border-primary/50 focus:ring-2 focus:ring-primary/10"
               >
                 <option value="">-- اختر عضواً لعرض كشف حسابه --</option>
                 {members.map((m) => (
@@ -837,7 +837,7 @@ export default function Analytics() {
             {selectedMemberId && (
               <div>
                 <label className="mb-2 block text-xs font-bold text-muted-foreground">السنة</label>
-                <div className="flex gap-1.5 rounded-2xl bg-muted/60 p-1">
+                <div className="flex gap-1.5 rounded-lg bg-muted/60 p-1">
                   {availableYears.slice(0, 4).map(yr => (
                     <button key={yr} onClick={() => setMemberReportYear(yr)}
                       className={cn("tap-target", "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 flex-1",
@@ -855,7 +855,7 @@ export default function Analytics() {
           {/* Report content */}
           {selectedMemberId && (
             memberReportLoading ? (
-              <div className="text-center py-10 bg-muted/10 rounded-[2rem] border border-dashed border-border/50">
+              <div className="text-center py-10 bg-muted/10 rounded-xl border border-dashed border-border/50">
                 <div className="w-8 h-8 mx-auto mb-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                 <p className="text-sm text-muted-foreground">جاري تحميل التقرير...</p>
               </div>
@@ -864,7 +864,7 @@ export default function Analytics() {
 
                 {/* Performance banner */}
                 <div className={cn(
-                  "relative overflow-hidden rounded-[2rem] p-5 shadow-lg",
+                  "relative overflow-hidden rounded-xl p-5 shadow-lg",
                   memberReport.performance.rating === 'ممتاز' ? "bg-gradient-to-br from-fund-in via-fund-in to-fund-in" :
                   memberReport.performance.rating === 'جيد' ? "bg-gradient-to-br from-fund-loan via-fund-loan to-fund-loan" :
                   "bg-gradient-to-br from-fund-out via-fund-out to-fund-due"
@@ -880,7 +880,7 @@ export default function Analytics() {
                       </p>
                     </div>
                     <div className="text-center shrink-0">
-                      <div className="flex h-16 w-16 flex-col items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm ring-1 ring-white/20">
+                      <div className="flex h-16 w-16 flex-col items-center justify-center rounded-lg bg-white/20 backdrop-blur-sm ring-1 ring-white/20">
                         <span className="text-xl font-extrabold font-mono text-white leading-none">{memberReport.performance.commitmentRate}%</span>
                         <span className="text-xs font-bold text-white/70 mt-0.5">التزام</span>
                       </div>
@@ -910,7 +910,7 @@ export default function Analytics() {
                     { label: "المسدد من السلف", value: formatCurrency(memberReport.summary.totalLoanPaid), Icon: HandCoins, color: "text-primary", bg: "bg-secondary/5 border-secondary/10" },
                     { label: "المتبقي عليه", value: formatCurrency(memberReport.summary.totalLoanRemaining), Icon: Wallet, color: "text-fund-out", bg: "bg-fund-out/8 border-fund-out/14" },
                   ].map((s) => (
-                    <div key={s.label} className={cn("rounded-2xl border p-3.5", s.bg)}>
+                    <div key={s.label} className={cn("rounded-lg border p-3.5", s.bg)}>
                       <s.Icon className={cn("w-4 h-4 mb-2", s.color)} />
                       <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{s.label}</p>
                       <p className={cn("mt-1 text-sm font-extrabold font-mono", s.color)}>{s.value}</p>
@@ -919,7 +919,7 @@ export default function Analytics() {
                 </div>
 
                 {/* Contributions grid */}
-                <div className="overflow-hidden rounded-[2rem] border border-border/50 bg-card shadow-md">
+                <div className="overflow-hidden rounded-xl border border-border/50 bg-card shadow-md">
                   <div className="border-b border-border/30 bg-muted/20 px-5 py-3.5 flex items-center justify-between">
                     <h4 className="font-bold text-sm text-primary flex items-center gap-2">
                       <Calendar className="w-4 h-4" /> سجل المساهمات {memberReport.year}
@@ -961,7 +961,7 @@ export default function Analytics() {
 
                 {/* Loans list */}
                 {memberReport.loans.length > 0 && (
-                  <div className="overflow-hidden rounded-[2rem] border border-border/50 bg-card shadow-md">
+                  <div className="overflow-hidden rounded-xl border border-border/50 bg-card shadow-md">
                     <div className="border-b border-border/30 bg-muted/20 px-5 py-3.5">
                       <h4 className="font-bold text-sm text-primary flex items-center gap-2">
                         <HandCoins className="w-4 h-4" />
@@ -979,7 +979,7 @@ export default function Analytics() {
                         const statusLabels: Record<string, string> = { approved: "معتمد", pending: "قيد المراجعة", rejected: "مرفوض" };
                         const repaymentPct = loan.amount > 0 ? Math.min(100, Math.round((loan.totalPaid / loan.amount) * 100)) : 0;
                         return (
-                          <div key={loan.id} className="rounded-2xl border border-border/40 bg-background/70 p-4 space-y-3">
+                          <div key={loan.id} className="rounded-lg border border-border/40 bg-background/70 p-4 space-y-3">
                             <div className="flex items-start justify-between gap-2">
                               <div className="min-w-0">
                                 <h5 className="font-bold text-sm leading-tight truncate">{loan.title}</h5>
@@ -1056,7 +1056,7 @@ export default function Analytics() {
             </span>
           </h3>
           {filteredTransactions.length === 0 ? (
-            <div className="text-center py-10 bg-muted/10 rounded-[2rem] border border-dashed border-border/50">
+            <div className="text-center py-10 bg-muted/10 rounded-xl border border-dashed border-border/50">
               <FileText className="w-8 h-8 mx-auto text-muted-foreground/40 mb-2" />
               <p className="text-sm text-muted-foreground font-medium">لا توجد معاملات في الفترة المحددة</p>
             </div>
@@ -1071,7 +1071,7 @@ export default function Analytics() {
                   }[t.type];
                   return (
                     <motion.div key={t.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.025 }}
-                      className="overflow-hidden rounded-[1.5rem] border border-border/40 bg-card shadow-sm">
+                      className="overflow-hidden rounded-xl border border-border/40 bg-card shadow-sm">
                       <div className="p-4">
                         <div className="flex justify-between items-start gap-3">
                           <div className="flex gap-3 min-w-0">
@@ -1144,7 +1144,7 @@ export default function Analytics() {
               </div>
               {filteredTransactions.length > 6 && (
                 <button onClick={() => setShowAllTransactions(!showAllTransactions)}
-                  className="w-full rounded-2xl border border-primary/20 bg-primary/5 py-3.5 text-sm font-bold text-primary transition-all hover:bg-primary/10 hover:shadow-md">
+                  className="w-full rounded-lg border border-primary/20 bg-primary/5 py-3.5 text-sm font-bold text-primary transition-all hover:bg-primary/10 hover:shadow-md">
                   {showAllTransactions ? "عرض أقل ↑" : `عرض جميع المعاملات (${filteredTransactions.length})`}
                 </button>
               )}

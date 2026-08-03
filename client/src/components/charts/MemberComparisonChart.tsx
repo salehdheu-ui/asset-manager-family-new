@@ -50,7 +50,7 @@ export function MemberComparisonChart({
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="rounded-2xl border border-border/60 bg-white px-4 py-3 text-xs shadow-xl">
+        <div className="rounded-lg border border-border/60 bg-white px-4 py-3 text-xs shadow-xl">
           <p className="mb-1.5 font-bold text-foreground">{label}</p>
           <p className="text-base font-bold font-mono text-fund-loan">
             {payload[0].value.toLocaleString("en-US")}
@@ -89,7 +89,7 @@ export function MemberComparisonChart({
       )}
 
       {/* bar chart */}
-      <div className="h-52 rounded-2xl border border-border/30 bg-gradient-to-b from-muted/20 to-card p-3">
+      <div className="h-52 rounded-lg border border-border/30 bg-gradient-to-b from-muted/20 to-card p-3">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={limitedData} margin={{ top: 8, right: 4, left: -10, bottom: 12 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" opacity={0.6} vertical={false} />

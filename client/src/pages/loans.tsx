@@ -279,7 +279,7 @@ export default function Loans() {
   return (
     <MobileLayout title="نظام السلف">
       <div className="space-y-6 pt-2 pb-12">
-        <div className="bg-primary text-primary-foreground p-6 rounded-[2rem] relative overflow-hidden shadow-lg shadow-primary/20">
+        <div className="bg-primary text-primary-foreground p-6 rounded-xl relative overflow-hidden shadow-lg shadow-primary/20">
           <div className="relative z-10">
             <h2 className="text-sm font-medium opacity-80 mb-1">المتاح للإقراض الآن</h2>
             <div className="text-4xl font-mono font-bold tracking-tighter" data-testid="text-available-capital">
@@ -294,26 +294,26 @@ export default function Loans() {
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-card border border-border/60 rounded-2xl p-4">
+          <div className="bg-card border border-border/60 rounded-lg p-4">
             <p className="text-xs font-bold text-muted-foreground">إجمالي السلف</p>
             <p className="text-lg font-mono font-bold text-primary">{totalLoanAmount.toFixed(3)} ر.ع</p>
           </div>
-          <div className="bg-card border border-border/60 rounded-2xl p-4">
+          <div className="bg-card border border-border/60 rounded-lg p-4">
             <p className="text-xs font-bold text-muted-foreground">إجمالي المسدد</p>
             <p className="text-lg font-mono font-bold text-fund-in">{totalPaidAmount.toFixed(3)} ر.ع</p>
           </div>
-          <div className="bg-card border border-border/60 rounded-2xl p-4">
+          <div className="bg-card border border-border/60 rounded-lg p-4">
             <p className="text-xs font-bold text-muted-foreground">إجمالي المتبقي</p>
             <p className="text-lg font-mono font-bold text-fund-out">{totalRemainingAmount.toFixed(3)} ر.ع</p>
           </div>
-          <div className="bg-card border border-border/60 rounded-2xl p-4">
+          <div className="bg-card border border-border/60 rounded-lg p-4">
             <p className="text-xs font-bold text-muted-foreground">نوع السلف</p>
             <p className="text-xs font-bold text-primary">{scheduledLoansCount} بخطة • {openLoansCount} مفتوحة</p>
           </div>
         </div>
 
         {members.length === 0 ? (
-          <div className="text-center py-12 bg-muted/20 rounded-3xl border border-dashed border-border">
+          <div className="text-center py-12 bg-muted/20 rounded-xl border border-dashed border-border">
             <p className="text-sm text-muted-foreground font-medium">لا يوجد أعضاء</p>
             <p className="text-xs text-muted-foreground mt-1">يرجى إضافة أعضاء أولاً لتقديم طلبات السلف</p>
           </div>
@@ -329,7 +329,7 @@ export default function Loans() {
                         whileTap={{ scale: 0.98 }}
                         data-testid={`button-loan-${loan.id}`}
                         className={cn(
-                          "p-5 rounded-2xl border flex items-start gap-4 cursor-pointer transition-all hover:shadow-md", 
+                          "p-5 rounded-lg border flex items-start gap-4 cursor-pointer transition-all hover:shadow-md", 
                           loan.color
                         )}
                       >
@@ -367,7 +367,7 @@ export default function Loans() {
                           <select 
                             id={`loan-member-${loan.id}`}
                             data-testid={`select-member-${loan.id}`}
-                            className="w-full p-4 border-2 border-primary/10 rounded-2xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all"
+                            className="w-full p-4 border-2 border-primary/10 rounded-lg focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all"
                             value={loanMembers[loan.id] ?? (isGuardian ? members[0]?.id ?? "" : userMemberId ?? "")}
                             onChange={(e) => setLoanMembers((prev) => ({ ...prev, [loan.id]: e.target.value }))}
                           >
@@ -383,7 +383,7 @@ export default function Loans() {
                               type="number" 
                               id={`loan-amount-${loan.id}`}
                               data-testid={`input-amount-${loan.id}`}
-                              className="w-full text-4xl font-mono p-6 border-2 border-primary/10 rounded-3xl text-center focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all" 
+                              className="w-full text-4xl font-mono p-6 border-2 border-primary/10 rounded-xl text-center focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all" 
                               placeholder="000"
                               value={loanAmounts[loan.id] ?? ""}
                               onChange={(e) => setLoanAmounts((prev) => ({ ...prev, [loan.id]: e.target.value }))}
@@ -399,7 +399,7 @@ export default function Loans() {
                           <textarea
                             id={`loan-description-${loan.id}`}
                             data-testid={`textarea-description-${loan.id}`}
-                            className="w-full min-h-24 p-4 border-2 border-primary/10 rounded-2xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all resize-none"
+                            className="w-full min-h-24 p-4 border-2 border-primary/10 rounded-lg focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all resize-none"
                             placeholder="اكتب تفاصيل أو سبب طلب السلفة"
                             value={loanDescriptions[loan.id] ?? ""}
                             onChange={(e) => setLoanDescriptions((prev) => ({ ...prev, [loan.id]: e.target.value }))}
@@ -410,7 +410,7 @@ export default function Loans() {
                           <select
                             id={`loan-repayment-type-${loan.id}`}
                             data-testid={`select-repayment-type-${loan.id}`}
-                            className="w-full p-4 border-2 border-primary/10 rounded-2xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all"
+                            className="w-full p-4 border-2 border-primary/10 rounded-lg focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all"
                             value={loanRepaymentTypes[loan.id] ?? "scheduled"}
                             onChange={(e) => setLoanRepaymentTypes((prev) => ({ ...prev, [loan.id]: e.target.value }))}
                           >
@@ -424,7 +424,7 @@ export default function Loans() {
                           <select 
                             id={`loan-months-${loan.id}`}
                             data-testid={`select-months-${loan.id}`}
-                            className="w-full p-4 border-2 border-primary/10 rounded-2xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all"
+                            className="w-full p-4 border-2 border-primary/10 rounded-lg focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all"
                             value={loanMonths[loan.id] ?? "12"}
                             onChange={(e) => setLoanMonths((prev) => ({ ...prev, [loan.id]: e.target.value }))}
                           >
@@ -435,7 +435,7 @@ export default function Loans() {
                           </select>
                         </div>
                         )}
-                        <div className="bg-muted/30 p-4 rounded-2xl text-xs text-muted-foreground space-y-2 border border-border/50 font-medium">
+                        <div className="bg-muted/30 p-4 rounded-lg text-xs text-muted-foreground space-y-2 border border-border/50 font-medium">
                           <p>• المال وسيلة لخدمة العائلة، وليس غاية.</p>
                           <p>• بتقديمك لهذا الطلب، أنت تتعهد بالمسؤولية تجاه مستقبل العائلة.</p>
                         </div>
@@ -475,7 +475,7 @@ export default function Loans() {
                           }
                         }}
                         disabled={createMutation.isPending}
-                        className="w-full bg-primary text-primary-foreground py-5 rounded-2xl font-bold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 text-lg active:scale-95 disabled:opacity-50"
+                        className="w-full bg-primary text-primary-foreground py-5 rounded-lg font-bold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 text-lg active:scale-95 disabled:opacity-50"
                       >
                         {createMutation.isPending ? "جاري الإرسال..." : "تأكيد وإرسال الطلب"}
                       </button>
@@ -493,7 +493,7 @@ export default function Loans() {
               
               <div className="space-y-3">
                 {activeLoans.length === 0 ? (
-                  <div className="text-center py-12 bg-muted/20 rounded-3xl border border-dashed border-border">
+                  <div className="text-center py-12 bg-muted/20 rounded-xl border border-dashed border-border">
                     {settledLoans.length > 0 ? (
                       <div className="space-y-1">
                         <CheckCircle2 className="w-8 h-8 mx-auto text-fund-in" />
@@ -515,7 +515,7 @@ export default function Loans() {
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
                       data-testid={`card-loan-${loan.id}`}
-                      className="bg-card border border-border/60 rounded-2xl p-4 shadow-sm space-y-3"
+                      className="bg-card border border-border/60 rounded-lg p-4 shadow-sm space-y-3"
                     >
                       <div className="flex justify-between items-start">
                         <div className="flex items-center gap-3">
@@ -640,7 +640,7 @@ export default function Loans() {
                           >
                             <div className="pt-3 space-y-3">
                               {isGuardian && remainingTotal > 0 && (
-                                <div className="bg-primary/5 border border-primary/10 rounded-2xl p-3 space-y-2">
+                                <div className="bg-primary/5 border border-primary/10 rounded-lg p-3 space-y-2">
                                   <p className="text-xs font-bold text-primary">تسجيل سداد يدوي</p>
                                   <div className="grid grid-cols-2 gap-2">
                                     <input
@@ -795,7 +795,7 @@ export default function Loans() {
               {settledLoans.length > 0 && activeLoans.length > 0 && (
                 <Link
                   href="/analytics"
-                  className="block bg-fund-in/5 border border-fund-in/15 rounded-2xl p-4 hover:border-fund-in/30 transition-colors"
+                  className="block bg-fund-in/5 border border-fund-in/15 rounded-lg p-4 hover:border-fund-in/30 transition-colors"
                   data-testid="link-settled-loans"
                 >
                   <div className="flex items-center justify-between">
@@ -921,7 +921,7 @@ export default function Loans() {
                       editMutation.mutate({ id: editTarget.id, data: base });
                     }}
                     disabled={editMutation.isPending || !editForm.title.trim()}
-                    className="w-full bg-primary text-primary-foreground py-3 rounded-2xl font-bold text-sm disabled:opacity-50"
+                    className="w-full bg-primary text-primary-foreground py-3 rounded-lg font-bold text-sm disabled:opacity-50"
                     data-testid="button-save-edit"
                   >
                     {editMutation.isPending ? "جارٍ الحفظ..." : "حفظ التعديلات"}

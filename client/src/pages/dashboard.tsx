@@ -66,7 +66,7 @@ export default function Dashboard() {
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center space-y-2 py-8 bg-card border border-border/40 rounded-[2.5rem] shadow-sm relative overflow-hidden"
+          className="text-center space-y-2 py-8 bg-card border border-border/40 rounded-xl shadow-sm relative overflow-hidden"
         >
           <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
           <p className="text-sm text-muted-foreground font-medium">صافي الأصول المعتمدة</p>
@@ -86,7 +86,7 @@ export default function Dashboard() {
           {quickActions.map((action) => (
             <Link key={action.label} href={action.href} className="flex flex-col items-center gap-2 group" data-testid={`link-${action.href.slice(1)}`}>
               <div className={cn(
-                "w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-lg transition-transform group-active:scale-95",
+                "w-14 h-14 rounded-lg flex items-center justify-center text-white shadow-lg transition-transform group-active:scale-95",
                 action.color
               )}>
                 <action.icon className="w-7 h-7" />
@@ -98,7 +98,7 @@ export default function Dashboard() {
 
         {/* Summary Cards */}
         <div className="grid grid-cols-2 gap-4">
-          <div className="bg-fund-in/5 border border-fund-in/14 rounded-3xl p-5 flex flex-col gap-1 relative overflow-hidden group">
+          <div className="bg-fund-in/5 border border-fund-in/14 rounded-xl p-5 flex flex-col gap-1 relative overflow-hidden group">
             <div className="absolute -right-2 -bottom-2 opacity-5 transition-transform group-hover:scale-110">
               <TrendingUp className="w-16 h-16" />
             </div>
@@ -107,7 +107,7 @@ export default function Dashboard() {
               {totalContributions.toLocaleString()} <span className="text-xs">ر.ع</span>
             </span>
           </div>
-          <div className="bg-fund-out/5 border border-fund-out/14 rounded-3xl p-5 flex flex-col gap-1 relative overflow-hidden group">
+          <div className="bg-fund-out/5 border border-fund-out/14 rounded-xl p-5 flex flex-col gap-1 relative overflow-hidden group">
             <div className="absolute -right-2 -bottom-2 opacity-5 transition-transform group-hover:scale-110">
               <History className="w-16 h-16" />
             </div>

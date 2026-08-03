@@ -17,7 +17,7 @@ export function ChartCard({ title, children, className, delay = 0, icon }: Chart
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: delay * 0.1, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       className={cn(
-        "group relative overflow-hidden rounded-[2rem] border border-border/40 bg-gradient-to-b from-card via-card to-muted/10 p-5 shadow-md transition-shadow hover:shadow-lg",
+        "group relative overflow-hidden rounded-xl border border-border/40 bg-gradient-to-b from-card via-card to-muted/10 p-5 shadow-md transition-shadow hover:shadow-lg",
         className
       )}
     >
@@ -29,7 +29,7 @@ export function ChartCard({ title, children, className, delay = 0, icon }: Chart
           <div className="h-1 w-16 rounded-full bg-gradient-to-r from-primary/50 via-fund-in/24 to-transparent" />
         </div>
         {icon && (
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/10 to-fund-in/5 text-primary shadow-md ring-1 ring-primary/10">
+          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-primary/10 to-fund-in/5 text-primary shadow-md ring-1 ring-primary/10">
             {icon}
           </div>
         )}

@@ -134,9 +134,9 @@ export default function MemberDetail() {
         </div>
 
         {/* Member header */}
-        <div className="bg-primary text-primary-foreground p-5 rounded-[2rem] relative overflow-hidden shadow-lg shadow-primary/20">
+        <div className="bg-primary text-primary-foreground p-5 rounded-xl relative overflow-hidden shadow-lg shadow-primary/20">
           <div className="relative z-10 flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center font-bold text-xl shrink-0">
+            <div className="w-14 h-14 rounded-lg bg-white/20 flex items-center justify-center font-bold text-xl shrink-0">
               {report.member.avatar || report.member.name.substring(0, 2)}
             </div>
             <div>
@@ -152,7 +152,7 @@ export default function MemberDetail() {
 
         {/* Summary cards */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-fund-in/8 border border-fund-in/25 rounded-2xl p-4">
+          <div className="bg-fund-in/8 border border-fund-in/25 rounded-lg p-4">
             <div className="flex items-center gap-1.5 mb-1">
               <TrendingUp className="w-4 h-4 text-fund-in" />
               <p className="text-xs font-bold text-fund-in">إجمالي المساهمات</p>
@@ -160,7 +160,7 @@ export default function MemberDetail() {
             <p className="font-mono font-bold text-fund-in text-base">{fmt(report.summary.totalContributions)}</p>
             <p className="text-xs text-fund-in mt-0.5">{report.summary.contributionCount} مساهمة</p>
           </div>
-          <div className="bg-fund-loan/8 border border-fund-loan/25 rounded-2xl p-4">
+          <div className="bg-fund-loan/8 border border-fund-loan/25 rounded-lg p-4">
             <div className="flex items-center gap-1.5 mb-1">
               <HandCoins className="w-4 h-4 text-fund-loan" />
               <p className="text-xs font-bold text-fund-loan">إجمالي السلف</p>
@@ -168,14 +168,14 @@ export default function MemberDetail() {
             <p className="font-mono font-bold text-fund-loan text-base">{fmt(report.summary.totalLoaned)}</p>
             <p className="text-xs text-fund-loan mt-0.5">{report.summary.loanCount} سلفة</p>
           </div>
-          <div className="bg-fund-in/8 border border-fund-in/25 rounded-2xl p-4">
+          <div className="bg-fund-in/8 border border-fund-in/25 rounded-lg p-4">
             <div className="flex items-center gap-1.5 mb-1">
               <CheckCircle2 className="w-4 h-4 text-fund-in" />
               <p className="text-xs font-bold text-fund-in">المسدد من السلف</p>
             </div>
             <p className="font-mono font-bold text-fund-in text-base">{fmt(report.summary.totalLoanPaid)}</p>
           </div>
-          <div className={cn("border rounded-2xl p-4", report.summary.totalLoanRemaining > 0 ? "bg-fund-out/8 border-fund-out/25" : "bg-gray-50 border-gray-200")}>
+          <div className={cn("border rounded-lg p-4", report.summary.totalLoanRemaining > 0 ? "bg-fund-out/8 border-fund-out/25" : "bg-gray-50 border-gray-200")}>
             <div className="flex items-center gap-1.5 mb-1">
               <Scale className={cn("w-4 h-4", report.summary.totalLoanRemaining > 0 ? "text-fund-out" : "text-gray-500")} />
               <p className={cn("text-xs font-bold", report.summary.totalLoanRemaining > 0 ? "text-fund-out" : "text-gray-600")}>الرصيد القائم</p>
@@ -188,7 +188,7 @@ export default function MemberDetail() {
         </div>
 
         {/* Commitment bar */}
-        <div className="bg-card border border-border/60 rounded-2xl p-4">
+        <div className="bg-card border border-border/60 rounded-lg p-4">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm font-bold">معدل الالتزام بالمساهمات</p>
             <span className={cn("text-sm font-bold font-mono", ratingColor)}>{report.performance.commitmentRate}%</span>
@@ -244,7 +244,7 @@ export default function MemberDetail() {
             </h3>
             {report.loans.map((loan, idx) => (
               <motion.div key={loan.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}
-                className="bg-card border border-border/60 rounded-2xl overflow-hidden">
+                className="bg-card border border-border/60 rounded-lg overflow-hidden">
                 <button className="w-full p-4 flex items-center gap-3 text-right"
                   onClick={() => setExpandedLoan(expandedLoan === loan.id ? null : loan.id)}>
                   <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
@@ -319,7 +319,7 @@ export default function MemberDetail() {
         )}
 
         {report.loans.length === 0 && (
-          <div className="text-center py-8 bg-muted/20 rounded-3xl border border-dashed border-border">
+          <div className="text-center py-8 bg-muted/20 rounded-xl border border-dashed border-border">
             <HandCoins className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
             <p className="text-sm text-muted-foreground">لا توجد سلف في هذه السنة</p>
           </div>
@@ -327,7 +327,7 @@ export default function MemberDetail() {
 
         {/* Export button */}
         <button onClick={handleExport} disabled={isExporting}
-          className="w-full bg-primary text-primary-foreground py-3.5 rounded-2xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-primary/20 disabled:opacity-60">
+          className="w-full bg-primary text-primary-foreground py-3.5 rounded-lg font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-primary/20 disabled:opacity-60">
           {isExporting
             ? <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full" />
             : <><FileSpreadsheet className="w-5 h-5" /> تصدير تقرير Excel لهذا العضو</>}

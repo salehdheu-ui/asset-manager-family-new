@@ -58,22 +58,22 @@ export default function AnnualReport() {
         <section>
           <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><TrendingUp className="w-5 h-5 text-emerald-600" /> ملخص السنة المالية</h2>
           <div className="grid grid-cols-2 gap-4">
-            <div className="border border-gray-200 rounded-2xl p-5 text-center">
+            <div className="border border-gray-200 rounded-lg p-5 text-center">
               <p className="text-xs text-gray-500 font-bold">إجمالي المساهمات</p>
               <p className="text-2xl font-mono font-bold text-emerald-600 mt-1">{fmt(yearly?.summary.totalContributions ?? 0)} <span className="text-xs">ر.ع</span></p>
               <p className="text-xs text-gray-400 mt-1">{yearly?.summary.contributionCount ?? 0} مساهمة</p>
             </div>
-            <div className="border border-gray-200 rounded-2xl p-5 text-center">
+            <div className="border border-gray-200 rounded-lg p-5 text-center">
               <p className="text-xs text-gray-500 font-bold">السلف الممنوحة</p>
               <p className="text-2xl font-mono font-bold text-blue-600 mt-1">{fmt(yearly?.summary.totalLoans ?? 0)} <span className="text-xs">ر.ع</span></p>
               <p className="text-xs text-gray-400 mt-1">{yearly?.summary.loanCount ?? 0} سلفة</p>
             </div>
-            <div className="border border-gray-200 rounded-2xl p-5 text-center">
+            <div className="border border-gray-200 rounded-lg p-5 text-center">
               <p className="text-xs text-gray-500 font-bold">المصروفات</p>
               <p className="text-2xl font-mono font-bold text-amber-600 mt-1">{fmt(yearly?.summary.totalExpenses ?? 0)} <span className="text-xs">ر.ع</span></p>
               <p className="text-xs text-gray-400 mt-1">{yearly?.summary.expenseCount ?? 0} عملية</p>
             </div>
-            <div className="border border-gray-200 rounded-2xl p-5 text-center">
+            <div className="border border-gray-200 rounded-lg p-5 text-center">
               <p className="text-xs text-gray-500 font-bold">صافي رأس مال الصندوق الآن</p>
               <p className="text-2xl font-mono font-bold text-gray-900 mt-1">{fmt(summary?.netCapital ?? 0)} <span className="text-xs">ر.ع</span></p>
               <p className={`text-xs mt-1 font-bold ${netFlow >= 0 ? "text-emerald-600" : "text-red-500"}`}>
@@ -89,7 +89,7 @@ export default function AnnualReport() {
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><Users className="w-5 h-5 text-emerald-600" /> أبرز المساهمين</h2>
             <div className="grid grid-cols-3 gap-3">
               {topMembers.map((m, i) => (
-                <div key={m.memberId} className="border border-gray-200 rounded-2xl p-4 text-center">
+                <div key={m.memberId} className="border border-gray-200 rounded-lg p-4 text-center">
                   <p className="text-2xl">{["🥇", "🥈", "🥉"][i]}</p>
                   <p className="font-bold mt-1">{m.name}</p>
                   <p className="text-sm font-mono text-emerald-600">{fmt(m.totalContributions)} ر.ع</p>

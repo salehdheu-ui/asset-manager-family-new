@@ -36,7 +36,7 @@ export function ContributionsTrendChart({
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="rounded-2xl border border-fund-in/14 bg-white px-4 py-3 text-xs shadow-xl">
+        <div className="rounded-lg border border-fund-in/14 bg-white px-4 py-3 text-xs shadow-xl">
           <p className="mb-1.5 font-bold text-foreground">{label}</p>
           <p className="text-base font-bold font-mono text-fund-in">
             {payload[0].value.toLocaleString("en-US")}
@@ -91,7 +91,7 @@ export function ContributionsTrendChart({
       </div>
 
       {/* chart */}
-      <div className="h-56 rounded-2xl border border-border/30 bg-gradient-to-b from-muted/20 to-card p-3">
+      <div className="h-56 rounded-lg border border-border/30 bg-gradient-to-b from-muted/20 to-card p-3">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={data} margin={{ top: 8, right: 4, left: -8, bottom: 0 }}>
             <defs>

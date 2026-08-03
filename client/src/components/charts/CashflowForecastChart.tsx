@@ -31,7 +31,7 @@ export function CashflowForecastChart({ data, loading = false, delay = 0 }: { da
     if (active && payload && payload.length) {
       const row = payload[0].payload;
       return (
-        <div className="rounded-2xl border border-fund-in/14 bg-white px-4 py-3 text-xs shadow-xl">
+        <div className="rounded-lg border border-fund-in/14 bg-white px-4 py-3 text-xs shadow-xl">
           <p className="mb-1.5 font-bold text-foreground">{label}</p>
           <p className="text-base font-bold font-mono text-fund-in">
             {row.projectedBalance.toLocaleString("en-US")}
@@ -76,7 +76,7 @@ export function CashflowForecastChart({ data, loading = false, delay = 0 }: { da
         </div>
       </div>
 
-      <div className="h-56 rounded-2xl border border-border/30 bg-gradient-to-b from-muted/20 to-card p-3" data-testid="cashflow-forecast-chart">
+      <div className="h-56 rounded-lg border border-border/30 bg-gradient-to-b from-muted/20 to-card p-3" data-testid="cashflow-forecast-chart">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={chartData} margin={{ top: 8, right: 4, left: -8, bottom: 0 }}>
             <defs>

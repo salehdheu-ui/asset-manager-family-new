@@ -153,7 +153,7 @@ export default function Expenses() {
     <MobileLayout title="الإنفاق والمبرات">
       <div className="space-y-6 pt-2 pb-12">
         <div className="grid grid-cols-2 gap-3">
-          <div className="col-span-2 bg-card border border-border rounded-2xl p-4 flex justify-between items-center shadow-sm">
+          <div className="col-span-2 bg-card border border-border rounded-lg p-4 flex justify-between items-center shadow-sm">
             <div>
               <p className="text-xs text-muted-foreground">الرصيد القابل للإنفاق (مرن)</p>
               <h3 className="text-2xl font-bold font-mono text-primary" data-testid="text-available-flexible">{availableFlexible.toLocaleString()} ر.ع</h3>
@@ -174,7 +174,7 @@ export default function Expenses() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: idx * 0.1 }}
-                  className="bg-card border border-border rounded-2xl p-5 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+                  className="bg-card border border-border rounded-lg p-5 shadow-sm hover:shadow-md transition-all cursor-pointer group"
                   data-testid={`card-expense-${section.id}`}
                 >
                   <div className="flex items-start gap-4">
@@ -257,7 +257,7 @@ export default function Expenses() {
           </div>
           
           {expenses.length === 0 ? (
-            <div className="text-center py-12 bg-muted/20 rounded-3xl border border-dashed border-border">
+            <div className="text-center py-12 bg-muted/20 rounded-xl border border-dashed border-border">
               <p className="text-sm text-muted-foreground font-medium">لا توجد مصروفات مسجلة</p>
             </div>
           ) : (
@@ -267,7 +267,7 @@ export default function Expenses() {
                   key={expense.id}
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="bg-card border border-border/60 rounded-2xl p-4 shadow-sm"
+                  className="bg-card border border-border/60 rounded-lg p-4 shadow-sm"
                   data-testid={`card-expense-record-${expense.id}`}
                 >
                   <div className="flex justify-between items-start">

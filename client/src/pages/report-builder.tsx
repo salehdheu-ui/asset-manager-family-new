@@ -225,28 +225,28 @@ export default function ReportBuilder() {
               <section>
                 <h3 className="font-bold text-lg mb-3 flex items-center gap-2"><Wallet className="w-5 h-5 text-emerald-600" /> الملخص المالي</h3>
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="border border-gray-200 rounded-2xl p-4 text-center">
+                  <div className="border border-gray-200 rounded-lg p-4 text-center">
                     <p className="text-xs text-gray-500 font-bold">إجمالي مساهماته (له في الصندوق)</p>
                     <p className="text-xl font-mono font-bold text-emerald-600 mt-1">{fmt(statement.summary.totalContributed)} <span className="text-xs">ر.ع</span></p>
                   </div>
-                  <div className="border-2 rounded-2xl p-4 text-center border-red-200 bg-red-50/40">
+                  <div className="border-2 rounded-lg p-4 text-center border-red-200 bg-red-50/40">
                     <p className="text-xs text-gray-500 font-bold">المتبقي عليه الآن بالضبط</p>
                     <p className={cn("text-xl font-mono font-bold mt-1", statement.summary.currentDebt > 0 ? "text-red-600" : "text-emerald-600")}>
                       {fmt(statement.summary.currentDebt)} <span className="text-xs">ر.ع</span>
                     </p>
                     {statement.summary.currentDebt === 0 && <p className="text-xs font-bold text-emerald-600">الذمة صفر ✓</p>}
                   </div>
-                  <div className="border border-gray-200 rounded-2xl p-4 text-center">
+                  <div className="border border-gray-200 rounded-lg p-4 text-center">
                     <p className="text-xs text-gray-500 font-bold">إجمالي ما تسلّف</p>
                     <p className="text-xl font-mono font-bold text-blue-600 mt-1">{fmt(statement.summary.totalBorrowed)} <span className="text-xs">ر.ع</span></p>
                   </div>
-                  <div className="border border-gray-200 rounded-2xl p-4 text-center">
+                  <div className="border border-gray-200 rounded-lg p-4 text-center">
                     <p className="text-xs text-gray-500 font-bold">إجمالي ما سدّد</p>
                     <p className="text-xl font-mono font-bold text-teal-600 mt-1">{fmt(statement.summary.totalRepaid)} <span className="text-xs">ر.ع</span></p>
                   </div>
                 </div>
                 {score !== undefined && (
-                  <div className="mt-3 flex items-center gap-2 border border-gray-200 rounded-2xl px-4 py-3">
+                  <div className="mt-3 flex items-center gap-2 border border-gray-200 rounded-lg px-4 py-3">
                     <Gauge className="w-4 h-4 text-emerald-600" />
                     <span className="text-sm font-bold text-gray-500">درجة الالتزام:</span>
                     <span className={cn("font-mono font-bold", score >= 80 ? "text-emerald-600" : score >= 50 ? "text-amber-600" : "text-red-600")}>{score}/100</span>
@@ -259,11 +259,11 @@ export default function ReportBuilder() {
               <section>
                 <h3 className="font-bold text-lg mb-3 flex items-center gap-2"><AlertTriangle className="w-5 h-5 text-emerald-600" /> متأخرات المساهمات</h3>
                 {statement.arrears.expectedMonthly <= 0 ? (
-                  <p className="text-sm text-gray-400 text-center py-6 border border-dashed border-gray-200 rounded-2xl">
+                  <p className="text-sm text-gray-400 text-center py-6 border border-dashed border-gray-200 rounded-lg">
                     لم يُحدَّد اشتراك شهري لهذا العضو ولا افتراضي للعائلة — حدِّده من صفحة الأعضاء أو الإعدادات
                   </p>
                 ) : (
-                  <div className="border border-gray-200 rounded-2xl p-4 space-y-3">
+                  <div className="border border-gray-200 rounded-lg p-4 space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-500 font-bold">المتأخر عليه (آخر 12 شهراً مستحقاً)</span>
                       <span className={cn("text-xl font-mono font-bold", statement.arrears.arrears > 0 ? "text-red-600" : "text-emerald-600")}>
@@ -292,10 +292,10 @@ export default function ReportBuilder() {
                 {(() => {
                   const share = sharesReport?.shares.find((s) => s.memberId === memberId);
                   if (!share) {
-                    return <p className="text-sm text-gray-400 text-center py-6 border border-dashed border-gray-200 rounded-2xl">لا مساهمات معتمدة بعد لحساب حصة</p>;
+                    return <p className="text-sm text-gray-400 text-center py-6 border border-dashed border-gray-200 rounded-lg">لا مساهمات معتمدة بعد لحساب حصة</p>;
                   }
                   return (
-                    <div className="border border-gray-200 rounded-2xl p-4 space-y-3">
+                    <div className="border border-gray-200 rounded-lg p-4 space-y-3">
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-gray-500 font-bold">نسبته من الصندوق</span>
                         <span className="text-xl font-mono font-bold text-emerald-600">{share.percent}%</span>
@@ -318,9 +318,9 @@ export default function ReportBuilder() {
               <section>
                 <h3 className="font-bold text-lg mb-3 flex items-center gap-2"><CalendarClock className="w-5 h-5 text-emerald-600" /> السجل الزمني الكامل</h3>
                 {statement.timeline.length === 0 ? (
-                  <p className="text-sm text-gray-400 text-center py-6 border border-dashed border-gray-200 rounded-2xl">لا حركات في هذه الفترة</p>
+                  <p className="text-sm text-gray-400 text-center py-6 border border-dashed border-gray-200 rounded-lg">لا حركات في هذه الفترة</p>
                 ) : (
-                  <div className="overflow-x-auto border border-gray-200 rounded-2xl">
+                  <div className="overflow-x-auto border border-gray-200 rounded-lg">
                     <table className="w-full text-sm border-collapse">
                       <thead>
                         <tr className="bg-gray-50 text-gray-500 text-xs">
@@ -362,11 +362,11 @@ export default function ReportBuilder() {
               <section>
                 <h3 className="font-bold text-lg mb-3 flex items-center gap-2"><HandCoins className="w-5 h-5 text-emerald-600" /> تفاصيل السلف والسداد</h3>
                 {statement.loans.length === 0 ? (
-                  <p className="text-sm text-gray-400 text-center py-6 border border-dashed border-gray-200 rounded-2xl">لا سلف مسجلة</p>
+                  <p className="text-sm text-gray-400 text-center py-6 border border-dashed border-gray-200 rounded-lg">لا سلف مسجلة</p>
                 ) : (
                   <div className="space-y-3">
                     {statement.loans.map((l) => (
-                      <div key={l.id} className="border border-gray-200 rounded-2xl p-4">
+                      <div key={l.id} className="border border-gray-200 rounded-lg p-4">
                         <div className="flex items-start justify-between gap-3">
                           <div>
                             <p className="font-bold">{l.title}</p>
@@ -403,7 +403,7 @@ export default function ReportBuilder() {
               <section>
                 <h3 className="font-bold text-lg mb-3 flex items-center gap-2"><TrendingUp className="w-5 h-5 text-emerald-600" /> شبكة المساهمات</h3>
                 {statement.contributionsByYear.length === 0 ? (
-                  <p className="text-sm text-gray-400 text-center py-6 border border-dashed border-gray-200 rounded-2xl">لا مساهمات مسجلة</p>
+                  <p className="text-sm text-gray-400 text-center py-6 border border-dashed border-gray-200 rounded-lg">لا مساهمات مسجلة</p>
                 ) : (
                   statement.contributionsByYear.map((y) => (
                     <div key={y.year} className="mb-4">

@@ -74,7 +74,7 @@ export default function UserDashboard() {
   if (!profile) {
     return (
       <MobileLayout title="حسابي">
-        <div className="text-center py-12 bg-muted/20 rounded-3xl border border-dashed border-border">
+        <div className="text-center py-12 bg-muted/20 rounded-xl border border-dashed border-border">
           <User className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
           <p className="text-sm text-muted-foreground font-medium">لم يتم العثور على الملف الشخصي</p>
         </div>
@@ -102,7 +102,7 @@ export default function UserDashboard() {
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center space-y-4 py-8 bg-card border border-border/40 rounded-[2.5rem] shadow-sm relative overflow-hidden"
+          className="text-center space-y-4 py-8 bg-card border border-border/40 rounded-xl shadow-sm relative overflow-hidden"
         >
           <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
           
@@ -140,7 +140,7 @@ export default function UserDashboard() {
         {/* Stats Cards */}
         {profile.memberId && (
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-fund-in/5 border border-fund-in/14 rounded-3xl p-5 flex flex-col gap-1 relative overflow-hidden">
+            <div className="bg-fund-in/5 border border-fund-in/14 rounded-xl p-5 flex flex-col gap-1 relative overflow-hidden">
               <div className="absolute -right-2 -bottom-2 opacity-5">
                 <CreditCard className="w-16 h-16" />
               </div>
@@ -151,7 +151,7 @@ export default function UserDashboard() {
                 {totalContributed.toLocaleString()} <span className="text-xs">ر.ع</span>
               </span>
             </div>
-            <div className="bg-fund-loan/5 border border-fund-loan/14 rounded-3xl p-5 flex flex-col gap-1 relative overflow-hidden">
+            <div className="bg-fund-loan/5 border border-fund-loan/14 rounded-xl p-5 flex flex-col gap-1 relative overflow-hidden">
               <div className="absolute -right-2 -bottom-2 opacity-5">
                 <HandCoins className="w-16 h-16" />
               </div>
@@ -169,7 +169,7 @@ export default function UserDashboard() {
         )}
 
         {!profile.memberId && (
-          <div className="bg-fund-out/8 border border-fund-out/25 rounded-2xl p-4 text-center">
+          <div className="bg-fund-out/8 border border-fund-out/25 rounded-lg p-4 text-center">
             <p className="text-fund-out text-sm font-medium">حسابك غير مرتبط بعضو في الصندوق</p>
             <p className="text-fund-out text-xs mt-1">تواصل مع المشرف لربط حسابك</p>
           </div>
@@ -183,7 +183,7 @@ export default function UserDashboard() {
             </h3>
           </div>
 
-          <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
+          <div className="bg-card border border-border rounded-lg p-5 space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-bold text-muted-foreground">الاسم الأول</label>
               <input 
@@ -250,7 +250,7 @@ export default function UserDashboard() {
               setLocation("/");
             }
           }}
-          className="w-full bg-fund-due text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform"
+          className="w-full bg-fund-due text-white py-4 rounded-lg font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform"
         >
           <LogOut className="w-5 h-5" />
           تسجيل الخروج

@@ -225,7 +225,7 @@ export default function FamilySettings() {
   return (
     <MobileLayout title="إعدادات العائلة">
       <div className="space-y-6 pt-2">
-        <div className="bg-card border border-border rounded-2xl p-5 space-y-4 shadow-sm">
+        <div className="bg-card border border-border rounded-lg p-5 space-y-4 shadow-sm">
           <div className="flex items-center gap-2 text-primary mb-2">
             <Home className="w-5 h-5" />
             <h3 className="font-bold font-heading">اسم العائلة / الصندوق</h3>
@@ -287,7 +287,7 @@ export default function FamilySettings() {
           </Button>
         </div>
 
-        <div className="bg-card border border-border rounded-2xl p-5 space-y-4 shadow-sm">
+        <div className="bg-card border border-border rounded-lg p-5 space-y-4 shadow-sm">
           <div className="flex items-start justify-between gap-3">
             <div className="space-y-1">
               <div className="flex items-center gap-2 text-primary">
@@ -545,7 +545,7 @@ export default function FamilySettings() {
 
           <Link
             href="/members"
-            className="block bg-card border border-border rounded-2xl p-4 shadow-sm hover:border-primary/30 transition-colors"
+            className="block bg-card border border-border rounded-lg p-4 shadow-sm hover:border-primary/30 transition-colors"
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -595,7 +595,7 @@ export default function FamilySettings() {
           <div className="grid grid-cols-2 gap-3">
             <Link
               href="/governance"
-              className="bg-card border border-border rounded-2xl p-4 flex flex-col items-center gap-2 hover:border-primary/30 transition-colors"
+              className="bg-card border border-border rounded-lg p-4 flex flex-col items-center gap-2 hover:border-primary/30 transition-colors"
             >
               <div className="w-10 h-10 rounded-full bg-fund-out/14 flex items-center justify-center">
                 <Shield className="w-5 h-5 text-fund-out" />
@@ -604,7 +604,7 @@ export default function FamilySettings() {
             </Link>
             <Link
               href="/audit-log"
-              className="bg-card border border-border rounded-2xl p-4 flex flex-col items-center gap-2 hover:border-primary/30 transition-colors"
+              className="bg-card border border-border rounded-lg p-4 flex flex-col items-center gap-2 hover:border-primary/30 transition-colors"
             >
               <div className="w-10 h-10 rounded-full bg-fund-loan/14 flex items-center justify-center">
                 <Wallet className="w-5 h-5 text-fund-loan" />

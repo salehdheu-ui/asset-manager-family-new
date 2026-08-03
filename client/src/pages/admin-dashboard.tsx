@@ -207,7 +207,7 @@ export default function AdminDashboard() {
   if (error) {
     return (
       <MobileLayout title="لوحة الإدارة">
-        <div className="text-center py-12 bg-fund-due/8 rounded-3xl border border-fund-due/25">
+        <div className="text-center py-12 bg-fund-due/8 rounded-xl border border-fund-due/25">
           <Shield className="w-12 h-12 mx-auto text-fund-due mb-4" />
           <p className="text-fund-due font-bold">غير مصرح لك بالوصول</p>
           <p className="text-fund-due text-sm mt-2">يجب أن تكون مشرفاً للوصول لهذه الصفحة</p>
@@ -226,7 +226,7 @@ export default function AdminDashboard() {
       <div className="space-y-6 pt-2 pb-12">
         
         {/* Header */}
-        <div className="bg-primary text-primary-foreground p-6 rounded-[2rem] relative overflow-hidden shadow-lg shadow-primary/20">
+        <div className="bg-primary text-primary-foreground p-6 rounded-xl relative overflow-hidden shadow-lg shadow-primary/20">
           <div className="relative z-10">
             <div className="flex items-center gap-3 mb-2">
               <Shield className="w-8 h-8" />
@@ -240,7 +240,7 @@ export default function AdminDashboard() {
 
         {/* بطاقة «يحتاج انتباهك» — تنبيهات تشغيلية ذكية */}
         {alerts.length > 0 && (
-          <div className="rounded-[1.5rem] border border-border bg-card p-4 space-y-3" data-testid="alerts-card">
+          <div className="rounded-xl border border-border bg-card p-4 space-y-3" data-testid="alerts-card">
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-fund-out" />
               <span className="font-bold">يحتاج انتباهك</span>
@@ -265,7 +265,7 @@ export default function AdminDashboard() {
 
         {/* طلبات استعادة كلمة المرور */}
         {resetRequests.length > 0 && (
-          <div className="rounded-[1.5rem] border border-primary/20 bg-primary/5 p-4 space-y-3" data-testid="reset-requests-panel">
+          <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-3" data-testid="reset-requests-panel">
             <div className="flex items-center gap-2 text-primary">
               <KeyRound className="h-5 w-5" />
               <span className="font-bold">طلبات استعادة كلمة المرور</span>
@@ -315,7 +315,7 @@ export default function AdminDashboard() {
               <DialogDescription>أرسل هذا الكود للعضو مباشرة. لن يظهر مرة أخرى، وصالح 30 دقيقة.</DialogDescription>
             </DialogHeader>
             <div className="py-2 space-y-3">
-              <div className="rounded-2xl border-2 border-dashed border-primary/40 bg-primary/5 py-5 text-center">
+              <div className="rounded-lg border-2 border-dashed border-primary/40 bg-primary/5 py-5 text-center">
                 <span className="text-4xl font-mono font-bold tracking-[0.3em] text-primary" data-testid="issued-code">{issuedCode?.code}</span>
               </div>
               <button
@@ -336,7 +336,7 @@ export default function AdminDashboard() {
         </Dialog>
 
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          <div className="rounded-[1.5rem] border border-fund-out/25 bg-fund-out/6 p-4">
+          <div className="rounded-xl border border-fund-out/25 bg-fund-out/6 p-4">
             <div className="mb-2 flex items-center gap-2 text-fund-out">
               <AlertTriangle className="h-4 w-4" />
               <span className="text-xs font-bold">تنبيه أمني</span>
@@ -344,7 +344,7 @@ export default function AdminDashboard() {
             <p className="text-sm font-bold text-fund-out">تأكد من تغيير كلمة مرور المدير الافتراضية قبل اعتماد النظام.</p>
             <p className="mt-1 text-xs leading-6 text-fund-out">يوصى بإعداد كلمة مرور قوية ومراجعة الحسابات الإدارية قبل التشغيل الفعلي.</p>
           </div>
-          <div className="rounded-[1.5rem] border border-fund-loan/25 bg-fund-loan/6 p-4">
+          <div className="rounded-xl border border-fund-loan/25 bg-fund-loan/6 p-4">
             <div className="mb-2 flex items-center gap-2 text-fund-loan">
               <Lock className="h-4 w-4" />
               <span className="text-xs font-bold">إجراءات حساسة</span>
@@ -358,7 +358,7 @@ export default function AdminDashboard() {
         <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
           <DialogTrigger asChild>
             <button 
-              className="w-full bg-fund-in text-white py-3 rounded-2xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-fund-in/20"
+              className="w-full bg-fund-in text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-fund-in/20"
               data-testid="button-add-user"
             >
               <Plus className="w-5 h-5" />
@@ -462,7 +462,7 @@ export default function AdminDashboard() {
 
         <button
           onClick={() => setLocation("/fund-ops")}
-          className="w-full bg-fund-out text-white py-4 rounded-2xl font-bold flex items-center gap-4 px-5 active:scale-95 transition-transform shadow-lg shadow-fund-out/20"
+          className="w-full bg-fund-out text-white py-4 rounded-lg font-bold flex items-center gap-4 px-5 active:scale-95 transition-transform shadow-lg shadow-fund-out/20"
           data-testid="button-goto-fund-ops"
         >
           <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
@@ -477,7 +477,7 @@ export default function AdminDashboard() {
 
         <button
           onClick={() => setLocation("/report-builder")}
-          className="w-full bg-primary text-primary-foreground py-4 rounded-2xl font-bold flex items-center gap-4 px-5 active:scale-95 transition-transform shadow-lg shadow-primary/20"
+          className="w-full bg-primary text-primary-foreground py-4 rounded-lg font-bold flex items-center gap-4 px-5 active:scale-95 transition-transform shadow-lg shadow-primary/20"
           data-testid="button-goto-report-builder"
         >
           <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
@@ -492,7 +492,7 @@ export default function AdminDashboard() {
 
         <button
           onClick={() => setLocation("/investments")}
-          className="w-full bg-primary text-primary-foreground py-4 rounded-2xl font-bold flex items-center gap-4 px-5 active:scale-95 transition-transform shadow-lg shadow-primary/20"
+          className="w-full bg-primary text-primary-foreground py-4 rounded-lg font-bold flex items-center gap-4 px-5 active:scale-95 transition-transform shadow-lg shadow-primary/20"
           data-testid="button-goto-investments"
         >
           <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
@@ -513,7 +513,7 @@ export default function AdminDashboard() {
           </div>
 
           {allUsers.length === 0 ? (
-            <div className="text-center py-12 bg-muted/20 rounded-3xl border border-dashed border-border">
+            <div className="text-center py-12 bg-muted/20 rounded-xl border border-dashed border-border">
               <p className="text-sm text-muted-foreground font-medium">لا يوجد مستخدمين مسجلين</p>
             </div>
           ) : (
@@ -524,7 +524,7 @@ export default function AdminDashboard() {
                   initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.05 }}
-                  className="bg-card border border-border/60 rounded-[1.5rem] p-4 shadow-sm space-y-4"
+                  className="bg-card border border-border/60 rounded-xl p-4 shadow-sm space-y-4"
                 >
                   <div className="flex items-center gap-4">
                     {u.profileImageUrl ? (
@@ -706,7 +706,7 @@ export default function AdminDashboard() {
         {/* Capital Allocation Lock Section */}
         <div className="border-t border-border/40 my-2" />
 
-        <div className="bg-fund-in text-white p-6 rounded-[2rem] relative overflow-hidden shadow-lg shadow-fund-in/20">
+        <div className="bg-fund-in text-white p-6 rounded-xl relative overflow-hidden shadow-lg shadow-fund-in/20">
           <div className="relative z-10">
             <div className="flex items-center gap-3 mb-2">
               <Lock className="w-8 h-8" />
@@ -721,7 +721,7 @@ export default function AdminDashboard() {
           <button
             onClick={() => lockAllocationMutation.mutate()}
             disabled={lockAllocationMutation.isPending}
-            className="flex-1 bg-fund-in text-white py-3 rounded-2xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-fund-in/20 disabled:opacity-50"
+            className="flex-1 bg-fund-in text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-fund-in/20 disabled:opacity-50"
             data-testid="button-lock-allocation"
           >
             {lockAllocationMutation.isPending ? (
@@ -736,7 +736,7 @@ export default function AdminDashboard() {
           <button
             onClick={() => resetAllocationMutation.mutate()}
             disabled={resetAllocationMutation.isPending}
-            className="flex-1 bg-fund-out text-white py-3 rounded-2xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-fund-out/20 disabled:opacity-50"
+            className="flex-1 bg-fund-out text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-fund-out/20 disabled:opacity-50"
             data-testid="button-reset-allocation"
           >
             {resetAllocationMutation.isPending ? (
@@ -753,7 +753,7 @@ export default function AdminDashboard() {
         {/* System Reset Section */}
         <div className="border-t border-border/40 my-2" />
         
-        <div className="bg-fund-due text-white p-6 rounded-[2rem] relative overflow-hidden shadow-lg shadow-fund-due/20">
+        <div className="bg-fund-due text-white p-6 rounded-xl relative overflow-hidden shadow-lg shadow-fund-due/20">
           <div className="relative z-10">
             <div className="flex items-center gap-3 mb-2">
               <RotateCcw className="w-8 h-8" />
@@ -767,7 +767,7 @@ export default function AdminDashboard() {
         <Dialog open={resetDialogOpen} onOpenChange={(open) => { setResetDialogOpen(open); if (!open) setResetConfirmText(""); }}>
           <DialogTrigger asChild>
             <button
-              className="w-full bg-fund-due text-white py-3 rounded-2xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-fund-due/20"
+              className="w-full bg-fund-due text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-fund-due/20"
               data-testid="button-system-reset"
             >
               <AlertTriangle className="w-5 h-5" />

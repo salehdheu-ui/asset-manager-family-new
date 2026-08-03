@@ -144,7 +144,7 @@ export default function Investments() {
     <MobileLayout title="الاستثمار والزكاة">
       <div className="space-y-6 pt-2 pb-12">
         {/* الزكاة */}
-        <div className="bg-secondary/5 border border-secondary/20 rounded-3xl p-5 space-y-3" data-testid="card-zakat">
+        <div className="bg-secondary/5 border border-secondary/20 rounded-xl p-5 space-y-3" data-testid="card-zakat">
           <div className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-primary" />
             <h3 className="font-bold text-primary font-heading">زكاة مال الصندوق</h3>
@@ -216,7 +216,7 @@ export default function Investments() {
 
         {/* طبقة النمو */}
         {growth && (
-          <div className="bg-card border border-border rounded-3xl p-5 space-y-2">
+          <div className="bg-card border border-border rounded-xl p-5 space-y-2">
             <h3 className="font-bold text-sm font-heading">طبقة النمو ({growth.percent}٪)</h3>
             <div className="grid grid-cols-3 gap-2 text-center text-xs">
               <div><p className="text-muted-foreground mb-1">المخصص</p><p className="font-bold font-mono">{fmt(growth.amount)}</p></div>
@@ -240,15 +240,15 @@ export default function Investments() {
 
         {data && investments.length > 0 && (
           <div className="grid grid-cols-3 gap-2 text-center text-xs">
-            <div className="bg-fund-loan/8 border border-fund-loan/14 rounded-2xl p-3">
+            <div className="bg-fund-loan/8 border border-fund-loan/14 rounded-lg p-3">
               <p className="text-fund-loan font-bold mb-1">المستثمر</p>
               <p className="font-bold font-mono text-fund-loan">{fmt(data.totals.invested)}</p>
             </div>
-            <div className="bg-fund-in/8 border border-fund-in/14 rounded-2xl p-3">
+            <div className="bg-fund-in/8 border border-fund-in/14 rounded-lg p-3">
               <p className="text-fund-in font-bold mb-1">القيمة الحالية</p>
               <p className="font-bold font-mono text-fund-in">{fmt(data.totals.currentValue)}</p>
             </div>
-            <div className="bg-fund-out/8 border border-fund-out/14 rounded-2xl p-3">
+            <div className="bg-fund-out/8 border border-fund-out/14 rounded-lg p-3">
               <p className="text-fund-out font-bold mb-1">أرباح محققة</p>
               <p className="font-bold font-mono text-fund-out">{fmt(data.totals.realizedGain)}</p>
             </div>
@@ -257,7 +257,7 @@ export default function Investments() {
 
         <div className="grid gap-4">
           {investments.length === 0 ? (
-            <div className="text-center py-12 bg-muted/20 rounded-3xl border border-dashed border-border">
+            <div className="text-center py-12 bg-muted/20 rounded-xl border border-dashed border-border">
               <p className="text-sm text-muted-foreground font-medium">لا استثمارات مسجلة</p>
               <p className="text-xs text-muted-foreground mt-1">طبقة النمو مخصصة ولم تُستثمر بعد</p>
             </div>
@@ -271,11 +271,11 @@ export default function Investments() {
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.05 }}
-                  className="bg-card border border-border rounded-[1.5rem] p-5 space-y-3 shadow-sm"
+                  className="bg-card border border-border rounded-xl p-5 space-y-3 shadow-sm"
                   data-testid={`card-investment-${inv.id}`}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-2xl bg-primary/10 flex items-center justify-center">
+                    <div className="w-11 h-11 rounded-lg bg-primary/10 flex items-center justify-center">
                       <Icon className="w-5 h-5 text-primary" />
                     </div>
                     <div className="flex-1">
@@ -349,7 +349,7 @@ export default function Investments() {
 
       {/* استثمار جديد */}
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent dir="rtl" className="max-w-sm rounded-3xl">
+        <DialogContent dir="rtl" className="max-w-sm rounded-xl">
           <DialogHeader>
             <DialogTitle>استثمار جديد</DialogTitle>
             <DialogDescription>يُخصم من طبقة النمو ولا يتجاوز المتاح فيها</DialogDescription>
@@ -380,7 +380,7 @@ export default function Investments() {
 
       {/* تقييم */}
       <Dialog open={!!valuationTarget} onOpenChange={(o) => !o && setValuationTarget(null)}>
-        <DialogContent dir="rtl" className="max-w-sm rounded-3xl">
+        <DialogContent dir="rtl" className="max-w-sm rounded-xl">
           <DialogHeader>
             <DialogTitle>تقييم {valuationTarget?.title}</DialogTitle>
             <DialogDescription>القيمة السوقية الحالية لهذا الاستثمار</DialogDescription>
@@ -404,7 +404,7 @@ export default function Investments() {
 
       {/* تصفية */}
       <Dialog open={!!exitTarget} onOpenChange={(o) => !o && setExitTarget(null)}>
-        <DialogContent dir="rtl" className="max-w-sm rounded-3xl">
+        <DialogContent dir="rtl" className="max-w-sm rounded-xl">
           <DialogHeader>
             <DialogTitle>تصفية {exitTarget?.title}</DialogTitle>
             <DialogDescription>الربح يُسجَّل إيداعاً في الصندوق والخسارة سحباً</DialogDescription>
@@ -427,7 +427,7 @@ export default function Investments() {
 
       {/* إخراج الزكاة */}
       <Dialog open={zakatOpen} onOpenChange={setZakatOpen}>
-        <DialogContent dir="rtl" className="max-w-sm rounded-3xl">
+        <DialogContent dir="rtl" className="max-w-sm rounded-xl">
           <DialogHeader>
             <DialogTitle>إخراج الزكاة</DialogTitle>
             <DialogDescription>يُسجَّل المبلغ مصروفاً بتصنيف «زكاة» ويُوثَّق في سجل التدقيق</DialogDescription>

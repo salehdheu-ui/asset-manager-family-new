@@ -96,7 +96,7 @@ export default function Proposals() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: idx * 0.05 }}
-        className="bg-card border border-border rounded-[1.5rem] p-5 space-y-3 shadow-sm"
+        className="bg-card border border-border rounded-xl p-5 space-y-3 shadow-sm"
         data-testid={`card-proposal-${p.id}`}
       >
         <div className="flex items-start gap-3">
@@ -197,7 +197,7 @@ export default function Proposals() {
 
         <div className="grid gap-4">
           {open.length === 0 ? (
-            <div className="text-center py-12 bg-muted/20 rounded-3xl border border-dashed border-border">
+            <div className="text-center py-12 bg-muted/20 rounded-xl border border-dashed border-border">
               <Clock className="w-8 h-8 text-muted-foreground/40 mx-auto mb-2" />
               <p className="text-sm text-muted-foreground font-medium">لا اقتراحات مطروحة حالياً</p>
             </div>
@@ -217,7 +217,7 @@ export default function Proposals() {
       </div>
 
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent dir="rtl" className="max-w-sm rounded-3xl">
+        <DialogContent dir="rtl" className="max-w-sm rounded-xl">
           <DialogHeader>
             <DialogTitle>اقتراح جديد</DialogTitle>
             <DialogDescription>يمرّ بالنصاب نفسه المعتمد للسلف الكبيرة: 3 موافقين أو كل المؤهلين</DialogDescription>

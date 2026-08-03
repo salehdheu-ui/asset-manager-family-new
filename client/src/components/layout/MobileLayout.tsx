@@ -106,12 +106,12 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
         </button>
       </aside>
 
-      <div className="relative z-10 flex flex-1 flex-col min-w-0 lg:mx-auto lg:my-6 lg:h-fit lg:min-h-[calc(100vh-3rem)] lg:w-full lg:max-w-md lg:rounded-[2rem] lg:bg-background lg:shadow-[0_20px_60px_rgba(16,24,40,0.10)] lg:overflow-hidden">
+      <div className="relative z-10 flex flex-1 flex-col min-w-0 lg:mx-auto lg:my-6 lg:h-fit lg:min-h-[calc(100vh-3rem)] lg:w-full lg:max-w-md lg:rounded-xl lg:bg-background lg:shadow-[0_20px_60px_rgba(16,24,40,0.10)] lg:overflow-hidden">
       {/* Header */}
       <header className="relative z-10 px-5 pt-8 pb-4 bg-gradient-to-b from-background via-background/95 to-transparent shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-             <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-primary/15 bg-card/80 p-1.5 shadow-sm">
+             <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-primary/15 bg-card/80 p-1.5 shadow-sm">
                 <img src={logo} alt="Logo" className="w-full h-full object-contain opacity-85" />
              </div>
              <div>
@@ -127,16 +127,16 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
           </div>
           <button 
             onClick={() => setIsMenuOpen(true)}
-            className="tap-target relative rounded-2xl border border-border/60 bg-card/80 p-2.5 shadow-sm transition-all hover:bg-primary/5 active:border-primary/10 lg:hidden"
+            className="tap-target relative rounded-lg border border-border/60 bg-card/80 p-2.5 shadow-sm transition-all hover:bg-primary/5 active:border-primary/10 lg:hidden"
           >
             <Menu className="w-5 h-5 text-primary" />
             <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-fund-in border border-background"></span>
           </button>
         </div>
-        <div className="mt-4 rounded-[1.6rem] border border-primary/10 bg-card/80 px-4 py-3 shadow-sm backdrop-blur-sm">
+        <div className="mt-4 rounded-xl border border-primary/10 bg-card/80 px-4 py-3 shadow-sm backdrop-blur-sm">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <Info className="w-4 h-4" />
               </div>
               <div className="text-right">
@@ -213,7 +213,7 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
                     href={item.href}
                     onClick={() => setIsMenuOpen(false)}
                     className={cn(
-                      "flex items-center gap-4 p-4 rounded-2xl transition-all border",
+                      "flex items-center gap-4 p-4 rounded-lg transition-all border",
                       activeSection?.key === item.key
                         ? "bg-primary/5 border-primary/20 text-primary shadow-sm" 
                         : "border-transparent hover:bg-muted/50 text-muted-foreground"
@@ -238,7 +238,7 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
               </div>
 
               <div className="mt-6 pt-6 border-t border-border/50 space-y-4">
-                <div className="bg-muted/30 p-4 rounded-2xl">
+                <div className="bg-muted/30 p-4 rounded-lg">
                   <div className="flex items-center gap-3 mb-2">
                     {user?.profileImageUrl ? (
                       <img src={user.profileImageUrl} alt="" className="w-8 h-8 rounded-full object-cover" />
@@ -265,7 +265,7 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
                     setIsMenuOpen(false);
                     setLocation("/");
                   }}
-                  className="w-full flex items-center gap-3 p-4 rounded-2xl text-destructive hover:bg-destructive/5 transition-all border border-transparent hover:border-destructive/10 font-bold text-sm"
+                  className="w-full flex items-center gap-3 p-4 rounded-lg text-destructive hover:bg-destructive/5 transition-all border border-transparent hover:border-destructive/10 font-bold text-sm"
                   data-testid="button-logout"
                 >
                   <div className="p-2 rounded-xl bg-destructive/10">
@@ -301,7 +301,7 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
                     {isActive && (
                       <motion.div 
                         layoutId="nav-active"
-                        className="absolute -top-2 h-8 w-14 rounded-2xl bg-primary/8"
+                        className="absolute -top-2 h-8 w-14 rounded-lg bg-primary/8"
                       />
                     )}
                     <item.icon className={cn("relative z-10 h-[18px] w-[18px] transition-transform group-active:scale-90", isActive && "fill-current")} strokeWidth={isActive ? 2.5 : 2} />
