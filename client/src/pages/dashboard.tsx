@@ -10,9 +10,9 @@ import { cn } from "@/lib/utils";
 
 const layerMeta: Record<string, { arabicName: string; color: string }> = {
   protected: { arabicName: "رأس المال المحمي", color: "bg-primary" },
-  emergency: { arabicName: "احتياطي الطوارئ", color: "bg-amber-600" },
-  flexible: { arabicName: "رأس المال المرن", color: "bg-emerald-500" },
-  growth: { arabicName: "رأس مال النمو", color: "bg-blue-600" },
+  emergency: { arabicName: "احتياطي الطوارئ", color: "bg-fund-out" },
+  flexible: { arabicName: "رأس المال المرن", color: "bg-fund-in" },
+  growth: { arabicName: "رأس مال النمو", color: "bg-fund-loan" },
 };
 
 export default function Dashboard() {
@@ -24,10 +24,10 @@ export default function Dashboard() {
   });
 
   const quickActions = [
-    { label: "المساهمات", icon: CreditCard, href: "/payments", color: "bg-emerald-500" },
-    ...(isAdmin ? [{ label: "الإنفاق", icon: Wallet, href: "/expenses", color: "bg-amber-500" }] : []),
-    { label: "السلف", icon: HandCoins, href: "/loans", color: "bg-blue-500" },
-    { label: "التقارير", icon: FileText, href: "/reports", color: "bg-purple-500" },
+    { label: "المساهمات", icon: CreditCard, href: "/payments", color: "bg-fund-in" },
+    ...(isAdmin ? [{ label: "الإنفاق", icon: Wallet, href: "/expenses", color: "bg-fund-out" }] : []),
+    { label: "السلف", icon: HandCoins, href: "/loans", color: "bg-fund-loan" },
+    { label: "التقارير", icon: FileText, href: "/reports", color: "bg-secondary" },
   ];
 
   if (isLoading) {
@@ -74,7 +74,7 @@ export default function Dashboard() {
             {totalCapital.toLocaleString()} <span className="text-xl text-muted-foreground font-sans">ر.ع</span>
           </h2>
           <div className="flex items-center justify-center gap-3 mt-4">
-            <div className="px-4 py-1.5 rounded-full bg-emerald-500/10 text-emerald-700 text-xs font-bold flex items-center gap-1.5 border border-emerald-500/20 shadow-sm">
+            <div className="px-4 py-1.5 rounded-full bg-fund-in/14 text-fund-in text-xs font-bold flex items-center gap-1.5 border border-fund-in/25 shadow-sm">
               <ShieldCheck className="w-4 h-4" />
               <span>الاعتمادات نشطة</span>
             </div>
@@ -98,21 +98,21 @@ export default function Dashboard() {
 
         {/* Summary Cards */}
         <div className="grid grid-cols-2 gap-4">
-          <div className="bg-emerald-50/50 border border-emerald-100 rounded-3xl p-5 flex flex-col gap-1 relative overflow-hidden group">
+          <div className="bg-fund-in/5 border border-fund-in/14 rounded-3xl p-5 flex flex-col gap-1 relative overflow-hidden group">
             <div className="absolute -right-2 -bottom-2 opacity-5 transition-transform group-hover:scale-110">
               <TrendingUp className="w-16 h-16" />
             </div>
-            <span className="text-xs text-emerald-700 font-bold uppercase tracking-wider">الإيداعات</span>
-            <span className="text-2xl font-bold font-mono text-emerald-600">
+            <span className="text-xs text-fund-in font-bold uppercase tracking-wider">الإيداعات</span>
+            <span className="text-2xl font-bold font-mono text-fund-in">
               {totalContributions.toLocaleString()} <span className="text-xs">ر.ع</span>
             </span>
           </div>
-          <div className="bg-amber-50/50 border border-amber-100 rounded-3xl p-5 flex flex-col gap-1 relative overflow-hidden group">
+          <div className="bg-fund-out/5 border border-fund-out/14 rounded-3xl p-5 flex flex-col gap-1 relative overflow-hidden group">
             <div className="absolute -right-2 -bottom-2 opacity-5 transition-transform group-hover:scale-110">
               <History className="w-16 h-16" />
             </div>
-            <span className="text-xs text-amber-700 font-bold uppercase tracking-wider">المصروفات</span>
-            <span className="text-2xl font-bold font-mono text-amber-600">
+            <span className="text-xs text-fund-out font-bold uppercase tracking-wider">المصروفات</span>
+            <span className="text-2xl font-bold font-mono text-fund-out">
               {totalExpenses.toLocaleString()} <span className="text-xs">ر.ع</span>
             </span>
           </div>

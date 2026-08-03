@@ -207,10 +207,10 @@ export default function AdminDashboard() {
   if (error) {
     return (
       <MobileLayout title="لوحة الإدارة">
-        <div className="text-center py-12 bg-red-50 rounded-3xl border border-red-200">
-          <Shield className="w-12 h-12 mx-auto text-red-500 mb-4" />
-          <p className="text-red-700 font-bold">غير مصرح لك بالوصول</p>
-          <p className="text-red-600 text-sm mt-2">يجب أن تكون مشرفاً للوصول لهذه الصفحة</p>
+        <div className="text-center py-12 bg-fund-due/8 rounded-3xl border border-fund-due/25">
+          <Shield className="w-12 h-12 mx-auto text-fund-due mb-4" />
+          <p className="text-fund-due font-bold">غير مصرح لك بالوصول</p>
+          <p className="text-fund-due text-sm mt-2">يجب أن تكون مشرفاً للوصول لهذه الصفحة</p>
         </div>
       </MobileLayout>
     );
@@ -242,16 +242,16 @@ export default function AdminDashboard() {
         {alerts.length > 0 && (
           <div className="rounded-[1.5rem] border border-border bg-card p-4 space-y-3" data-testid="alerts-card">
             <div className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              <AlertTriangle className="h-5 w-5 text-fund-out" />
               <span className="font-bold">يحتاج انتباهك</span>
-              <span className="mr-auto rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700">{alerts.length}</span>
+              <span className="mr-auto rounded-full bg-fund-out/14 px-2 py-0.5 text-xs font-bold text-fund-out">{alerts.length}</span>
             </div>
             <div className="space-y-2">
               {alerts.map((alert, idx) => (
                 <div key={idx} className="flex items-start gap-3 rounded-xl border border-border/60 bg-background px-3 py-2.5">
                   <span className={cn(
                     "mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full",
-                    alert.severity === "high" ? "bg-red-500" : alert.severity === "medium" ? "bg-amber-500" : "bg-blue-400",
+                    alert.severity === "high" ? "bg-fund-due" : alert.severity === "medium" ? "bg-fund-out" : "bg-fund-loan/60",
                   )} />
                   <div className="min-w-0">
                     <p className="text-sm font-bold leading-tight">{alert.title}</p>
@@ -295,7 +295,7 @@ export default function AdminDashboard() {
                     <button
                       onClick={() => rejectRequestMutation.mutate(r.id)}
                       disabled={rejectRequestMutation.isPending}
-                      className="tap-target rounded-lg border border-border p-1.5 text-muted-foreground hover:text-red-500"
+                      className="tap-target rounded-lg border border-border p-1.5 text-muted-foreground hover:text-fund-due"
                       title="رفض الطلب"
                     >
                       <X className="w-4 h-4" />
@@ -336,21 +336,21 @@ export default function AdminDashboard() {
         </Dialog>
 
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          <div className="rounded-[1.5rem] border border-amber-200 bg-amber-50/80 p-4">
-            <div className="mb-2 flex items-center gap-2 text-amber-700">
+          <div className="rounded-[1.5rem] border border-fund-out/25 bg-fund-out/6 p-4">
+            <div className="mb-2 flex items-center gap-2 text-fund-out">
               <AlertTriangle className="h-4 w-4" />
               <span className="text-xs font-bold">تنبيه أمني</span>
             </div>
-            <p className="text-sm font-bold text-amber-900">تأكد من تغيير كلمة مرور المدير الافتراضية قبل اعتماد النظام.</p>
-            <p className="mt-1 text-xs leading-6 text-amber-700">يوصى بإعداد كلمة مرور قوية ومراجعة الحسابات الإدارية قبل التشغيل الفعلي.</p>
+            <p className="text-sm font-bold text-fund-out">تأكد من تغيير كلمة مرور المدير الافتراضية قبل اعتماد النظام.</p>
+            <p className="mt-1 text-xs leading-6 text-fund-out">يوصى بإعداد كلمة مرور قوية ومراجعة الحسابات الإدارية قبل التشغيل الفعلي.</p>
           </div>
-          <div className="rounded-[1.5rem] border border-blue-200 bg-blue-50/80 p-4">
-            <div className="mb-2 flex items-center gap-2 text-blue-700">
+          <div className="rounded-[1.5rem] border border-fund-loan/25 bg-fund-loan/6 p-4">
+            <div className="mb-2 flex items-center gap-2 text-fund-loan">
               <Lock className="h-4 w-4" />
               <span className="text-xs font-bold">إجراءات حساسة</span>
             </div>
-            <p className="text-sm font-bold text-blue-900">الحذف، التصفير، وتعديل الصلاحيات تؤثر مباشرة على النظام.</p>
-            <p className="mt-1 text-xs leading-6 text-blue-700">نفّذ العمليات الحساسة بعد مراجعة مزدوجة وتأكيد واضح قبل الإرسال.</p>
+            <p className="text-sm font-bold text-fund-loan">الحذف، التصفير، وتعديل الصلاحيات تؤثر مباشرة على النظام.</p>
+            <p className="mt-1 text-xs leading-6 text-fund-loan">نفّذ العمليات الحساسة بعد مراجعة مزدوجة وتأكيد واضح قبل الإرسال.</p>
           </div>
         </div>
 
@@ -358,7 +358,7 @@ export default function AdminDashboard() {
         <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
           <DialogTrigger asChild>
             <button 
-              className="w-full bg-green-600 text-white py-3 rounded-2xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-green-600/20"
+              className="w-full bg-fund-in text-white py-3 rounded-2xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-fund-in/20"
               data-testid="button-add-user"
             >
               <Plus className="w-5 h-5" />
@@ -462,7 +462,7 @@ export default function AdminDashboard() {
 
         <button
           onClick={() => setLocation("/fund-ops")}
-          className="w-full bg-amber-600 text-white py-4 rounded-2xl font-bold flex items-center gap-4 px-5 active:scale-95 transition-transform shadow-lg shadow-amber-600/20"
+          className="w-full bg-fund-out text-white py-4 rounded-2xl font-bold flex items-center gap-4 px-5 active:scale-95 transition-transform shadow-lg shadow-fund-out/20"
           data-testid="button-goto-fund-ops"
         >
           <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
@@ -492,7 +492,7 @@ export default function AdminDashboard() {
 
         <button
           onClick={() => setLocation("/investments")}
-          className="w-full bg-purple-600 text-white py-4 rounded-2xl font-bold flex items-center gap-4 px-5 active:scale-95 transition-transform shadow-lg shadow-purple-600/20"
+          className="w-full bg-primary text-primary-foreground py-4 rounded-2xl font-bold flex items-center gap-4 px-5 active:scale-95 transition-transform shadow-lg shadow-primary/20"
           data-testid="button-goto-investments"
         >
           <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
@@ -578,7 +578,7 @@ export default function AdminDashboard() {
                     {/* Link to Member */}
                     <Dialog>
                       <DialogTrigger asChild>
-                        <button className="tap-target flex-1 bg-blue-600 text-white py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform">
+                        <button className="tap-target flex-1 bg-fund-loan text-white py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform">
                           <Link className="w-3.5 h-3.5" />
                           ربط بعضو
                         </button>
@@ -621,7 +621,7 @@ export default function AdminDashboard() {
                       <DialogTrigger asChild>
                         <button 
                           onClick={() => setPasswordUserId(u.id)}
-                          className="tap-target p-2 bg-amber-600 text-white rounded-xl flex items-center justify-center active:scale-95 transition-transform"
+                          className="tap-target p-2 bg-fund-out text-white rounded-xl flex items-center justify-center active:scale-95 transition-transform"
                           data-testid={`button-change-password-${u.id}`}
                         >
                           <Key className="w-4 h-4" />
@@ -692,7 +692,7 @@ export default function AdminDashboard() {
                         }
                       }}
                       disabled={deleteUserMutation.isPending || u.id === user?.id}
-                      className="tap-target p-2 bg-red-600 text-white rounded-xl flex items-center justify-center active:scale-95 transition-transform disabled:opacity-50"
+                      className="tap-target p-2 bg-fund-due text-white rounded-xl flex items-center justify-center active:scale-95 transition-transform disabled:opacity-50"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -706,7 +706,7 @@ export default function AdminDashboard() {
         {/* Capital Allocation Lock Section */}
         <div className="border-t border-border/40 my-2" />
 
-        <div className="bg-emerald-700 text-white p-6 rounded-[2rem] relative overflow-hidden shadow-lg shadow-emerald-700/20">
+        <div className="bg-fund-in text-white p-6 rounded-[2rem] relative overflow-hidden shadow-lg shadow-fund-in/20">
           <div className="relative z-10">
             <div className="flex items-center gap-3 mb-2">
               <Lock className="w-8 h-8" />
@@ -721,7 +721,7 @@ export default function AdminDashboard() {
           <button
             onClick={() => lockAllocationMutation.mutate()}
             disabled={lockAllocationMutation.isPending}
-            className="flex-1 bg-emerald-700 text-white py-3 rounded-2xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-emerald-700/20 disabled:opacity-50"
+            className="flex-1 bg-fund-in text-white py-3 rounded-2xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-fund-in/20 disabled:opacity-50"
             data-testid="button-lock-allocation"
           >
             {lockAllocationMutation.isPending ? (
@@ -736,7 +736,7 @@ export default function AdminDashboard() {
           <button
             onClick={() => resetAllocationMutation.mutate()}
             disabled={resetAllocationMutation.isPending}
-            className="flex-1 bg-amber-600 text-white py-3 rounded-2xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-amber-600/20 disabled:opacity-50"
+            className="flex-1 bg-fund-out text-white py-3 rounded-2xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-fund-out/20 disabled:opacity-50"
             data-testid="button-reset-allocation"
           >
             {resetAllocationMutation.isPending ? (
@@ -753,7 +753,7 @@ export default function AdminDashboard() {
         {/* System Reset Section */}
         <div className="border-t border-border/40 my-2" />
         
-        <div className="bg-red-600 text-white p-6 rounded-[2rem] relative overflow-hidden shadow-lg shadow-red-600/20">
+        <div className="bg-fund-due text-white p-6 rounded-[2rem] relative overflow-hidden shadow-lg shadow-fund-due/20">
           <div className="relative z-10">
             <div className="flex items-center gap-3 mb-2">
               <RotateCcw className="w-8 h-8" />
@@ -767,7 +767,7 @@ export default function AdminDashboard() {
         <Dialog open={resetDialogOpen} onOpenChange={(open) => { setResetDialogOpen(open); if (!open) setResetConfirmText(""); }}>
           <DialogTrigger asChild>
             <button
-              className="w-full bg-red-600 text-white py-3 rounded-2xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-red-600/20"
+              className="w-full bg-fund-due text-white py-3 rounded-2xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-fund-due/20"
               data-testid="button-system-reset"
             >
               <AlertTriangle className="w-5 h-5" />
@@ -776,7 +776,7 @@ export default function AdminDashboard() {
           </DialogTrigger>
           <DialogContent className="sm:max-w-md font-sans" dir="rtl">
             <DialogHeader>
-              <DialogTitle className="font-heading text-xl text-red-600 flex items-center gap-2">
+              <DialogTitle className="font-heading text-xl text-fund-due flex items-center gap-2">
                 <AlertTriangle className="w-6 h-6" />
                 تحذير: تصفير النظام
               </DialogTitle>
@@ -785,13 +785,13 @@ export default function AdminDashboard() {
               </DialogDescription>
             </DialogHeader>
             <div className="py-4 space-y-4">
-              <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
-                <p className="text-sm text-red-700 font-bold mb-2">للتأكيد، اكتب "تصفير" في الحقل أدناه</p>
+              <div className="bg-fund-due/8 border border-fund-due/25 rounded-xl p-4 text-center">
+                <p className="text-sm text-fund-due font-bold mb-2">للتأكيد، اكتب "تصفير" في الحقل أدناه</p>
                 <input
                   type="text"
                   value={resetConfirmText}
                   onChange={(e) => setResetConfirmText(e.target.value)}
-                  className="w-full bg-white border border-red-300 rounded-xl px-4 py-3 text-center focus:outline-none focus:ring-2 focus:ring-red-500/50"
+                  className="w-full bg-white border border-fund-due/30 rounded-xl px-4 py-3 text-center focus:outline-none focus:ring-2 focus:ring-fund-due/50"
                   placeholder='اكتب "تصفير" هنا'
                   data-testid="input-reset-confirm"
                 />
@@ -799,7 +799,7 @@ export default function AdminDashboard() {
               <button
                 onClick={() => resetSystemMutation.mutate()}
                 disabled={resetConfirmText !== "تصفير" || resetSystemMutation.isPending}
-                className="w-full bg-red-600 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full bg-fund-due text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-50"
                 data-testid="button-confirm-reset"
               >
                 {resetSystemMutation.isPending ? (

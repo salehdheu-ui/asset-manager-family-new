@@ -100,7 +100,7 @@ export default function Governance() {
               <h2 className="text-xl font-bold font-heading">{user?.firstName} {user?.lastName}</h2>
               <div className="flex items-center gap-2 mt-1">
                 <span className="text-sm font-medium text-primary">وضعية: {isGuardian ? 'الوصي' : 'عضو'}</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <span className="w-1.5 h-1.5 rounded-full bg-fund-in" />
               </div>
             </div>
           </div>
@@ -235,9 +235,9 @@ export default function Governance() {
         </AnimatePresence>
 
         {/* Info Box */}
-        <div className="bg-blue-50 border border-blue-200 p-4 rounded-2xl flex items-start gap-3">
-          <Info className="w-5 h-5 text-blue-600 shrink-0" />
-          <div className="text-xs text-blue-800 leading-relaxed">
+        <div className="bg-fund-loan/8 border border-fund-loan/25 p-4 rounded-2xl flex items-start gap-3">
+          <Info className="w-5 h-5 text-fund-loan shrink-0" />
+          <div className="text-xs text-fund-loan leading-relaxed">
             يتم توثيق كل عملية استخدام لصلاحيات الوصي في سجل الثقة مع "بصمة رقمية" فريدة. لا يمكن حذف أو تعديل أي إجراء يتم اتخاذه.
           </div>
         </div>

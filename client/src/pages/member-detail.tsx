@@ -114,8 +114,8 @@ export default function MemberDetail() {
     );
   }
 
-  const ratingColor = report.performance.commitmentRate >= 80 ? "text-emerald-600" : report.performance.commitmentRate >= 50 ? "text-amber-600" : "text-red-600";
-  const ratingBg = report.performance.commitmentRate >= 80 ? "bg-emerald-50 border-emerald-200" : report.performance.commitmentRate >= 50 ? "bg-amber-50 border-amber-200" : "bg-red-50 border-red-200";
+  const ratingColor = report.performance.commitmentRate >= 80 ? "text-fund-in" : report.performance.commitmentRate >= 50 ? "text-fund-out" : "text-fund-due";
+  const ratingBg = report.performance.commitmentRate >= 80 ? "bg-fund-in/8 border-fund-in/25" : report.performance.commitmentRate >= 50 ? "bg-fund-out/8 border-fund-out/25" : "bg-fund-due/8 border-fund-due/25";
 
   return (
     <MobileLayout title={`تقرير: ${report.member.name}`}>
@@ -152,36 +152,36 @@ export default function MemberDetail() {
 
         {/* Summary cards */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4">
+          <div className="bg-fund-in/8 border border-fund-in/25 rounded-2xl p-4">
             <div className="flex items-center gap-1.5 mb-1">
-              <TrendingUp className="w-4 h-4 text-emerald-600" />
-              <p className="text-xs font-bold text-emerald-700">إجمالي المساهمات</p>
+              <TrendingUp className="w-4 h-4 text-fund-in" />
+              <p className="text-xs font-bold text-fund-in">إجمالي المساهمات</p>
             </div>
-            <p className="font-mono font-bold text-emerald-700 text-base">{fmt(report.summary.totalContributions)}</p>
-            <p className="text-xs text-emerald-600 mt-0.5">{report.summary.contributionCount} مساهمة</p>
+            <p className="font-mono font-bold text-fund-in text-base">{fmt(report.summary.totalContributions)}</p>
+            <p className="text-xs text-fund-in mt-0.5">{report.summary.contributionCount} مساهمة</p>
           </div>
-          <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4">
+          <div className="bg-fund-loan/8 border border-fund-loan/25 rounded-2xl p-4">
             <div className="flex items-center gap-1.5 mb-1">
-              <HandCoins className="w-4 h-4 text-blue-600" />
-              <p className="text-xs font-bold text-blue-700">إجمالي السلف</p>
+              <HandCoins className="w-4 h-4 text-fund-loan" />
+              <p className="text-xs font-bold text-fund-loan">إجمالي السلف</p>
             </div>
-            <p className="font-mono font-bold text-blue-700 text-base">{fmt(report.summary.totalLoaned)}</p>
-            <p className="text-xs text-blue-600 mt-0.5">{report.summary.loanCount} سلفة</p>
+            <p className="font-mono font-bold text-fund-loan text-base">{fmt(report.summary.totalLoaned)}</p>
+            <p className="text-xs text-fund-loan mt-0.5">{report.summary.loanCount} سلفة</p>
           </div>
-          <div className="bg-green-50 border border-green-200 rounded-2xl p-4">
+          <div className="bg-fund-in/8 border border-fund-in/25 rounded-2xl p-4">
             <div className="flex items-center gap-1.5 mb-1">
-              <CheckCircle2 className="w-4 h-4 text-green-600" />
-              <p className="text-xs font-bold text-green-700">المسدد من السلف</p>
+              <CheckCircle2 className="w-4 h-4 text-fund-in" />
+              <p className="text-xs font-bold text-fund-in">المسدد من السلف</p>
             </div>
-            <p className="font-mono font-bold text-green-700 text-base">{fmt(report.summary.totalLoanPaid)}</p>
+            <p className="font-mono font-bold text-fund-in text-base">{fmt(report.summary.totalLoanPaid)}</p>
           </div>
-          <div className={cn("border rounded-2xl p-4", report.summary.totalLoanRemaining > 0 ? "bg-amber-50 border-amber-200" : "bg-gray-50 border-gray-200")}>
+          <div className={cn("border rounded-2xl p-4", report.summary.totalLoanRemaining > 0 ? "bg-fund-out/8 border-fund-out/25" : "bg-gray-50 border-gray-200")}>
             <div className="flex items-center gap-1.5 mb-1">
-              <Scale className={cn("w-4 h-4", report.summary.totalLoanRemaining > 0 ? "text-amber-600" : "text-gray-500")} />
-              <p className={cn("text-xs font-bold", report.summary.totalLoanRemaining > 0 ? "text-amber-700" : "text-gray-600")}>الرصيد القائم</p>
+              <Scale className={cn("w-4 h-4", report.summary.totalLoanRemaining > 0 ? "text-fund-out" : "text-gray-500")} />
+              <p className={cn("text-xs font-bold", report.summary.totalLoanRemaining > 0 ? "text-fund-out" : "text-gray-600")}>الرصيد القائم</p>
             </div>
-            <p className={cn("font-mono font-bold text-base", report.summary.totalLoanRemaining > 0 ? "text-amber-700" : "text-gray-500")}>{fmt(report.summary.totalLoanRemaining)}</p>
-            <p className={cn("text-xs mt-0.5", report.summary.totalLoanRemaining > 0 ? "text-amber-600" : "text-gray-400")}>
+            <p className={cn("font-mono font-bold text-base", report.summary.totalLoanRemaining > 0 ? "text-fund-out" : "text-gray-500")}>{fmt(report.summary.totalLoanRemaining)}</p>
+            <p className={cn("text-xs mt-0.5", report.summary.totalLoanRemaining > 0 ? "text-fund-out" : "text-gray-400")}>
               {report.summary.totalLoanRemaining > 0 ? "مديونية قائمة" : "لا توجد ديون"}
             </p>
           </div>
@@ -195,7 +195,7 @@ export default function MemberDetail() {
           </div>
           <div className="w-full h-2.5 bg-muted rounded-full overflow-hidden">
             <motion.div initial={{ width: 0 }} animate={{ width: `${report.performance.commitmentRate}%` }} transition={{ duration: 0.8, ease: "easeOut" }}
-              className={cn("h-full rounded-full", report.performance.commitmentRate >= 80 ? "bg-emerald-500" : report.performance.commitmentRate >= 50 ? "bg-amber-500" : "bg-red-500")} />
+              className={cn("h-full rounded-full", report.performance.commitmentRate >= 80 ? "bg-fund-in" : report.performance.commitmentRate >= 50 ? "bg-fund-out" : "bg-fund-due")} />
           </div>
           <p className="text-xs text-muted-foreground mt-1.5">
             {report.performance.paidMonths} شهر مدفوع من أصل {report.performance.expectedMonths} شهر متوقع
@@ -211,26 +211,26 @@ export default function MemberDetail() {
             {report.contributionsGrid.map((c) => (
               <div key={c.month} className={cn(
                 "rounded-xl p-2 text-center border",
-                c.status === "approved" ? "bg-emerald-50 border-emerald-200" :
-                c.status === "pending_approval" ? "bg-blue-50 border-blue-200" :
+                c.status === "approved" ? "bg-fund-in/8 border-fund-in/25" :
+                c.status === "pending_approval" ? "bg-fund-loan/8 border-fund-loan/25" :
                 c.status === "upcoming" ? "bg-gray-50 border-gray-200" :
-                "bg-red-50 border-red-200"
+                "bg-fund-due/8 border-fund-due/25"
               )}>
                 <p className="text-xs font-bold text-muted-foreground">{monthNames[c.month - 1].substring(0, 3)}</p>
                 <div className="mt-1 flex justify-center">
-                  {c.status === "approved" ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> :
-                   c.status === "pending_approval" ? <Clock className="w-4 h-4 text-blue-600" /> :
+                  {c.status === "approved" ? <CheckCircle2 className="w-4 h-4 text-fund-in" /> :
+                   c.status === "pending_approval" ? <Clock className="w-4 h-4 text-fund-loan" /> :
                    c.status === "upcoming" ? <div className="w-4 h-4 rounded-full border-2 border-gray-300" /> :
-                   <AlertCircle className="w-4 h-4 text-red-500" />}
+                   <AlertCircle className="w-4 h-4 text-fund-due" />}
                 </div>
                 {c.amount > 0 && <p className="text-xs font-mono font-bold text-muted-foreground mt-0.5">{c.amount.toFixed(0)}</p>}
               </div>
             ))}
           </div>
           <div className="flex flex-wrap gap-2 text-xs">
-            <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-emerald-600" />مدفوع</span>
-            <span className="flex items-center gap-1"><Clock className="w-3 h-3 text-blue-600" />قيد الاعتماد</span>
-            <span className="flex items-center gap-1"><AlertCircle className="w-3 h-3 text-red-500" />غائب</span>
+            <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-fund-in" />مدفوع</span>
+            <span className="flex items-center gap-1"><Clock className="w-3 h-3 text-fund-loan" />قيد الاعتماد</span>
+            <span className="flex items-center gap-1"><AlertCircle className="w-3 h-3 text-fund-due" />غائب</span>
             <span className="flex items-center gap-1"><div className="w-3 h-3 rounded-full border-2 border-gray-300" />قادم</span>
           </div>
         </div>
@@ -248,7 +248,7 @@ export default function MemberDetail() {
                 <button className="w-full p-4 flex items-center gap-3 text-right"
                   onClick={() => setExpandedLoan(expandedLoan === loan.id ? null : loan.id)}>
                   <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
-                    loan.status === "approved" ? "bg-blue-100 text-blue-600" : loan.status === "rejected" ? "bg-red-100 text-red-600" : "bg-amber-100 text-amber-600")}>
+                    loan.status === "approved" ? "bg-fund-loan/14 text-fund-loan" : loan.status === "rejected" ? "bg-fund-due/14 text-fund-due" : "bg-fund-out/14 text-fund-out")}>
                     <HandCoins className="w-5 h-5" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -256,7 +256,7 @@ export default function MemberDetail() {
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className="font-mono text-xs font-bold text-primary">{fmt(loan.amount)}</span>
                       <span className={cn("text-xs px-1.5 py-0.5 rounded-full font-bold",
-                        loan.status === "approved" ? "bg-blue-50 text-blue-700" : loan.status === "rejected" ? "bg-red-50 text-red-700" : "bg-amber-50 text-amber-700")}>
+                        loan.status === "approved" ? "bg-fund-loan/8 text-fund-loan" : loan.status === "rejected" ? "bg-fund-due/8 text-fund-due" : "bg-fund-out/8 text-fund-out")}>
                         {loan.status === "approved" ? "معتمدة" : loan.status === "rejected" ? "مرفوضة" : "معلقة"}
                       </span>
                     </div>
@@ -274,13 +274,13 @@ export default function MemberDetail() {
                             <p className="text-xs font-bold text-muted-foreground">المبلغ</p>
                             <p className="font-mono font-bold text-xs text-primary mt-0.5">{fmt(loan.amount)}</p>
                           </div>
-                          <div className="bg-green-50 rounded-xl p-2.5 text-center">
-                            <p className="text-xs font-bold text-green-700">المسدد</p>
-                            <p className="font-mono font-bold text-xs text-green-700 mt-0.5">{fmt(loan.totalPaid)}</p>
+                          <div className="bg-fund-in/8 rounded-xl p-2.5 text-center">
+                            <p className="text-xs font-bold text-fund-in">المسدد</p>
+                            <p className="font-mono font-bold text-xs text-fund-in mt-0.5">{fmt(loan.totalPaid)}</p>
                           </div>
-                          <div className={cn("rounded-xl p-2.5 text-center", loan.remaining > 0 ? "bg-amber-50" : "bg-gray-50")}>
-                            <p className={cn("text-xs font-bold", loan.remaining > 0 ? "text-amber-700" : "text-gray-500")}>المتبقي</p>
-                            <p className={cn("font-mono font-bold text-xs mt-0.5", loan.remaining > 0 ? "text-amber-700" : "text-gray-500")}>{fmt(loan.remaining)}</p>
+                          <div className={cn("rounded-xl p-2.5 text-center", loan.remaining > 0 ? "bg-fund-out/8" : "bg-gray-50")}>
+                            <p className={cn("text-xs font-bold", loan.remaining > 0 ? "text-fund-out" : "text-gray-500")}>المتبقي</p>
+                            <p className={cn("font-mono font-bold text-xs mt-0.5", loan.remaining > 0 ? "text-fund-out" : "text-gray-500")}>{fmt(loan.remaining)}</p>
                           </div>
                         </div>
 
@@ -291,7 +291,7 @@ export default function MemberDetail() {
                               <span className="font-bold">{loan.amount > 0 ? Math.round((loan.totalPaid / loan.amount) * 100) : 0}%</span>
                             </div>
                             <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
-                              <div className="h-full bg-green-500 rounded-full transition-all"
+                              <div className="h-full bg-fund-in rounded-full transition-all"
                                 style={{ width: `${loan.amount > 0 ? Math.min(100, (loan.totalPaid / loan.amount) * 100) : 0}%` }} />
                             </div>
                           </div>

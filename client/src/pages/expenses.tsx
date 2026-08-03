@@ -111,7 +111,7 @@ export default function Expenses() {
       subtitle: 'الصدقة والبر',
       description: 'مساهمات تطوعية لدعم المجتمع والمحتاجين.',
       icon: Heart,
-      color: 'bg-emerald-600 text-white',
+      color: 'bg-fund-in text-white',
       details: 'بحد أقصى 3% من إجمالي الصندوق سنوياً للحفاظ على الاستدامة.',
       category: 'charity',
       available: availableFlexible,
@@ -122,7 +122,7 @@ export default function Expenses() {
       subtitle: 'إدارة النفقات',
       description: 'تتبع مصروفات الصندوق الإدارية والتشغيلية.',
       icon: Wallet,
-      color: 'bg-amber-600 text-white',
+      color: 'bg-fund-out text-white',
       details: 'مرتبطة بأهداف العائلة السنوية المعتمدة.',
       category: 'general',
       available: availableFlexible,
@@ -275,7 +275,7 @@ export default function Expenses() {
                       <div className={cn(
                         "w-10 h-10 rounded-xl flex items-center justify-center",
                         expense.category === 'zakat' ? "bg-primary/10 text-primary" :
-                        expense.category === 'charity' ? "bg-emerald-100 text-emerald-600" : "bg-amber-100 text-amber-600"
+                        expense.category === 'charity' ? "bg-fund-in/14 text-fund-in" : "bg-fund-out/14 text-fund-out"
                       )}>
                         {expense.category === 'zakat' ? <Scale className="w-5 h-5" /> :
                          expense.category === 'charity' ? <Heart className="w-5 h-5" /> : <Wallet className="w-5 h-5" />}
@@ -291,7 +291,7 @@ export default function Expenses() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-lg font-mono font-bold text-amber-600">
+                      <div className="text-lg font-mono font-bold text-fund-out">
                         -{Number(expense.amount).toLocaleString()} <span className="text-xs font-sans">ر.ع</span>
                       </div>
                     </div>

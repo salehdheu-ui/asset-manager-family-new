@@ -48,10 +48,10 @@ export default function AuditLog() {
             <p className="text-sm font-medium text-muted-foreground">جاري تحميل السجل...</p>
           </div>
         ) : error ? (
-          <div className="rounded-3xl border border-red-200 bg-red-50 p-8 text-center">
-            <History className="mx-auto mb-3 h-10 w-10 text-red-400" />
-            <p className="font-bold text-red-700">تعذر تحميل سجل التدقيق</p>
-            <p className="mt-1 text-sm text-red-600">حاول تحديث الصفحة أو إعادة المحاولة لاحقاً.</p>
+          <div className="rounded-3xl border border-fund-due/25 bg-fund-due/8 p-8 text-center">
+            <History className="mx-auto mb-3 h-10 w-10 text-fund-due" />
+            <p className="font-bold text-fund-due">تعذر تحميل سجل التدقيق</p>
+            <p className="mt-1 text-sm text-fund-due">حاول تحديث الصفحة أو إعادة المحاولة لاحقاً.</p>
           </div>
         ) : logs.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-border bg-muted/20 p-10 text-center">

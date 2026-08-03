@@ -119,7 +119,7 @@ export default function FundOps() {
       <div className="space-y-6 pt-2 pb-12">
 
         {/* Header */}
-        <div className="bg-amber-600 text-white p-6 rounded-[2rem] relative overflow-hidden shadow-lg shadow-amber-600/20">
+        <div className="bg-fund-out text-white p-6 rounded-[2rem] relative overflow-hidden shadow-lg shadow-fund-out/20">
           <div className="relative z-10">
             <div className="flex items-center gap-3 mb-2">
               <Wallet className="w-8 h-8" />
@@ -141,10 +141,10 @@ export default function FundOps() {
           </div>
           <div className="bg-card border border-border/60 rounded-2xl p-4">
             <div className="flex items-center gap-2 mb-1">
-              <TrendingDown className="w-4 h-4 text-amber-600" />
+              <TrendingDown className="w-4 h-4 text-fund-out" />
               <p className="text-xs font-bold text-muted-foreground">المتاح للطوارئ</p>
             </div>
-            <p className="text-lg font-mono font-bold text-amber-600">{availableEmergency.toFixed(3)} ر.ع</p>
+            <p className="text-lg font-mono font-bold text-fund-out">{availableEmergency.toFixed(3)} ر.ع</p>
           </div>
         </div>
 
@@ -167,7 +167,7 @@ export default function FundOps() {
 
           <button
             onClick={() => setExpenseDialogOpen(true)}
-            className="w-full bg-red-600 text-white py-4 rounded-2xl font-bold flex items-center gap-4 px-5 active:scale-95 transition-transform shadow-lg shadow-red-600/20"
+            className="w-full bg-fund-due text-white py-4 rounded-2xl font-bold flex items-center gap-4 px-5 active:scale-95 transition-transform shadow-lg shadow-fund-due/20"
             data-testid="button-fund-ops-expense"
           >
             <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
@@ -182,7 +182,7 @@ export default function FundOps() {
 
           <button
             onClick={() => setDepositDialogOpen(true)}
-            className="w-full bg-green-600 text-white py-4 rounded-2xl font-bold flex items-center gap-4 px-5 active:scale-95 transition-transform shadow-lg shadow-green-600/20"
+            className="w-full bg-fund-in text-white py-4 rounded-2xl font-bold flex items-center gap-4 px-5 active:scale-95 transition-transform shadow-lg shadow-fund-in/20"
             data-testid="button-fund-ops-deposit"
           >
             <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
@@ -325,7 +325,7 @@ export default function FundOps() {
                   placeholder="سبب المصروف..." />
               </div>
               <button type="submit" disabled={createAdminExpenseMutation.isPending || !expenseTitle || !expenseAmount}
-                className="w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-50 text-white bg-red-600">
+                className="w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-50 text-white bg-fund-due">
                 {createAdminExpenseMutation.isPending
                   ? <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full" />
                   : <><ReceiptText className="w-5 h-5" /> تسجيل المصروف</>}
@@ -371,7 +371,7 @@ export default function FundOps() {
                   placeholder="مثال: تسوية يدوية أو مبلغ نقدي" />
               </div>
               <button type="submit" disabled={createAdjustmentMutation.isPending || !depositAmount}
-                className="w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-50 text-white bg-green-600">
+                className="w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-50 text-white bg-fund-in">
                 {createAdjustmentMutation.isPending
                   ? <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full" />
                   : <><ArrowDownCircle className="w-5 h-5" /> تسجيل الإيداع</>}
@@ -383,19 +383,19 @@ export default function FundOps() {
         {/* Deposits log */}
         {depositRecords.length > 0 && (
           <div className="space-y-3">
-            <h3 className="font-bold text-lg text-green-700 font-heading px-1 flex items-center gap-2">
+            <h3 className="font-bold text-lg text-fund-in font-heading px-1 flex items-center gap-2">
               <Coins className="w-5 h-5" /> السجل العام للإيداعات
               <span className="text-xs bg-muted px-2 py-0.5 rounded-full font-bold text-muted-foreground mr-auto">{depositRecords.length}</span>
             </h3>
             {depositRecords.map((adj: any, idx: number) => (
               <motion.div key={adj.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.04 }}
                 className="bg-card border border-border/60 rounded-2xl p-4 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-green-100 text-green-600 shrink-0">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-fund-in/14 text-fund-in shrink-0">
                   <ArrowDownCircle className="w-5 h-5" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700">إيداع</span>
+                    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-fund-in/14 text-fund-in">إيداع</span>
                     <span className="font-bold text-sm font-mono">{Number(adj.amount).toFixed(3)} ر.ع</span>
                   </div>
                   {adj.description && <p className="text-xs text-muted-foreground mt-1 truncate">{adj.description}</p>}

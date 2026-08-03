@@ -26,10 +26,10 @@ export function ChartCard({ title, children, className, delay = 0, icon }: Chart
       <div className="relative mb-5 flex items-center justify-between gap-3">
         <div className="space-y-2">
           <h3 className="font-heading text-lg font-bold leading-tight text-primary">{title}</h3>
-          <div className="h-1 w-16 rounded-full bg-gradient-to-r from-primary/50 via-emerald-400/40 to-transparent" />
+          <div className="h-1 w-16 rounded-full bg-gradient-to-r from-primary/50 via-fund-in/24 to-transparent" />
         </div>
         {icon && (
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/10 to-emerald-50 text-primary shadow-md ring-1 ring-primary/10">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/10 to-fund-in/5 text-primary shadow-md ring-1 ring-primary/10">
             {icon}
           </div>
         )}

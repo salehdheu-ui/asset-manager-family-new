@@ -247,28 +247,28 @@ export default function YearlyPaymentMatrix() {
           <motion.div 
             initial={{ opacity: 0, y: 10 }} 
             animate={{ opacity: 1, y: 0 }}
-            className="bg-emerald-500/5 border border-emerald-500/15 rounded-2xl p-4 flex items-center gap-3"
+            className="bg-fund-in/8 border border-fund-in/15 rounded-2xl p-4 flex items-center gap-3"
           >
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
-              <TrendingUp className="w-5 h-5 text-emerald-600" />
+            <div className="w-10 h-10 rounded-xl bg-fund-in/14 flex items-center justify-center">
+              <TrendingUp className="w-5 h-5 text-fund-in" />
             </div>
             <div>
-              <p className="text-xs text-emerald-600/70 font-bold">إجمالي المعتمد</p>
-              <p className="text-lg font-mono font-bold text-emerald-700" data-testid="text-total-approved">{totalAllApproved.toLocaleString()} <span className="text-xs font-sans">ر.ع</span></p>
+              <p className="text-xs text-fund-in/70 font-bold">إجمالي المعتمد</p>
+              <p className="text-lg font-mono font-bold text-fund-in" data-testid="text-total-approved">{totalAllApproved.toLocaleString()} <span className="text-xs font-sans">ر.ع</span></p>
             </div>
           </motion.div>
           <motion.div 
             initial={{ opacity: 0, y: 10 }} 
             animate={{ opacity: 1, y: 0 }} 
             transition={{ delay: 0.05 }}
-            className="bg-amber-500/5 border border-amber-500/15 rounded-2xl p-4 flex items-center gap-3"
+            className="bg-fund-out/8 border border-fund-out/15 rounded-2xl p-4 flex items-center gap-3"
           >
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center">
-              <Clock className="w-5 h-5 text-amber-600" />
+            <div className="w-10 h-10 rounded-xl bg-fund-out/14 flex items-center justify-center">
+              <Clock className="w-5 h-5 text-fund-out" />
             </div>
             <div>
-              <p className="text-xs text-amber-600/70 font-bold">طلبات معلقة</p>
-              <p className="text-lg font-mono font-bold text-amber-700" data-testid="text-total-pending">{totalPending}</p>
+              <p className="text-xs text-fund-out/70 font-bold">طلبات معلقة</p>
+              <p className="text-lg font-mono font-bold text-fund-out" data-testid="text-total-pending">{totalPending}</p>
             </div>
           </motion.div>
         </div>
@@ -308,7 +308,7 @@ export default function YearlyPaymentMatrix() {
                       <div>
                         <h4 className="font-bold text-sm" data-testid={`text-member-name-${member.id}`}>{member.name}</h4>
                         <div className="flex items-center gap-3 mt-1">
-                          <span className="text-xs text-emerald-600 font-bold bg-emerald-500/10 px-2 py-0.5 rounded-md">
+                          <span className="text-xs text-fund-in font-bold bg-fund-in/14 px-2 py-0.5 rounded-md">
                             {totalApproved.toLocaleString()} ر.ع
                           </span>
                           <span className="text-xs text-muted-foreground font-medium">
@@ -447,9 +447,9 @@ export default function YearlyPaymentMatrix() {
                       )}
                       {memberPending.length > 0 && (
                         <div className="flex items-center gap-2">
-                          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200/60">
-                            <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse" />
-                            <span className="text-xs font-bold text-amber-600">{memberPending.length} معلق</span>
+                          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-fund-out/8 border border-fund-out/15">
+                            <span className="w-1.5 h-1.5 bg-fund-out rounded-full animate-pulse" />
+                            <span className="text-xs font-bold text-fund-out">{memberPending.length} معلق</span>
                           </div>
                           {isGuardian && (
                             <button
@@ -460,7 +460,7 @@ export default function YearlyPaymentMatrix() {
                                 })
                               }
                               disabled={approvingAllFor === member.id}
-                              className="tap-target flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-700 text-xs font-bold hover:bg-emerald-500/20 transition-all active:scale-95 disabled:opacity-50"
+                              className="tap-target flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-fund-in/14 border border-fund-in/25 text-fund-in text-xs font-bold hover:bg-fund-in/20 transition-all active:scale-95 disabled:opacity-50"
                               data-testid={`button-approve-all-${member.id}`}
                             >
                               <Check className="w-3.5 h-3.5" />
@@ -479,7 +479,7 @@ export default function YearlyPaymentMatrix() {
                         initial={{ width: 0 }}
                         animate={{ width: `${(paidMonths / 12) * 100}%` }}
                         transition={{ duration: 0.8, delay: mIdx * 0.1 }}
-                        className="h-full bg-gradient-to-l from-emerald-400 to-emerald-500 rounded-full"
+                        className="h-full bg-gradient-to-l from-fund-in/60 to-fund-in rounded-full"
                       />
                     </div>
                   </div>
@@ -505,9 +505,9 @@ export default function YearlyPaymentMatrix() {
                               className={cn(
                                 "relative flex flex-col items-center justify-center py-3 px-1 gap-0.5 transition-all rounded-2xl border",
                                 isApproved 
-                                  ? "bg-emerald-500/8 border-emerald-500/20 hover:bg-emerald-500/15" 
+                                  ? "bg-fund-in/8 border-fund-in/25 hover:bg-fund-in/15" 
                                   : isPending 
-                                    ? "bg-amber-500/8 border-amber-400/25 hover:bg-amber-500/15" 
+                                    ? "bg-fund-out/8 border-fund-out/15 hover:bg-fund-out/15" 
                                     : isCurrentMonth
                                       ? "bg-primary/5 border-primary/20 hover:bg-primary/10"
                                       : "bg-muted/20 border-transparent hover:bg-muted/40 hover:border-border/30"
@@ -516,15 +516,15 @@ export default function YearlyPaymentMatrix() {
                             >
                               <span className={cn(
                                 "text-xs font-bold",
-                                isApproved ? "text-emerald-600" : isPending ? "text-amber-600" : isCurrentMonth ? "text-primary" : "text-muted-foreground/70"
+                                isApproved ? "text-fund-in" : isPending ? "text-fund-out" : isCurrentMonth ? "text-primary" : "text-muted-foreground/70"
                               )}>
                                 {month.name}
                               </span>
                               
                               {isApproved ? (
-                                <CheckCircle2 className="w-5 h-5 text-emerald-500 mt-0.5" />
+                                <CheckCircle2 className="w-5 h-5 text-fund-in mt-0.5" />
                               ) : isPending ? (
-                                <Clock className="w-5 h-5 text-amber-500 mt-0.5 animate-pulse" />
+                                <Clock className="w-5 h-5 text-fund-out mt-0.5 animate-pulse" />
                               ) : (
                                 <span className="text-xs font-mono text-muted-foreground/40 mt-0.5">---</span>
                               )}
@@ -532,7 +532,7 @@ export default function YearlyPaymentMatrix() {
                               {amount > 0 && (
                                 <span className={cn(
                                   "text-xs font-mono font-bold mt-0.5",
-                                  isApproved ? "text-emerald-700" : "text-amber-700"
+                                  isApproved ? "text-fund-in" : "text-fund-out"
                                 )}>
                                   {amount.toLocaleString()}
                                 </span>
@@ -556,8 +556,8 @@ export default function YearlyPaymentMatrix() {
                             <div className="py-6 space-y-4">
                               {isApproved ? (
                                 <div className="space-y-4">
-                                  <div className="bg-emerald-50 text-emerald-800 p-8 rounded-[2rem] flex flex-col items-center gap-3 text-center border border-emerald-100">
-                                    <CheckCircle2 className="w-16 h-16 text-emerald-500" />
+                                  <div className="bg-fund-in/8 text-fund-in p-8 rounded-[2rem] flex flex-col items-center gap-3 text-center border border-fund-in/14">
+                                    <CheckCircle2 className="w-16 h-16 text-fund-in" />
                                     <div className="text-4xl font-mono font-bold tracking-tighter">{amount.toLocaleString()} <span className="text-base font-sans font-normal">ر.ع</span></div>
                                     <p className="text-sm font-bold opacity-80">تم الاعتماد والتوثيق</p>
                                   </div>
@@ -611,8 +611,8 @@ export default function YearlyPaymentMatrix() {
                                 </div>
                               ) : isPending ? (
                                 <div className="space-y-4">
-                                  <div className="bg-amber-50 text-amber-800 p-8 rounded-[2rem] flex flex-col items-center gap-3 text-center border border-amber-100">
-                                    <Clock className="w-16 h-16 text-amber-500" />
+                                  <div className="bg-fund-out/8 text-fund-out p-8 rounded-[2rem] flex flex-col items-center gap-3 text-center border border-fund-out/14">
+                                    <Clock className="w-16 h-16 text-fund-out" />
                                     <div className="text-4xl font-mono font-bold tracking-tighter">{amount.toLocaleString()} <span className="text-base font-sans font-normal">ر.ع</span></div>
                                     <p className="text-sm font-bold opacity-80">بانتظار تأكيد الوصي</p>
                                   </div>

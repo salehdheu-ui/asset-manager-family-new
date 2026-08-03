@@ -242,7 +242,7 @@ export default function Loans() {
       title: 'سلفة عاجلة',
       description: 'للمتطلبات السريعة والبسيطة.',
       maxAmount: '10% من الصندوق',
-      color: 'bg-emerald-50 border-emerald-200 text-emerald-800',
+      color: 'bg-fund-in/8 border-fund-in/25 text-fund-in',
       icon: Clock,
       features: ['موافقة فورية', 'مراجعة بعد 30 يوم', 'من رأس المال المرن']
     },
@@ -251,7 +251,7 @@ export default function Loans() {
       title: 'سلفة غير عاجلة',
       description: 'للمشاريع الشخصية أو التحسينات.',
       maxAmount: '10% من الصندوق',
-      color: 'bg-blue-50 border-blue-200 text-blue-800',
+      color: 'bg-fund-loan/8 border-fund-loan/25 text-fund-loan',
       icon: HandCoins,
       features: ['فترة تفكير 48 ساعة', 'تصويت العائلة', 'خطة سداد ميسرة']
     },
@@ -260,7 +260,7 @@ export default function Loans() {
       title: 'قرض طارئ',
       description: 'للأزمات الصحية أو الكوارث فقط.',
       maxAmount: '20% من الصندوق',
-      color: 'bg-amber-50 border-amber-200 text-amber-800',
+      color: 'bg-fund-out/8 border-fund-out/25 text-fund-out',
       icon: AlertCircle,
       features: ['موافقة الوصي فقط', 'من احتياطي الطوارئ', 'تسجيل فوري']
     }
@@ -300,11 +300,11 @@ export default function Loans() {
           </div>
           <div className="bg-card border border-border/60 rounded-2xl p-4">
             <p className="text-xs font-bold text-muted-foreground">إجمالي المسدد</p>
-            <p className="text-lg font-mono font-bold text-emerald-600">{totalPaidAmount.toFixed(3)} ر.ع</p>
+            <p className="text-lg font-mono font-bold text-fund-in">{totalPaidAmount.toFixed(3)} ر.ع</p>
           </div>
           <div className="bg-card border border-border/60 rounded-2xl p-4">
             <p className="text-xs font-bold text-muted-foreground">إجمالي المتبقي</p>
-            <p className="text-lg font-mono font-bold text-amber-600">{totalRemainingAmount.toFixed(3)} ر.ع</p>
+            <p className="text-lg font-mono font-bold text-fund-out">{totalRemainingAmount.toFixed(3)} ر.ع</p>
           </div>
           <div className="bg-card border border-border/60 rounded-2xl p-4">
             <p className="text-xs font-bold text-muted-foreground">نوع السلف</p>
@@ -496,8 +496,8 @@ export default function Loans() {
                   <div className="text-center py-12 bg-muted/20 rounded-3xl border border-dashed border-border">
                     {settledLoans.length > 0 ? (
                       <div className="space-y-1">
-                        <CheckCircle2 className="w-8 h-8 mx-auto text-emerald-500" />
-                        <p className="text-sm font-bold text-emerald-700">لا توجد سلف قائمة — الذمة صفر ✓</p>
+                        <CheckCircle2 className="w-8 h-8 mx-auto text-fund-in" />
+                        <p className="text-sm font-bold text-fund-in">لا توجد سلف قائمة — الذمة صفر ✓</p>
                         <p className="text-xs text-muted-foreground">كل السلف السابقة مسددة بالكامل، وتفاصيلها محفوظة في التقارير</p>
                       </div>
                     ) : (
@@ -521,8 +521,8 @@ export default function Loans() {
                         <div className="flex items-center gap-3">
                           <div className={cn(
                             "w-10 h-10 rounded-xl flex items-center justify-center",
-                            loan.status === 'approved' ? "bg-emerald-100 text-emerald-600" :
-                            loan.status === 'rejected' ? "bg-red-100 text-red-600" : "bg-amber-100 text-amber-600"
+                            loan.status === 'approved' ? "bg-fund-in/14 text-fund-in" :
+                            loan.status === 'rejected' ? "bg-fund-due/14 text-fund-due" : "bg-fund-out/14 text-fund-out"
                           )}>
                             <HandCoins className="w-5 h-5" />
                           </div>
@@ -539,8 +539,8 @@ export default function Loans() {
                           </div>
                           <div className={cn(
                             "text-xs font-bold px-2 py-0.5 rounded-full inline-block mt-1 uppercase",
-                            loan.status === 'approved' ? "bg-emerald-500/10 text-emerald-700" :
-                            loan.status === 'rejected' ? "bg-red-500/10 text-red-700" : "bg-amber-500/10 text-amber-700"
+                            loan.status === 'approved' ? "bg-fund-in/14 text-fund-in" :
+                            loan.status === 'rejected' ? "bg-fund-due/14 text-fund-due" : "bg-fund-out/14 text-fund-out"
                           )}>
                             {loan.status === 'approved' ? 'معتمد' : loan.status === 'rejected' ? 'مرفوض' : 'قيد الانتظار'}
                           </div>
@@ -562,11 +562,11 @@ export default function Loans() {
                               </div>
                               <div>
                                 <p className="text-xs text-muted-foreground font-bold">المسدد</p>
-                                <p className="text-xs font-mono font-bold text-emerald-600">{paidTotal.toFixed(3)}</p>
+                                <p className="text-xs font-mono font-bold text-fund-in">{paidTotal.toFixed(3)}</p>
                               </div>
                               <div>
                                 <p className="text-xs text-muted-foreground font-bold">المتبقي</p>
-                                <p className="text-xs font-mono font-bold text-amber-600">{remainingTotal.toFixed(3)}</p>
+                                <p className="text-xs font-mono font-bold text-fund-out">{remainingTotal.toFixed(3)}</p>
                               </div>
                             </div>
                           )}
@@ -583,13 +583,13 @@ export default function Loans() {
                           <span className="text-xs font-bold text-muted-foreground">درجة التزام الطالب:</span>
                           <span className={cn(
                             "text-sm font-mono font-bold",
-                            (scoreOf(loan.memberId)?.score ?? 0) >= 80 ? "text-emerald-600" :
-                            (scoreOf(loan.memberId)?.score ?? 0) >= 50 ? "text-amber-600" : "text-red-600",
+                            (scoreOf(loan.memberId)?.score ?? 0) >= 80 ? "text-fund-in" :
+                            (scoreOf(loan.memberId)?.score ?? 0) >= 50 ? "text-fund-out" : "text-fund-due",
                           )}>
                             {scoreOf(loan.memberId)?.score}/100
                           </span>
                           {(scoreOf(loan.memberId)?.overdueInstallments ?? 0) > 0 && (
-                            <span className="mr-auto text-xs font-bold text-red-600">
+                            <span className="mr-auto text-xs font-bold text-fund-due">
                               {scoreOf(loan.memberId)?.overdueInstallments} قسط متأخر
                             </span>
                           )}
@@ -602,7 +602,7 @@ export default function Loans() {
                             data-testid={`button-approve-${loan.id}`}
                             onClick={() => statusMutation.mutate({ id: loan.id, status: "approved" })}
                             disabled={statusMutation.isPending}
-                            className="tap-target flex-1 bg-emerald-600 text-white py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform disabled:opacity-50"
+                            className="tap-target flex-1 bg-fund-in text-white py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform disabled:opacity-50"
                           >
                             <UserCheck className="w-3.5 h-3.5" />
                             اعتماد
@@ -611,7 +611,7 @@ export default function Loans() {
                             data-testid={`button-reject-${loan.id}`}
                             onClick={() => statusMutation.mutate({ id: loan.id, status: "rejected" })}
                             disabled={statusMutation.isPending}
-                            className="tap-target flex-1 bg-red-600 text-white py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform disabled:opacity-50"
+                            className="tap-target flex-1 bg-fund-due text-white py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform disabled:opacity-50"
                           >
                             <X className="w-3.5 h-3.5" />
                             رفض
@@ -682,9 +682,9 @@ export default function Loans() {
                                 <div className="space-y-2">
                                   <p className="text-xs font-bold text-muted-foreground px-1">دفعات السداد</p>
                                   {loanPayments.map((payment) => (
-                                    <div key={payment.id} className="p-3 rounded-xl border bg-emerald-50/40 border-emerald-200/50 flex justify-between items-start gap-3">
+                                    <div key={payment.id} className="p-3 rounded-xl border bg-fund-in/5 border-fund-in/12 flex justify-between items-start gap-3">
                                       <div>
-                                        <p className="text-xs font-mono font-bold text-emerald-700">{Number(payment.amount).toFixed(3)} ر.ع</p>
+                                        <p className="text-xs font-mono font-bold text-fund-in">{Number(payment.amount).toFixed(3)} ر.ع</p>
                                         {payment.note && <p className="text-xs text-muted-foreground mt-1">{payment.note}</p>}
                                       </div>
                                       <span className="text-xs text-muted-foreground">{payment.paidAt ? new Date(payment.paidAt).toLocaleDateString('ar-OM') : ""}</span>
@@ -697,7 +697,7 @@ export default function Loans() {
                               <>
                                 <div className="flex items-center justify-between px-1">
                                   <span className="text-xs font-bold text-muted-foreground">جدولة الأقساط ({loan.repaymentMonths} شهر)</span>
-                                  <span className="text-xs font-bold text-emerald-600">
+                                  <span className="text-xs font-bold text-fund-in">
                                     {repayments[loan.id].filter(r => r.status === 'paid').length}/{repayments[loan.id].length} مدفوع
                                   </span>
                                 </div>
@@ -705,12 +705,12 @@ export default function Loans() {
                                   {repayments[loan.id].map((step) => (
                                   <div key={step.id} className={cn(
                                     "p-3 rounded-xl border flex justify-between items-center",
-                                    step.status === 'paid' ? "bg-emerald-50/50 border-emerald-200/50" : "bg-muted/30 border-border/30"
+                                    step.status === 'paid' ? "bg-fund-in/5 border-fund-in/12" : "bg-muted/30 border-border/30"
                                   )}>
                                     <div className="flex items-center gap-2">
                                       <div className={cn(
                                         "w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold",
-                                        step.status === 'paid' ? "bg-emerald-500 text-white" : "bg-muted text-muted-foreground"
+                                        step.status === 'paid' ? "bg-fund-in text-white" : "bg-muted text-muted-foreground"
                                       )}>
                                         {step.installmentNumber}
                                       </div>
@@ -727,7 +727,7 @@ export default function Loans() {
                                     </div>
                                     <div className="flex items-center gap-2">
                                       {step.status === 'paid' ? (
-                                        <span className="text-xs font-bold text-emerald-600 bg-emerald-500/10 px-2 py-1 rounded-lg flex items-center gap-1">
+                                        <span className="text-xs font-bold text-fund-in bg-fund-in/14 px-2 py-1 rounded-lg flex items-center gap-1">
                                           <CheckCircle2 className="w-3 h-3" /> مدفوع
                                         </span>
                                       ) : (
@@ -742,7 +742,7 @@ export default function Loans() {
                                             تسديد
                                           </button>
                                         ) : (
-                                          <span className="text-xs font-bold text-amber-600 bg-amber-500/10 px-2 py-1 rounded-lg flex items-center gap-1">
+                                          <span className="text-xs font-bold text-fund-out bg-fund-out/14 px-2 py-1 rounded-lg flex items-center gap-1">
                                             <Clock className="w-3 h-3" /> مجدول
                                           </span>
                                         )
@@ -780,7 +780,7 @@ export default function Loans() {
                             data-testid={`button-delete-${loan.id}`}
                             onClick={() => setDeleteTarget({ id: loan.id, title: loan.title })}
                             disabled={deleteMutation.isPending}
-                            className="tap-target flex-1 text-xs text-muted-foreground flex items-center justify-center gap-1 py-1 hover:text-red-500 transition-colors disabled:opacity-50"
+                            className="tap-target flex-1 text-xs text-muted-foreground flex items-center justify-center gap-1 py-1 hover:text-fund-due transition-colors disabled:opacity-50"
                           >
                             <Trash2 className="w-3 h-3" /> حذف السجل
                           </button>
@@ -795,20 +795,20 @@ export default function Loans() {
               {settledLoans.length > 0 && activeLoans.length > 0 && (
                 <Link
                   href="/analytics"
-                  className="block bg-emerald-50/60 border border-emerald-200/60 rounded-2xl p-4 hover:border-emerald-300 transition-colors"
+                  className="block bg-fund-in/5 border border-fund-in/15 rounded-2xl p-4 hover:border-fund-in/30 transition-colors"
                   data-testid="link-settled-loans"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center">
-                        <CheckCircle2 className="w-4.5 h-4.5 text-emerald-600" />
+                      <div className="w-9 h-9 rounded-xl bg-fund-in/14 flex items-center justify-center">
+                        <CheckCircle2 className="w-4.5 h-4.5 text-fund-in" />
                       </div>
                       <div>
-                        <p className="text-xs font-bold text-emerald-800">{settledLoans.length} سلفة مسددة بالكامل</p>
-                        <p className="text-xs text-emerald-700/70">انتقلت من القائمة النشطة — التفاصيل الكاملة في التقارير</p>
+                        <p className="text-xs font-bold text-fund-in">{settledLoans.length} سلفة مسددة بالكامل</p>
+                        <p className="text-xs text-fund-in/70">انتقلت من القائمة النشطة — التفاصيل الكاملة في التقارير</p>
                       </div>
                     </div>
-                    <BarChart3 className="w-4 h-4 text-emerald-600/50" />
+                    <BarChart3 className="w-4 h-4 text-fund-in/50" />
                   </div>
                 </Link>
               )}

@@ -43,6 +43,11 @@
   --color-chart-4: hsl(var(--chart-4));
   --color-chart-5: hsl(var(--chart-5));
 
+  --color-fund-in: hsl(var(--fund-in));
+  --color-fund-loan: hsl(var(--fund-loan));
+  --color-fund-out: hsl(var(--fund-out));
+  --color-fund-due: hsl(var(--fund-due));
+
   --font-sans: 'Noto Sans Arabic', sans-serif;
   --font-heading: 'Noto Kufi Arabic', sans-serif;
   
@@ -71,7 +76,7 @@
   --popover-foreground: 146 30% 20%;
 
   --muted: 40 15% 90%;
-  --muted-foreground: 146 20% 40%;
+  --muted-foreground: 146 22% 32%;
 
   --accent: 45 50% 90%;
   --accent-foreground: 146 50% 25%;
@@ -88,6 +93,19 @@
   --chart-3: 146 30% 60%;
   --chart-4: 40 40% 70%;
   --chart-5: 0 0% 80%;
+
+  /* أدوار المال الأربعة — اللون يحمل معنى، لا زينة */
+  --fund-in: 146 50% 25%;    /* داخل الصندوق: مساهمة، معتمد، مسدّد — أخضر الهوية نفسه */
+  --fund-loan: 214 65% 42%;  /* سلفة: مال خرج ويُرد */
+  --fund-out: 32 85% 30%;    /* إنفاق: مال خرج ولا يعود — داكن ليتجاوز 4.5:1 نصاً */
+  --fund-due: 0 60% 45%;     /* متأخر، دَين قائم، مرفوض */
+
+  /* الرسوم البيانية تستخدم الأدوار نفسها — المعنى واحد في الجدول والرسم */
+  --chart-in: hsl(146 50% 32%);
+  --chart-loan: hsl(214 65% 48%);
+  --chart-out: hsl(35 80% 45%);
+  --chart-axis: hsl(146 12% 48%);
+  --chart-grid: hsl(45 20% 88%);
 
   --radius: 0.75rem;
 }
@@ -121,6 +139,17 @@
   --border: 146 30% 20%;
   --input: 146 30% 20%;
   --ring: 45 30% 50%;
+
+  --fund-in: 146 45% 55%;
+  --fund-loan: 214 60% 62%;
+  --fund-out: 35 70% 58%;
+  --fund-due: 0 60% 62%;
+
+  --chart-in: hsl(146 45% 58%);
+  --chart-loan: hsl(214 60% 65%);
+  --chart-out: hsl(35 70% 60%);
+  --chart-axis: hsl(146 12% 62%);
+  --chart-grid: hsl(146 25% 22%);
 }
 
 @layer base {

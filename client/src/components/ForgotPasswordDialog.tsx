@@ -136,7 +136,7 @@ export default function ForgotPasswordDialog({ open, onOpenChange, initialUserna
 
         {step === "reset" && (
           <div className="space-y-3 py-2">
-            {info && <p className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg p-2">{info}</p>}
+            {info && <p className="text-xs text-fund-in bg-fund-in/8 border border-fund-in/25 rounded-lg p-2">{info}</p>}
             <input
               type="text"
               value={username}
@@ -183,8 +183,8 @@ export default function ForgotPasswordDialog({ open, onOpenChange, initialUserna
 
         {step === "done" && (
           <div className="py-4 text-center space-y-3">
-            <div className="w-16 h-16 mx-auto rounded-full bg-emerald-50 flex items-center justify-center">
-              <CheckCircle2 className="w-8 h-8 text-emerald-500" />
+            <div className="w-16 h-16 mx-auto rounded-full bg-fund-in/8 flex items-center justify-center">
+              <CheckCircle2 className="w-8 h-8 text-fund-in" />
             </div>
             <p className="text-sm font-bold">تم تعيين كلمة المرور الجديدة بنجاح</p>
             <button

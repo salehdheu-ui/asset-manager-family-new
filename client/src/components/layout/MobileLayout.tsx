@@ -118,7 +118,7 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
                <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary/65">صندوق العائلة</p>
                <h1 className="text-lg font-bold font-heading text-primary leading-tight">{activeLabel}</h1>
                <div className="mt-0.5 flex items-center gap-1.5">
-                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                 <span className="w-1.5 h-1.5 rounded-full bg-fund-in animate-pulse"></span>
                  <p className="text-xs text-muted-foreground font-sans uppercase tracking-wider">
                    {user?.role === 'admin' ? 'مشرف النظام' : 'عضو الصندوق'}
                  </p>
@@ -130,7 +130,7 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
             className="tap-target relative rounded-2xl border border-border/60 bg-card/80 p-2.5 shadow-sm transition-all hover:bg-primary/5 active:border-primary/10 lg:hidden"
           >
             <Menu className="w-5 h-5 text-primary" />
-            <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-emerald-500 border border-background"></span>
+            <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-fund-in border border-background"></span>
           </button>
         </div>
         <div className="mt-4 rounded-[1.6rem] border border-primary/10 bg-card/80 px-4 py-3 shadow-sm backdrop-blur-sm">
@@ -145,7 +145,7 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
                 <p className="mt-1 text-xs leading-5 text-muted-foreground">{activeDesc}</p>
               </div>
             </div>
-            <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700 border border-emerald-100">
+            <span className="rounded-full bg-fund-in/8 px-2.5 py-1 text-xs font-bold text-fund-in border border-fund-in/14">
               {user?.role === "admin" ? "وضع الإدارة" : "وضع العضو"}
             </span>
           </div>

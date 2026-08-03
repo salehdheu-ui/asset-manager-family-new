@@ -36,9 +36,9 @@ export function ContributionsTrendChart({
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="rounded-2xl border border-emerald-100 bg-white px-4 py-3 text-xs shadow-xl">
+        <div className="rounded-2xl border border-fund-in/14 bg-white px-4 py-3 text-xs shadow-xl">
           <p className="mb-1.5 font-bold text-foreground">{label}</p>
-          <p className="text-base font-bold font-mono text-emerald-600">
+          <p className="text-base font-bold font-mono text-fund-in">
             {payload[0].value.toLocaleString("en-US")}
             <span className="text-xs font-sans text-muted-foreground mr-1"> ر.ع</span>
           </p>
@@ -65,24 +65,24 @@ export function ContributionsTrendChart({
       {/* stat pills */}
       <div className="mb-4 grid grid-cols-2 gap-2.5">
         <div className="flex items-center gap-3 rounded-xl border border-border/30 bg-card p-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-fund-in to-fund-in text-white shadow-md">
             <Star className="w-4 h-4" />
           </div>
           <div>
             <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">أفضل شهر</p>
             <p className="mt-0.5 text-sm font-bold text-foreground leading-tight">{bestMonth?.month || "—"}</p>
-            <p className="text-xs font-mono text-emerald-600">
+            <p className="text-xs font-mono text-fund-in">
               {bestMonth ? `${bestMonth.amount.toLocaleString("en-US")} ر.ع` : ""}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-3 rounded-xl border border-border/30 bg-card p-3">
-          <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl shadow-md text-white ${isUpward ? "bg-gradient-to-br from-emerald-500 to-teal-600" : "bg-gradient-to-br from-amber-500 to-orange-600"}`}>
+          <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl shadow-md text-white ${isUpward ? "bg-gradient-to-br from-fund-in to-fund-in" : "bg-gradient-to-br from-fund-out to-fund-out"}`}>
             {isUpward ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
           </div>
           <div>
             <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">اتجاه الحركة</p>
-            <p className={`mt-0.5 text-sm font-bold leading-tight ${isUpward ? "text-emerald-600" : "text-amber-600"}`}>
+            <p className={`mt-0.5 text-sm font-bold leading-tight ${isUpward ? "text-fund-in" : "text-fund-out"}`}>
               {isUpward ? "تصاعدي" : "متذبذب"}
             </p>
             <p className="text-xs text-muted-foreground">آخر {data.length} فترات</p>
@@ -96,19 +96,19 @@ export function ContributionsTrendChart({
           <ComposedChart data={data} margin={{ top: 8, right: 4, left: -8, bottom: 0 }}>
             <defs>
               <linearGradient id="contributionAreaGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#10b981" stopOpacity={0.22} />
-                <stop offset="85%" stopColor="#10b981" stopOpacity={0.03} />
+                <stop offset="0%" stopColor="var(--chart-in)" stopOpacity={0.22} />
+                <stop offset="85%" stopColor="var(--chart-in)" stopOpacity={0.03} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" opacity={0.6} vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" opacity={0.6} vertical={false} />
             <XAxis
               dataKey="month"
-              tick={{ fontSize: 12, fill: "#94a3b8" }}
+              tick={{ fontSize: 12, fill: "var(--chart-axis)" }}
               axisLine={false}
               tickLine={false}
             />
             <YAxis
-              tick={{ fontSize: 12, fill: "#94a3b8" }}
+              tick={{ fontSize: 12, fill: "var(--chart-axis)" }}
               axisLine={false}
               tickLine={false}
               width={32}
@@ -117,7 +117,7 @@ export function ContributionsTrendChart({
             <Tooltip content={<CustomTooltip />} />
             <ReferenceLine
               y={avgAmount}
-              stroke="#10b981"
+              stroke="var(--chart-in)"
               strokeDasharray="5 4"
               strokeOpacity={0.35}
               strokeWidth={1.5}
@@ -126,10 +126,10 @@ export function ContributionsTrendChart({
             <Line
               type="monotone"
               dataKey="amount"
-              stroke="#10b981"
+              stroke="var(--chart-in)"
               strokeWidth={2.5}
-              dot={{ fill: "#ffffff", stroke: "#10b981", strokeWidth: 2.5, r: 4 }}
-              activeDot={{ r: 7, fill: "#10b981", stroke: "#ffffff", strokeWidth: 2.5 }}
+              dot={{ fill: "#ffffff", stroke: "var(--chart-in)", strokeWidth: 2.5, r: 4 }}
+              activeDot={{ r: 7, fill: "var(--chart-in)", stroke: "#ffffff", strokeWidth: 2.5 }}
             />
           </ComposedChart>
         </ResponsiveContainer>
@@ -138,7 +138,7 @@ export function ContributionsTrendChart({
       {/* footer summary */}
       <div className="mt-4 grid grid-cols-2 gap-2.5">
         <div className="flex items-center gap-2.5 rounded-xl border border-border/30 bg-card px-3.5 py-3">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-sm">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-fund-in to-fund-in text-white shadow-sm">
             <Sigma className="w-3.5 h-3.5" />
           </div>
           <div>

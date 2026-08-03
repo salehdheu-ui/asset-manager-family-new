@@ -14,7 +14,7 @@ interface CapitalDistributionChartProps {
   delay?: number;
 }
 
-const defaultColors = ["#3b82f6", "#f59e0b", "#10b981", "#6366f1"];
+const defaultColors = ["var(--chart-loan)", "var(--chart-out)", "var(--chart-in)", "var(--chart-loan)"];
 const formatCompactCurrency = (value: number) =>
   value >= 1000 ? `${(value / 1000).toFixed(value >= 10000 ? 0 : 1)}k` : value.toLocaleString("en-US");
 
@@ -74,7 +74,7 @@ export function CapitalDistributionChart({
             <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">أكبر مكوّن</p>
             <p className="mt-1.5 text-xl font-bold leading-tight text-foreground">{highestSlice?.name || "لا يوجد"}</p>
           </div>
-          <div className="min-w-[80px] rounded-2xl bg-gradient-to-br from-primary to-emerald-600 px-4 py-2.5 text-center shadow-lg">
+          <div className="min-w-[80px] rounded-2xl bg-gradient-to-br from-primary to-fund-in px-4 py-2.5 text-center shadow-lg">
             <p className="text-2xl font-extrabold font-mono text-white">
               {highestSlice && total > 0 ? `${Math.round((highestSlice.value / total) * 100)}%` : "0%"}
             </p>
@@ -136,7 +136,7 @@ export function CapitalDistributionChart({
         </div>
       </div>
 
-      <div className="mt-5 rounded-2xl bg-gradient-to-r from-primary to-emerald-600 px-5 py-4 text-center shadow-lg">
+      <div className="mt-5 rounded-2xl bg-gradient-to-r from-primary to-fund-in px-5 py-4 text-center shadow-lg">
         <p className="text-3xl font-extrabold font-mono text-white">
           {total.toLocaleString("en-US")} <span className="text-sm font-sans font-bold text-white/70">ر.ع</span>
         </p>

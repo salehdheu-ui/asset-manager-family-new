@@ -15,14 +15,14 @@ interface MemberComparisonChartProps {
 }
 
 const rankConfig = [
-  { bg: "bg-amber-50", border: "border-amber-200", text: "text-amber-600", badge: "bg-amber-100 text-amber-700", icon: "🥇" },
+  { bg: "bg-fund-out/8", border: "border-fund-out/25", text: "text-fund-out", badge: "bg-fund-out/14 text-fund-out", icon: "🥇" },
   { bg: "bg-slate-50", border: "border-slate-200", text: "text-slate-500", badge: "bg-slate-100 text-slate-600", icon: "🥈" },
-  { bg: "bg-orange-50", border: "border-orange-200", text: "text-orange-500", badge: "bg-orange-100 text-orange-600", icon: "🥉" },
-  { bg: "bg-blue-50/40",  border: "border-blue-100",  text: "text-blue-500",  badge: "bg-blue-50 text-blue-600",  icon: "4" },
-  { bg: "bg-violet-50/40", border: "border-violet-100", text: "text-violet-500", badge: "bg-violet-50 text-violet-600", icon: "5" },
+  { bg: "bg-fund-out/8", border: "border-fund-out/25", text: "text-fund-out", badge: "bg-fund-out/14 text-fund-out", icon: "🥉" },
+  { bg: "bg-fund-loan/5",  border: "border-fund-loan/14",  text: "text-fund-loan",  badge: "bg-fund-loan/8 text-fund-loan",  icon: "4" },
+  { bg: "bg-secondary/5", border: "border-secondary/10", text: "text-primary", badge: "bg-secondary/5 text-primary", icon: "5" },
 ];
 
-const barColors = ["#f59e0b", "#94a3b8", "#f97316", "#3b82f6", "#8b5cf6"];
+const barColors = ["var(--chart-out)", "var(--chart-axis)", "var(--chart-out)", "var(--chart-loan)", "var(--chart-loan)"];
 
 export function MemberComparisonChart({
   data,
@@ -52,7 +52,7 @@ export function MemberComparisonChart({
       return (
         <div className="rounded-2xl border border-border/60 bg-white px-4 py-3 text-xs shadow-xl">
           <p className="mb-1.5 font-bold text-foreground">{label}</p>
-          <p className="text-base font-bold font-mono text-blue-600">
+          <p className="text-base font-bold font-mono text-fund-loan">
             {payload[0].value.toLocaleString("en-US")}
             <span className="text-xs font-sans text-muted-foreground mr-1"> ر.ع</span>
           </p>
@@ -74,7 +74,7 @@ export function MemberComparisonChart({
       {/* top member hero */}
       {limitedData[0] && (
         <div className="mb-4 flex items-center gap-4 rounded-xl border border-border/30 bg-card px-4 py-3.5">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-yellow-500 text-white shadow-lg">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-fund-out to-fund-out text-white shadow-lg">
             <Trophy className="w-5 h-5" />
           </div>
           <div className="flex-1 min-w-0">
@@ -82,7 +82,7 @@ export function MemberComparisonChart({
             <p className="mt-0.5 truncate text-base font-bold text-foreground leading-tight">{limitedData[0].name}</p>
           </div>
           <div className="text-left shrink-0">
-            <p className="text-lg font-extrabold font-mono text-amber-600">{limitedData[0].amount.toLocaleString("en-US")}</p>
+            <p className="text-lg font-extrabold font-mono text-fund-out">{limitedData[0].amount.toLocaleString("en-US")}</p>
             <p className="text-xs text-muted-foreground text-left">ر.ع</p>
           </div>
         </div>
@@ -92,10 +92,10 @@ export function MemberComparisonChart({
       <div className="h-52 rounded-2xl border border-border/30 bg-gradient-to-b from-muted/20 to-card p-3">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={limitedData} margin={{ top: 8, right: 4, left: -10, bottom: 12 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" opacity={0.6} vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" opacity={0.6} vertical={false} />
             <XAxis
               dataKey="name"
-              tick={{ fontSize: 12, fill: "#94a3b8" }}
+              tick={{ fontSize: 12, fill: "var(--chart-axis)" }}
               axisLine={false}
               tickLine={false}
               interval={0}
@@ -104,7 +104,7 @@ export function MemberComparisonChart({
               height={46}
             />
             <YAxis
-              tick={{ fontSize: 12, fill: "#94a3b8" }}
+              tick={{ fontSize: 12, fill: "var(--chart-axis)" }}
               axisLine={false}
               tickLine={false}
               width={30}

@@ -262,7 +262,7 @@ export default function FamilySettings() {
 
           <div className="space-y-2 pt-2 border-t border-border/50">
             <label className="text-sm font-bold flex items-center gap-2">
-              <Wallet className="w-4 h-4 text-purple-500" />
+              <Wallet className="w-4 h-4 text-primary" />
               نصاب الزكاة
             </label>
             <div className="flex items-center gap-2">
@@ -397,7 +397,7 @@ export default function FamilySettings() {
                       <div className="text-xs text-muted-foreground flex items-center gap-2">
                         {new Date(backup.backupDate).toLocaleString("ar-OM")}
                         {backup.backupLevel !== "snapshot" && (
-                          <span className={backup.backupLevel === "pre-restore" ? "text-amber-600 font-bold" : "text-blue-600 font-bold"}>
+                          <span className={backup.backupLevel === "pre-restore" ? "text-fund-out font-bold" : "text-fund-loan font-bold"}>
                             {LEVEL_LABELS[backup.backupLevel] ?? backup.backupLevel}
                           </span>
                         )}
@@ -461,7 +461,7 @@ export default function FamilySettings() {
                     ) : (
                       <p className="text-xs">جارٍ قراءة محتوى النسخة...</p>
                     )}
-                    <p className="flex items-center gap-2 text-emerald-700 text-xs font-bold">
+                    <p className="flex items-center gap-2 text-fund-in text-xs font-bold">
                       <ShieldCheck className="w-4 h-4 shrink-0" />
                       ستُنشأ نسخة أمان تلقائية من وضعك الحالي قبل الاستعادة — يمكنك التراجع عبرها إن أخطأت.
                     </p>
@@ -503,11 +503,11 @@ export default function FamilySettings() {
                         ))}
                       </div>
                     )}
-                    <p className="flex items-center gap-2 text-emerald-700 text-xs font-bold">
+                    <p className="flex items-center gap-2 text-fund-in text-xs font-bold">
                       <ShieldCheck className="w-4 h-4 shrink-0" />
                       ستُنشأ نسخة أمان تلقائية من وضعك الحالي، وسيُحفظ الملف المستورد ضمن سجل النسخ للتتبع.
                     </p>
-                    <p className="text-xs text-amber-700">
+                    <p className="text-xs text-fund-out">
                       تنبيه: إذا كانت حسابات الدخول في الملف مختلفة فستحتاج للدخول من جديد بحساب من داخل النسخة المستعادة.
                     </p>
                   </div>
@@ -597,8 +597,8 @@ export default function FamilySettings() {
               href="/governance"
               className="bg-card border border-border rounded-2xl p-4 flex flex-col items-center gap-2 hover:border-primary/30 transition-colors"
             >
-              <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
-                <Shield className="w-5 h-5 text-amber-600" />
+              <div className="w-10 h-10 rounded-full bg-fund-out/14 flex items-center justify-center">
+                <Shield className="w-5 h-5 text-fund-out" />
               </div>
               <span className="text-sm font-medium">الحوكمة</span>
             </Link>
@@ -606,16 +606,16 @@ export default function FamilySettings() {
               href="/audit-log"
               className="bg-card border border-border rounded-2xl p-4 flex flex-col items-center gap-2 hover:border-primary/30 transition-colors"
             >
-              <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                <Wallet className="w-5 h-5 text-blue-600" />
+              <div className="w-10 h-10 rounded-full bg-fund-loan/14 flex items-center justify-center">
+                <Wallet className="w-5 h-5 text-fund-loan" />
               </div>
               <span className="text-sm font-medium">سجل التدقيق</span>
             </Link>
           </div>
         </div>
 
-        <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-xl">
-          <p className="text-xs text-emerald-800 leading-relaxed">
+        <div className="bg-fund-in/8 border border-fund-in/25 p-4 rounded-xl">
+          <p className="text-xs text-fund-in leading-relaxed">
             * يتم حفظ النسخ الاحتياطية كملفات JSON داخل مجلد منفصل في الخادم، مع سياسة احتفاظ تقلل فقدان البيانات على المدى الطويل.
           </p>
         </div>

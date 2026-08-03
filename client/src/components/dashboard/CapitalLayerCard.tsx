@@ -58,7 +58,7 @@ export default function CapitalLayerCard({ layer, delay = 0 }: CapitalLayerCardP
                 initial={{ width: 0 }}
                 animate={{ width: `${usedPercent}%` }}
                 transition={{ duration: 1, delay: 0.5 + (delay * 0.1) }}
-                className="h-full rounded-full bg-red-400/70"
+                className="h-full rounded-full bg-fund-due/42"
               />
             ) : (
               <motion.div 
@@ -72,7 +72,7 @@ export default function CapitalLayerCard({ layer, delay = 0 }: CapitalLayerCardP
           <div className="flex justify-between text-xs font-bold text-muted-foreground">
             <span>{layer.percentage}%</span>
             {hasUsage ? (
-              <span data-testid={`text-available-${layer.id}`} className="text-emerald-600">
+              <span data-testid={`text-available-${layer.id}`} className="text-fund-in">
                 متاح: {(layer.available || 0).toLocaleString()}
               </span>
             ) : (
