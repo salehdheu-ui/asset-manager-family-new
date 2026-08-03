@@ -31,7 +31,7 @@ export function CashflowForecastChart({ data, loading = false, delay = 0 }: { da
     if (active && payload && payload.length) {
       const row = payload[0].payload;
       return (
-        <div className="rounded-lg border border-fund-in/14 bg-white px-4 py-3 text-xs shadow-xl">
+        <div className="rounded-lg border border-fund-in-bright/40 bg-white px-4 py-3 text-xs shadow-xl">
           <p className="mb-1.5 font-bold text-foreground">{label}</p>
           <p className="text-base font-bold font-mono text-fund-in">
             {row.projectedBalance.toLocaleString("en-US")}
@@ -52,7 +52,7 @@ export function CashflowForecastChart({ data, loading = false, delay = 0 }: { da
   return (
     <ChartCard title="إسقاط السيولة — 6 أشهر قادمة" icon={<Telescope className="w-5 h-5" />} delay={delay}>
       <div className="mb-4 grid grid-cols-2 gap-2.5">
-        <div className="flex items-center gap-3 rounded-xl border border-border/30 bg-card p-3">
+        <div className="flex items-center gap-3 rounded-xl border border-border/70 bg-card p-3">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-fund-in to-fund-in text-white shadow-md">
             <Wallet className="w-4 h-4" />
           </div>
@@ -63,7 +63,7 @@ export function CashflowForecastChart({ data, loading = false, delay = 0 }: { da
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-3 rounded-xl border border-border/30 bg-card p-3">
+        <div className="flex items-center gap-3 rounded-xl border border-border/70 bg-card p-3">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/80 to-primary text-white shadow-md">
             <CalendarClock className="w-4 h-4" />
           </div>
@@ -76,7 +76,7 @@ export function CashflowForecastChart({ data, loading = false, delay = 0 }: { da
         </div>
       </div>
 
-      <div className="h-56 rounded-lg border border-border/30 bg-gradient-to-b from-muted/20 to-card p-3" data-testid="cashflow-forecast-chart">
+      <div className="h-56 rounded-lg border border-border/70 bg-gradient-to-b from-muted/20 to-card p-3" data-testid="cashflow-forecast-chart">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={chartData} margin={{ top: 8, right: 4, left: -8, bottom: 0 }}>
             <defs>

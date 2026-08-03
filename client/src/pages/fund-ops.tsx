@@ -132,14 +132,14 @@ export default function FundOps() {
 
         {/* Balance overview */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-card border border-border/60 rounded-lg p-4">
+          <div className="bg-card border border-border/80 rounded-lg p-4">
             <div className="flex items-center gap-2 mb-1">
               <TrendingUp className="w-4 h-4 text-primary" />
               <p className="text-xs font-bold text-muted-foreground">المتاح للسلف</p>
             </div>
             <p className="text-lg font-mono font-bold text-primary">{availableFlexible.toFixed(3)} ر.ع</p>
           </div>
-          <div className="bg-card border border-border/60 rounded-lg p-4">
+          <div className="bg-card border border-border/80 rounded-lg p-4">
             <div className="flex items-center gap-2 mb-1">
               <TrendingDown className="w-4 h-4 text-fund-out" />
               <p className="text-xs font-bold text-muted-foreground">المتاح للطوارئ</p>
@@ -389,13 +389,13 @@ export default function FundOps() {
             </h3>
             {depositRecords.map((adj: any, idx: number) => (
               <motion.div key={adj.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.04 }}
-                className="bg-card border border-border/60 rounded-lg p-4 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-fund-in/14 text-fund-in shrink-0">
+                className="bg-card border border-border/80 rounded-lg p-4 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-fund-in-bright/20 text-fund-in shrink-0">
                   <ArrowDownCircle className="w-5 h-5" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-fund-in/14 text-fund-in">إيداع</span>
+                    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-fund-in-bright/20 text-fund-in">إيداع</span>
                     <span className="font-bold text-sm font-mono">{Number(adj.amount).toFixed(3)} ر.ع</span>
                   </div>
                   {adj.description && <p className="text-xs text-muted-foreground mt-1 truncate">{adj.description}</p>}

@@ -113,7 +113,7 @@ export default function Proposals() {
 
         {p.description && <p className="text-xs text-muted-foreground leading-relaxed">{p.description}</p>}
 
-        <div className="flex items-center gap-3 text-xs pt-2 border-t border-border/40">
+        <div className="flex items-center gap-3 text-xs pt-2 border-t border-border/70">
           <span className="flex items-center gap-1 text-fund-in font-bold">
             <ThumbsUp className="w-3.5 h-3.5" /> {p.approve}
           </span>
@@ -130,7 +130,7 @@ export default function Proposals() {
             {p.voters.map((v, i) => (
               <span key={i} className={cn(
                 "text-xs px-2 py-0.5 rounded-full border",
-                v.vote === "approve" ? "bg-fund-in/8 border-fund-in/25 text-fund-in" : "bg-fund-due/8 border-fund-due/25 text-fund-due",
+                v.vote === "approve" ? "bg-fund-in-bright/20 border-fund-in-bright/40 text-fund-in" : "bg-fund-due-bright/20 border-fund-due-bright/40 text-fund-due",
               )}>
                 {v.name} {v.vote === "approve" ? "✓" : "✗"}
               </span>
@@ -145,7 +145,7 @@ export default function Proposals() {
               disabled={voteMutation.isPending}
               className={cn("tap-target", 
                 "flex-1 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1 active:scale-95 transition-transform",
-                p.myVote === "approve" ? "bg-fund-in text-white" : "bg-fund-in/14 text-fund-in",
+                p.myVote === "approve" ? "bg-fund-in text-white" : "bg-fund-in-bright/20 text-fund-in",
               )}
               data-testid={`button-approve-${p.id}`}
             >
@@ -156,7 +156,7 @@ export default function Proposals() {
               disabled={voteMutation.isPending}
               className={cn("tap-target", 
                 "flex-1 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1 active:scale-95 transition-transform",
-                p.myVote === "reject" ? "bg-fund-due text-white" : "bg-fund-due/14 text-fund-due",
+                p.myVote === "reject" ? "bg-fund-due text-white" : "bg-fund-due-bright/20 text-fund-due",
               )}
               data-testid={`button-reject-${p.id}`}
             >

@@ -43,12 +43,12 @@ export default function AuditLog() {
         </div>
 
         {isLoading ? (
-          <div className="rounded-xl border border-border/60 bg-card p-8 text-center">
+          <div className="rounded-xl border border-border/80 bg-card p-8 text-center">
             <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
             <p className="text-sm font-medium text-muted-foreground">جاري تحميل السجل...</p>
           </div>
         ) : error ? (
-          <div className="rounded-xl border border-fund-due/25 bg-fund-due/8 p-8 text-center">
+          <div className="rounded-xl border border-fund-due-bright/40 bg-fund-due-bright/20 p-8 text-center">
             <History className="mx-auto mb-3 h-10 w-10 text-fund-due" />
             <p className="font-bold text-fund-due">تعذر تحميل سجل التدقيق</p>
             <p className="mt-1 text-sm text-fund-due">حاول تحديث الصفحة أو إعادة المحاولة لاحقاً.</p>
@@ -66,15 +66,15 @@ export default function AuditLog() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.03 }}
-                className="rounded-xl border border-border/60 bg-card p-4 shadow-sm"
+                className="rounded-xl border border-border/80 bg-card p-4 shadow-sm"
               >
                 <div className="flex items-start gap-3">
-                  <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                  <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/14 text-primary">
                     <History className="h-4 w-4" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2 mb-1">
-                      <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-bold text-primary">
+                      <span className="rounded-full bg-primary/14 px-2.5 py-0.5 text-xs font-bold text-primary">
                         {getActionLabel(log.action)}
                       </span>
                       <span className="text-xs text-muted-foreground">

@@ -34,6 +34,15 @@ vi.mock("../services/dashboard", () => ({
 // سيناريو ثابت: عضو ساهم 25، تسلّف 30 وسدّدها، ثم تسلّف 100 وسدّد 40 ⇒ عليه 60
 const MEMBER = { id: "m1", name: "محمد", role: "member" };
 
+let paymentsFixture: any[] = [
+  { id: "p1", loanId: "l1", amount: "30", note: "سداد كامل", paidAt: new Date(2026, 6, 4) },
+  { id: "p2", loanId: "l2", amount: "40", note: "دفعة أولى", paidAt: new Date(2026, 7, 1) },
+];
+
+let ratesFixture: any[] = [
+  { id: "r1", memberId: null, amount: "25", effectiveYear: 2025, effectiveMonth: 1, note: null, createdAt: new Date(2025, 0, 1), createdBy: null },
+];
+
 vi.mock("../storage", () => ({
   storage: {
     getMember: vi.fn(async (id: string) => (id === MEMBER.id ? MEMBER : undefined)),
@@ -52,16 +61,16 @@ vi.mock("../storage", () => ({
       { id: "l1", memberId: "m1", amount: "30", status: "approved", approvedAt: new Date(2026, 6, 4), createdAt: new Date(2026, 6, 4) },
       { id: "l2", memberId: "m1", amount: "100", status: "approved", approvedAt: new Date(2026, 7, 1), createdAt: new Date(2026, 7, 1) },
     ]),
-    getAllLoanPayments: vi.fn(async () => [
-      { id: "p1", loanId: "l1", amount: "30", note: "سداد كامل", paidAt: new Date(2026, 6, 4) },
-      { id: "p2", loanId: "l2", amount: "40", note: "دفعة أولى", paidAt: new Date(2026, 7, 1) },
-    ]),
+    getAllLoanPayments: vi.fn(async () => paymentsFixture),
     // قسط مستحق 1 أغسطس (داخل مهلة 26) وآخر 10 يوليو (مضت مهلته)
     getAllLoanRepayments: vi.fn(async () => [
       { id: "r1", loanId: "l2", installmentNumber: 1, amount: "10", dueDate: new Date(2026, 7, 1), status: "scheduled" },
       { id: "r2", loanId: "l2", installmentNumber: 2, amount: "10", dueDate: new Date(2026, 6, 10), status: "scheduled" },
     ]),
     getFamilySettings: vi.fn(async () => ({ defaultMonthlyContribution: "25" })),
+    // اشتراك عائلي 25 ساري من يناير 2025 — يغطي كل نافذة الاثني عشر شهراً
+    getContributionRates: vi.fn(async () => ratesFixture),
+    getOpenZakatCycle: vi.fn(async () => undefined),
     getAuditLogs: vi.fn(async () => ({ data: [], total: 0, page: 1, limit: 50, totalPages: 0 })),
     getContributionsByYearAndMonth: vi.fn(async () => []),
     getLoansByYear: vi.fn(async () => []),
@@ -161,6 +170,46 @@ describe("المتأخرات بالريال", () => {
     expect(body.arrears.arrears).toBe(275);
   });
 
+  it("رفع المبلغ لا يُنشئ متأخرات على الأشهر السابقة له", async () => {
+    // 25 من يناير 2025، ثم 40 من مايو 2026 — الأشهر قبل مايو تبقى على 25
+    ratesFixture = [
+      { id: "r1", memberId: null, amount: "25", effectiveYear: 2025, effectiveMonth: 1, note: null, createdAt: new Date(), createdBy: null },
+      { id: "r2", memberId: null, amount: "40", effectiveYear: 2026, effectiveMonth: 5, note: null, createdAt: new Date(), createdBy: null },
+    ];
+    vi.setSystemTime(new Date(2026, 7, 5, 12, 0)); // النافذة: أغسطس 2025 ← يوليو 2026
+    const body = await (await request("/api/reports/arrears", admin)).json();
+    vi.useRealTimers();
+
+    const row = body.members.find((m: any) => m.memberId === "m1");
+    // 9 أشهر بـ25 (أغسطس 2025 ← أبريل 2026) + 3 أشهر بـ40 (مايو ← يوليو 2026) = 345
+    expect(row.expectedTotal).toBe(345);
+    expect(row.arrears).toBe(320); // ناقص 25 دفعها في يونيو
+    expect(row.expectedMonthly).toBe(40); // الساري الآن
+
+    ratesFixture = [
+      { id: "r1", memberId: null, amount: "25", effectiveYear: 2025, effectiveMonth: 1, note: null, createdAt: new Date(), createdBy: null },
+    ];
+  });
+
+  it("الأشهر السابقة لأول مبلغ مسجَّل لا تُحاسَب إطلاقاً", async () => {
+    // أول مبلغ يبدأ من مايو 2026 فقط
+    ratesFixture = [
+      { id: "r1", memberId: null, amount: "30", effectiveYear: 2026, effectiveMonth: 5, note: null, createdAt: new Date(), createdBy: null },
+    ];
+    vi.setSystemTime(new Date(2026, 7, 5, 12, 0));
+    const body = await (await request("/api/reports/arrears", admin)).json();
+    vi.useRealTimers();
+
+    const row = body.members.find((m: any) => m.memberId === "m1");
+    expect(row.chargedMonths).toBe(3);   // مايو ويونيو ويوليو فقط
+    expect(row.expectedTotal).toBe(90);
+    expect(row.arrears).toBe(65);        // ناقص 25 دفعها في يونيو
+
+    ratesFixture = [
+      { id: "r1", memberId: null, amount: "25", effectiveYear: 2025, effectiveMonth: 1, note: null, createdAt: new Date(), createdBy: null },
+    ];
+  });
+
   it("العضو العادي محجوب عن تقرير المتأخرات", async () => {
     expect((await request("/api/reports/arrears", member)).status).toBe(403);
   });
@@ -189,10 +238,26 @@ describe("حصص الأعضاء", () => {
 
 describe("مهلة يوم 26 في التقارير", () => {
   it("لا يُحسب متأخراً إلا القسط الذي مضت مهلة شهره", async () => {
-    // القسط المستحق 1 أغسطس داخل المهلة، والمستحق 10 يوليو خارجها
+    // بلا أي سداد: القسط المستحق 10 يوليو مضت مهلته، والمستحق 1 أغسطس ما زال داخلها
+    paymentsFixture = [];
     vi.setSystemTime(new Date(2026, 7, 1, 12, 0));
     const scores = await (await request("/api/reports/commitment-scores", admin)).json();
     expect(scores[0].overdueInstallments).toBe(1);
+    vi.useRealTimers();
+    paymentsFixture = [
+      { id: "p1", loanId: "l1", amount: "30", note: "سداد كامل", paidAt: new Date(2026, 6, 4) },
+      { id: "p2", loanId: "l2", amount: "40", note: "دفعة أولى", paidAt: new Date(2026, 7, 1) },
+    ];
+  });
+
+  it("السداد الحر يُبرئ الأقساط فلا تبقى متأخرة", async () => {
+    // دُفع 40 على سلفة قسطاها 10 و10 ⇒ لا متأخر رغم بقاء حالتها «مجدولة»
+    vi.setSystemTime(new Date(2026, 7, 1, 12, 0));
+    const scores = await (await request("/api/reports/commitment-scores", admin)).json();
+    expect(scores[0].overdueInstallments).toBe(0);
+
+    const alerts = await (await request("/api/reports/alerts", admin)).json();
+    expect(alerts.some((a: any) => a.title.includes("تجاوز مهلته"))).toBe(false);
     vi.useRealTimers();
   });
 

@@ -144,7 +144,7 @@ export default function Investments() {
     <MobileLayout title="الاستثمار والزكاة">
       <div className="space-y-6 pt-2 pb-12">
         {/* الزكاة */}
-        <div className="bg-secondary/5 border border-secondary/20 rounded-xl p-5 space-y-3" data-testid="card-zakat">
+        <div className="bg-secondary/10 border border-secondary/30 rounded-xl p-5 space-y-3" data-testid="card-zakat">
           <div className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-primary" />
             <h3 className="font-bold text-primary font-heading">زكاة مال الصندوق</h3>
@@ -187,7 +187,7 @@ export default function Investments() {
 
               <div className={cn(
                 "rounded-xl p-3 text-center border",
-                zakat?.estimate.reachesNisab ? "bg-secondary/10 border-secondary/30" : "bg-muted/40 border-border",
+                zakat?.estimate.reachesNisab ? "bg-secondary/14 border-secondary/30" : "bg-muted/40 border-border",
               )}>
                 {zakat?.nisab === 0 ? (
                   <p className="text-xs text-muted-foreground">حدّد قيمة النصاب من الإعدادات ليحسب النظام الزكاة</p>
@@ -240,15 +240,15 @@ export default function Investments() {
 
         {data && investments.length > 0 && (
           <div className="grid grid-cols-3 gap-2 text-center text-xs">
-            <div className="bg-fund-loan/8 border border-fund-loan/14 rounded-lg p-3">
+            <div className="bg-fund-loan-bright/20 border border-fund-loan-bright/40 rounded-lg p-3">
               <p className="text-fund-loan font-bold mb-1">المستثمر</p>
               <p className="font-bold font-mono text-fund-loan">{fmt(data.totals.invested)}</p>
             </div>
-            <div className="bg-fund-in/8 border border-fund-in/14 rounded-lg p-3">
+            <div className="bg-fund-in-bright/20 border border-fund-in-bright/40 rounded-lg p-3">
               <p className="text-fund-in font-bold mb-1">القيمة الحالية</p>
               <p className="font-bold font-mono text-fund-in">{fmt(data.totals.currentValue)}</p>
             </div>
-            <div className="bg-fund-out/8 border border-fund-out/14 rounded-lg p-3">
+            <div className="bg-fund-out-bright/20 border border-fund-out-bright/40 rounded-lg p-3">
               <p className="text-fund-out font-bold mb-1">أرباح محققة</p>
               <p className="font-bold font-mono text-fund-out">{fmt(data.totals.realizedGain)}</p>
             </div>
@@ -275,7 +275,7 @@ export default function Investments() {
                   data-testid={`card-investment-${inv.id}`}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <div className="w-11 h-11 rounded-lg bg-primary/14 flex items-center justify-center">
                       <Icon className="w-5 h-5 text-primary" />
                     </div>
                     <div className="flex-1">
@@ -286,13 +286,13 @@ export default function Investments() {
                     </div>
                     <span className={cn(
                       "text-xs font-bold px-2 py-1 rounded-full border",
-                      inv.status === "active" ? "bg-fund-in/14 border-fund-in/25 text-fund-in" : "bg-muted border-border text-muted-foreground",
+                      inv.status === "active" ? "bg-fund-in-bright/20 border-fund-in-bright/40 text-fund-in" : "bg-muted border-border text-muted-foreground",
                     )}>
                       {inv.status === "active" ? "قائم" : "مُصفّى"}
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2 text-center text-xs pt-2 border-t border-border/40">
+                  <div className="grid grid-cols-3 gap-2 text-center text-xs pt-2 border-t border-border/70">
                     <div><p className="text-muted-foreground mb-1">المبلغ</p><p className="font-bold font-mono">{fmt(Number(inv.amount))}</p></div>
                     <div><p className="text-muted-foreground mb-1">القيمة</p><p className="font-bold font-mono">{fmt(inv.currentValue)}</p></div>
                     <div>
@@ -326,7 +326,7 @@ export default function Investments() {
                       </button>
                       <button
                         onClick={() => { setExitTarget(inv); setExitValue(String(inv.currentValue)); }}
-                        className="tap-target flex-1 py-2 bg-fund-out/14 text-fund-out rounded-xl text-xs font-bold flex items-center justify-center gap-1 active:scale-95 transition-transform"
+                        className="tap-target flex-1 py-2 bg-fund-out-bright/20 text-fund-out rounded-xl text-xs font-bold flex items-center justify-center gap-1 active:scale-95 transition-transform"
                         data-testid={`button-exit-${inv.id}`}
                       >
                         <LogOut className="w-3 h-3" /> تصفية

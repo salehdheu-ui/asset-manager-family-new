@@ -922,3 +922,45 @@ export function attachmentUrl(id: string) {
 export async function deleteAttachment(id: string): Promise<void> {
   await apiRequest("DELETE", `/api/attachments/${id}`);
 }
+
+// ــــ سجل الاشتراك الشهري بتواريخ سريانه ــــ
+export interface ContributionRateRow {
+  id: string;
+  memberId: string | null;
+  scopeName: string;
+  amount: number;
+  effectiveYear: number;
+  effectiveMonth: number;
+  note: string | null;
+  createdAt: string;
+}
+
+export interface RatesResponse {
+  defaultEffective: { year: number; month: number };
+  rates: ContributionRateRow[];
+  current: {
+    family: number;
+    members: Array<{ memberId: string; name: string; now: number; fromNextMonth: number }>;
+  };
+}
+
+export async function getContributionRates(): Promise<RatesResponse> {
+  const res = await fetch("/api/contribution-rates", { credentials: "include" });
+  if (!res.ok) await parseFetchError(res);
+  return res.json();
+}
+
+export async function setContributionRate(data: {
+  memberId?: string | null;
+  amount: string;
+  effectiveYear?: number;
+  effectiveMonth?: number;
+  note?: string | null;
+}): Promise<ContributionRateRow> {
+  const res = await apiRequest("POST", "/api/contribution-rates", data);
+  return res.json();
+}
+
+export async function deleteContributionRate(id: string): Promise<void> {
+  await apiRequest("DELETE", `/api/contribution-rates/${id}`);
+}

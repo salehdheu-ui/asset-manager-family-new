@@ -242,7 +242,7 @@ export default function Loans() {
       title: 'سلفة عاجلة',
       description: 'للمتطلبات السريعة والبسيطة.',
       maxAmount: '10% من الصندوق',
-      color: 'bg-fund-in/8 border-fund-in/25 text-fund-in',
+      color: 'bg-fund-in-bright/20 border-fund-in-bright/40 text-fund-in',
       icon: Clock,
       features: ['موافقة فورية', 'مراجعة بعد 30 يوم', 'من رأس المال المرن']
     },
@@ -251,7 +251,7 @@ export default function Loans() {
       title: 'سلفة غير عاجلة',
       description: 'للمشاريع الشخصية أو التحسينات.',
       maxAmount: '10% من الصندوق',
-      color: 'bg-fund-loan/8 border-fund-loan/25 text-fund-loan',
+      color: 'bg-fund-loan-bright/20 border-fund-loan-bright/40 text-fund-loan',
       icon: HandCoins,
       features: ['فترة تفكير 48 ساعة', 'تصويت العائلة', 'خطة سداد ميسرة']
     },
@@ -260,7 +260,7 @@ export default function Loans() {
       title: 'قرض طارئ',
       description: 'للأزمات الصحية أو الكوارث فقط.',
       maxAmount: '20% من الصندوق',
-      color: 'bg-fund-out/8 border-fund-out/25 text-fund-out',
+      color: 'bg-fund-out-bright/20 border-fund-out-bright/40 text-fund-out',
       icon: AlertCircle,
       features: ['موافقة الوصي فقط', 'من احتياطي الطوارئ', 'تسجيل فوري']
     }
@@ -294,19 +294,19 @@ export default function Loans() {
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-card border border-border/60 rounded-lg p-4">
+          <div className="bg-card border border-border/80 rounded-lg p-4">
             <p className="text-xs font-bold text-muted-foreground">إجمالي السلف</p>
             <p className="text-lg font-mono font-bold text-primary">{totalLoanAmount.toFixed(3)} ر.ع</p>
           </div>
-          <div className="bg-card border border-border/60 rounded-lg p-4">
+          <div className="bg-card border border-border/80 rounded-lg p-4">
             <p className="text-xs font-bold text-muted-foreground">إجمالي المسدد</p>
             <p className="text-lg font-mono font-bold text-fund-in">{totalPaidAmount.toFixed(3)} ر.ع</p>
           </div>
-          <div className="bg-card border border-border/60 rounded-lg p-4">
+          <div className="bg-card border border-border/80 rounded-lg p-4">
             <p className="text-xs font-bold text-muted-foreground">إجمالي المتبقي</p>
             <p className="text-lg font-mono font-bold text-fund-out">{totalRemainingAmount.toFixed(3)} ر.ع</p>
           </div>
-          <div className="bg-card border border-border/60 rounded-lg p-4">
+          <div className="bg-card border border-border/80 rounded-lg p-4">
             <p className="text-xs font-bold text-muted-foreground">نوع السلف</p>
             <p className="text-xs font-bold text-primary">{scheduledLoansCount} بخطة • {openLoansCount} مفتوحة</p>
           </div>
@@ -367,7 +367,7 @@ export default function Loans() {
                           <select 
                             id={`loan-member-${loan.id}`}
                             data-testid={`select-member-${loan.id}`}
-                            className="w-full p-4 border-2 border-primary/10 rounded-lg focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all"
+                            className="w-full p-4 border-2 border-primary/22 rounded-lg focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all"
                             value={loanMembers[loan.id] ?? (isGuardian ? members[0]?.id ?? "" : userMemberId ?? "")}
                             onChange={(e) => setLoanMembers((prev) => ({ ...prev, [loan.id]: e.target.value }))}
                           >
@@ -383,7 +383,7 @@ export default function Loans() {
                               type="number" 
                               id={`loan-amount-${loan.id}`}
                               data-testid={`input-amount-${loan.id}`}
-                              className="w-full text-4xl font-mono p-6 border-2 border-primary/10 rounded-xl text-center focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all" 
+                              className="w-full text-4xl font-mono p-6 border-2 border-primary/22 rounded-xl text-center focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all" 
                               placeholder="000"
                               value={loanAmounts[loan.id] ?? ""}
                               onChange={(e) => setLoanAmounts((prev) => ({ ...prev, [loan.id]: e.target.value }))}
@@ -399,7 +399,7 @@ export default function Loans() {
                           <textarea
                             id={`loan-description-${loan.id}`}
                             data-testid={`textarea-description-${loan.id}`}
-                            className="w-full min-h-24 p-4 border-2 border-primary/10 rounded-lg focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all resize-none"
+                            className="w-full min-h-24 p-4 border-2 border-primary/22 rounded-lg focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all resize-none"
                             placeholder="اكتب تفاصيل أو سبب طلب السلفة"
                             value={loanDescriptions[loan.id] ?? ""}
                             onChange={(e) => setLoanDescriptions((prev) => ({ ...prev, [loan.id]: e.target.value }))}
@@ -410,7 +410,7 @@ export default function Loans() {
                           <select
                             id={`loan-repayment-type-${loan.id}`}
                             data-testid={`select-repayment-type-${loan.id}`}
-                            className="w-full p-4 border-2 border-primary/10 rounded-lg focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all"
+                            className="w-full p-4 border-2 border-primary/22 rounded-lg focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all"
                             value={loanRepaymentTypes[loan.id] ?? "scheduled"}
                             onChange={(e) => setLoanRepaymentTypes((prev) => ({ ...prev, [loan.id]: e.target.value }))}
                           >
@@ -424,7 +424,7 @@ export default function Loans() {
                           <select 
                             id={`loan-months-${loan.id}`}
                             data-testid={`select-months-${loan.id}`}
-                            className="w-full p-4 border-2 border-primary/10 rounded-lg focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all"
+                            className="w-full p-4 border-2 border-primary/22 rounded-lg focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all"
                             value={loanMonths[loan.id] ?? "12"}
                             onChange={(e) => setLoanMonths((prev) => ({ ...prev, [loan.id]: e.target.value }))}
                           >
@@ -435,7 +435,7 @@ export default function Loans() {
                           </select>
                         </div>
                         )}
-                        <div className="bg-muted/30 p-4 rounded-lg text-xs text-muted-foreground space-y-2 border border-border/50 font-medium">
+                        <div className="bg-muted/30 p-4 rounded-lg text-xs text-muted-foreground space-y-2 border border-border/80 font-medium">
                           <p>• المال وسيلة لخدمة العائلة، وليس غاية.</p>
                           <p>• بتقديمك لهذا الطلب، أنت تتعهد بالمسؤولية تجاه مستقبل العائلة.</p>
                         </div>
@@ -515,14 +515,14 @@ export default function Loans() {
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
                       data-testid={`card-loan-${loan.id}`}
-                      className="bg-card border border-border/60 rounded-lg p-4 shadow-sm space-y-3"
+                      className="bg-card border border-border/80 rounded-lg p-4 shadow-sm space-y-3"
                     >
                       <div className="flex justify-between items-start">
                         <div className="flex items-center gap-3">
                           <div className={cn(
                             "w-10 h-10 rounded-xl flex items-center justify-center",
-                            loan.status === 'approved' ? "bg-fund-in/14 text-fund-in" :
-                            loan.status === 'rejected' ? "bg-fund-due/14 text-fund-due" : "bg-fund-out/14 text-fund-out"
+                            loan.status === 'approved' ? "bg-fund-in-bright/20 text-fund-in" :
+                            loan.status === 'rejected' ? "bg-fund-due-bright/20 text-fund-due" : "bg-fund-out-bright/20 text-fund-out"
                           )}>
                             <HandCoins className="w-5 h-5" />
                           </div>
@@ -539,8 +539,8 @@ export default function Loans() {
                           </div>
                           <div className={cn(
                             "text-xs font-bold px-2 py-0.5 rounded-full inline-block mt-1 uppercase",
-                            loan.status === 'approved' ? "bg-fund-in/14 text-fund-in" :
-                            loan.status === 'rejected' ? "bg-fund-due/14 text-fund-due" : "bg-fund-out/14 text-fund-out"
+                            loan.status === 'approved' ? "bg-fund-in-bright/20 text-fund-in" :
+                            loan.status === 'rejected' ? "bg-fund-due-bright/20 text-fund-due" : "bg-fund-out-bright/20 text-fund-out"
                           )}>
                             {loan.status === 'approved' ? 'معتمد' : loan.status === 'rejected' ? 'مرفوض' : 'قيد الانتظار'}
                           </div>
@@ -548,7 +548,7 @@ export default function Loans() {
                       </div>
 
                       {(loan.description || loan.status === 'approved') && (
-                        <div className="bg-muted/20 border border-border/40 rounded-xl p-3 space-y-2">
+                        <div className="bg-muted/20 border border-border/70 rounded-xl p-3 space-y-2">
                           {loan.description && (
                             <p className="text-xs text-muted-foreground leading-relaxed">
                               <span className="font-bold text-foreground">الملاحظة: </span>{loan.description}
@@ -578,7 +578,7 @@ export default function Loans() {
                       )}
 
                       {isGuardian && loan.status === 'pending' && scoreOf(loan.memberId) && (
-                        <div className="flex items-center gap-2 rounded-xl bg-muted/30 border border-border/40 px-3 py-2" data-testid={`score-badge-${loan.id}`}>
+                        <div className="flex items-center gap-2 rounded-xl bg-muted/30 border border-border/70 px-3 py-2" data-testid={`score-badge-${loan.id}`}>
                           <Gauge className="w-4 h-4 text-primary shrink-0" />
                           <span className="text-xs font-bold text-muted-foreground">درجة التزام الطالب:</span>
                           <span className={cn(
@@ -597,7 +597,7 @@ export default function Loans() {
                       )}
 
                       {isGuardian && loan.status === 'pending' && (
-                        <div className="flex gap-2 pt-1 border-t border-border/40">
+                        <div className="flex gap-2 pt-1 border-t border-border/70">
                           <button 
                             data-testid={`button-approve-${loan.id}`}
                             onClick={() => statusMutation.mutate({ id: loan.id, status: "approved" })}
@@ -623,7 +623,7 @@ export default function Loans() {
                         <button 
                           data-testid={`button-repayments-${loan.id}`}
                           onClick={() => loadRepayments(loan.id)}
-                          className="tap-target w-full text-xs font-bold text-primary flex items-center justify-center gap-1 pt-2 border-t border-border/40"
+                          className="tap-target w-full text-xs font-bold text-primary flex items-center justify-center gap-1 pt-2 border-t border-border/70"
                         >
                           <Calendar className="w-3 h-3" />
                           عرض تفاصيل السداد {expandedLoan === loan.id ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
@@ -640,7 +640,7 @@ export default function Loans() {
                           >
                             <div className="pt-3 space-y-3">
                               {isGuardian && remainingTotal > 0 && (
-                                <div className="bg-primary/5 border border-primary/10 rounded-lg p-3 space-y-2">
+                                <div className="bg-primary/10 border border-primary/22 rounded-lg p-3 space-y-2">
                                   <p className="text-xs font-bold text-primary">تسجيل سداد يدوي</p>
                                   <div className="grid grid-cols-2 gap-2">
                                     <input
@@ -648,7 +648,7 @@ export default function Loans() {
                                       placeholder="المبلغ"
                                       value={paymentAmounts[loan.id] ?? ""}
                                       onChange={(e) => setPaymentAmounts((prev) => ({ ...prev, [loan.id]: e.target.value }))}
-                                      className="p-3 border border-primary/10 rounded-xl text-sm font-mono outline-none"
+                                      className="p-3 border border-primary/22 rounded-xl text-sm font-mono outline-none"
                                       data-testid={`input-payment-amount-${loan.id}`}
                                     />
                                     <input
@@ -656,7 +656,7 @@ export default function Loans() {
                                       placeholder="ملاحظة السداد"
                                       value={paymentNotes[loan.id] ?? ""}
                                       onChange={(e) => setPaymentNotes((prev) => ({ ...prev, [loan.id]: e.target.value }))}
-                                      className="p-3 border border-primary/10 rounded-xl text-sm outline-none"
+                                      className="p-3 border border-primary/22 rounded-xl text-sm outline-none"
                                       data-testid={`input-payment-note-${loan.id}`}
                                     />
                                   </div>
@@ -682,7 +682,7 @@ export default function Loans() {
                                 <div className="space-y-2">
                                   <p className="text-xs font-bold text-muted-foreground px-1">دفعات السداد</p>
                                   {loanPayments.map((payment) => (
-                                    <div key={payment.id} className="p-3 rounded-xl border bg-fund-in/5 border-fund-in/12 flex justify-between items-start gap-3">
+                                    <div key={payment.id} className="p-3 rounded-xl border bg-fund-in-bright/20 border-fund-in-bright/40 flex justify-between items-start gap-3">
                                       <div>
                                         <p className="text-xs font-mono font-bold text-fund-in">{Number(payment.amount).toFixed(3)} ر.ع</p>
                                         {payment.note && <p className="text-xs text-muted-foreground mt-1">{payment.note}</p>}
@@ -705,7 +705,7 @@ export default function Loans() {
                                   {repayments[loan.id].map((step) => (
                                   <div key={step.id} className={cn(
                                     "p-3 rounded-xl border flex justify-between items-center",
-                                    step.status === 'paid' ? "bg-fund-in/5 border-fund-in/12" : "bg-muted/30 border-border/30"
+                                    step.status === 'paid' ? "bg-fund-in-bright/20 border-fund-in-bright/40" : "bg-muted/30 border-border/70"
                                   )}>
                                     <div className="flex items-center gap-2">
                                       <div className={cn(
@@ -727,7 +727,7 @@ export default function Loans() {
                                     </div>
                                     <div className="flex items-center gap-2">
                                       {step.status === 'paid' ? (
-                                        <span className="text-xs font-bold text-fund-in bg-fund-in/14 px-2 py-1 rounded-lg flex items-center gap-1">
+                                        <span className="text-xs font-bold text-fund-in bg-fund-in-bright/20 px-2 py-1 rounded-lg flex items-center gap-1">
                                           <CheckCircle2 className="w-3 h-3" /> مدفوع
                                         </span>
                                       ) : (
@@ -735,14 +735,14 @@ export default function Loans() {
                                           <button
                                             onClick={() => repayMutation.mutate(step.id)}
                                             disabled={repayMutation.isPending}
-                                            className="tap-target text-xs font-bold text-primary bg-primary/10 hover:bg-primary/20 px-3 py-1.5 rounded-lg flex items-center gap-1.5 active:scale-95 transition-all disabled:opacity-50"
+                                            className="tap-target text-xs font-bold text-primary bg-primary/14 hover:bg-primary/20 px-3 py-1.5 rounded-lg flex items-center gap-1.5 active:scale-95 transition-all disabled:opacity-50"
                                             data-testid={`button-repay-${step.id}`}
                                           >
                                             <RotateCcw className="w-3.5 h-3.5" />
                                             تسديد
                                           </button>
                                         ) : (
-                                          <span className="text-xs font-bold text-fund-out bg-fund-out/14 px-2 py-1 rounded-lg flex items-center gap-1">
+                                          <span className="text-xs font-bold text-fund-out bg-fund-out-bright/20 px-2 py-1 rounded-lg flex items-center gap-1">
                                             <Clock className="w-3 h-3" /> مجدول
                                           </span>
                                         )
@@ -759,7 +759,7 @@ export default function Loans() {
                       </AnimatePresence>
 
                       {isGuardian && (
-                        <div className="flex gap-2 pt-2 border-t border-border/40">
+                        <div className="flex gap-2 pt-2 border-t border-border/70">
                           <button
                             data-testid={`button-edit-${loan.id}`}
                             onClick={() => {
@@ -795,12 +795,12 @@ export default function Loans() {
               {settledLoans.length > 0 && activeLoans.length > 0 && (
                 <Link
                   href="/analytics"
-                  className="block bg-fund-in/5 border border-fund-in/15 rounded-lg p-4 hover:border-fund-in/30 transition-colors"
+                  className="block bg-fund-in-bright/20 border border-fund-in-bright/40 rounded-lg p-4 hover:border-fund-in-bright/40 transition-colors"
                   data-testid="link-settled-loans"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-fund-in/14 flex items-center justify-center">
+                      <div className="w-9 h-9 rounded-xl bg-fund-in-bright/20 flex items-center justify-center">
                         <CheckCircle2 className="w-4.5 h-4.5 text-fund-in" />
                       </div>
                       <div>

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import MobileLayout from "@/components/layout/MobileLayout";
-import { applyBackupRetention, createBackup, getBackups, getBackupSummary, getMembers, getSettings, importBackup, restoreBackup, updateSettings, type BackupContentSummary, type RestoreResult } from "@/lib/api";
+import { applyBackupRetention, createBackup, deleteContributionRate, getBackups, getBackupSummary, getContributionRates, getMembers, getSettings, importBackup, restoreBackup, setContributionRate, updateSettings, type BackupContentSummary, type RestoreResult } from "@/lib/api";
 import { Home, Users, ChevronLeft, Shield, Wallet, DatabaseBackup, CalendarClock, Archive, Download, Upload, ShieldCheck } from "lucide-react";
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
@@ -44,12 +44,16 @@ function invalidateEverything(queryClient: ReturnType<typeof useQueryClient>) {
   queryClient.invalidateQueries();
 }
 
+const MONTHS = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
+
 export default function FamilySettings() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [familyName, setFamilyName] = useState(() => localStorage.getItem("familyName") || "عائلة السعيدي");
   const [defaultMonthly, setDefaultMonthly] = useState("");
   const [zakatNisab, setZakatNisab] = useState("");
+  const [effectiveYear, setEffectiveYear] = useState(new Date().getFullYear());
+  const [effectiveMonth, setEffectiveMonth] = useState(new Date().getMonth() + 2);
   const [backupEnabled, setBackupEnabled] = useState(false);
   const [backupKeepDays, setBackupKeepDays] = useState(7);
   const [backupKeepWeeksPerMonth, setBackupKeepWeeksPerMonth] = useState(4);
@@ -63,6 +67,40 @@ export default function FamilySettings() {
   const { data: settings } = useQuery<FamilySettingsType>({
     queryKey: ["settings"],
     queryFn: getSettings,
+  });
+
+  const { data: rates } = useQuery({ queryKey: ["contribution-rates"], queryFn: getContributionRates });
+
+  useEffect(() => {
+    if (!rates) return;
+    setEffectiveYear(rates.defaultEffective.year);
+    setEffectiveMonth(rates.defaultEffective.month);
+  }, [rates]);
+
+  const saveRateMutation = useMutation({
+    mutationFn: () => setContributionRate({
+      memberId: null,
+      amount: defaultMonthly.trim(),
+      effectiveYear,
+      effectiveMonth,
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contribution-rates"] });
+      queryClient.invalidateQueries({ queryKey: ["settings"] });
+      queryClient.invalidateQueries({ queryKey: ["arrears"] });
+      toast({ title: `اعتُمد المبلغ اعتباراً من ${MONTHS[effectiveMonth - 1]} ${effectiveYear}` });
+    },
+    onError: (error) => toast({ title: "تعذر اعتماد المبلغ", description: (error as Error).message, variant: "destructive" }),
+  });
+
+  const deleteRateMutation = useMutation({
+    mutationFn: (id: string) => deleteContributionRate(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contribution-rates"] });
+      queryClient.invalidateQueries({ queryKey: ["arrears"] });
+      toast({ title: "حُذف السعر" });
+    },
+    onError: (error) => toast({ title: "تعذر الحذف", description: (error as Error).message, variant: "destructive" }),
   });
 
   const { data: backups = [] } = useQuery<SystemBackup[]>({
@@ -238,7 +276,7 @@ export default function FamilySettings() {
             placeholder="مثال: عائلة السعيدي"
           />
 
-          <div className="space-y-2 pt-2 border-t border-border/50">
+          <div className="space-y-2 pt-2 border-t border-border/80">
             <label className="text-sm font-bold flex items-center gap-2">
               <Wallet className="w-4 h-4 text-primary" />
               الاشتراك الشهري الافتراضي للعضو
@@ -255,12 +293,64 @@ export default function FamilySettings() {
               />
               <span className="text-sm text-muted-foreground font-bold">ر.ع</span>
             </div>
+
+            {rates && (
+              <div className="flex items-center gap-2">
+                <label className="text-xs font-bold text-muted-foreground shrink-0">يبدأ من:</label>
+                <select
+                  value={effectiveMonth}
+                  onChange={(e) => setEffectiveMonth(Number(e.target.value))}
+                  className="flex-1 text-xs p-2 border rounded-xl bg-background"
+                  data-testid="select-rate-month"
+                >
+                  {MONTHS.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
+                </select>
+                <input
+                  type="number"
+                  value={effectiveYear}
+                  onChange={(e) => setEffectiveYear(Number(e.target.value))}
+                  className="w-20 text-xs p-2 border rounded-xl bg-background font-mono"
+                  data-testid="input-rate-year"
+                />
+              </div>
+            )}
+
+            <button
+              onClick={() => saveRateMutation.mutate()}
+              disabled={!defaultMonthly.trim() || saveRateMutation.isPending}
+              className="tap-target w-full rounded-xl bg-primary text-primary-foreground text-sm font-bold disabled:opacity-50"
+              data-testid="button-save-rate"
+            >
+              {saveRateMutation.isPending ? "جاري الحفظ..." : "اعتماد المبلغ"}
+            </button>
+
             <p className="text-xs text-muted-foreground leading-relaxed">
-              يُستخدم لحساب المتأخرات بالريال لكل عضو لم يُحدد له مبلغ خاص من صفحة الأعضاء. اتركه صفراً لتعطيل حساب المتأخرات.
+              المبلغ يسري من الشهر المحدد فصاعداً فقط — الأشهر السابقة تبقى محسوبة بالمبلغ الذي كان سارياً فيها،
+              فتغييره كل سنة لا يُنشئ متأخرات وهمية على الماضي.
             </p>
+
+            {rates && rates.rates.length > 0 && (
+              <div className="pt-2 space-y-1">
+                <p className="text-xs font-bold text-muted-foreground">سجل الاشتراكات</p>
+                {rates.rates.map((r) => (
+                  <div key={r.id} className="flex items-center gap-2 bg-muted/40 rounded-lg px-2 py-1.5 text-xs">
+                    <span className="font-bold">{r.scopeName}</span>
+                    <span className="font-mono font-bold tabular">{r.amount.toFixed(3)} ر.ع</span>
+                    <span className="text-muted-foreground">من {MONTHS[r.effectiveMonth - 1]} {r.effectiveYear}</span>
+                    <button
+                      onClick={() => deleteRateMutation.mutate(r.id)}
+                      className="tap-target mr-auto px-2 text-muted-foreground hover:text-destructive"
+                      data-testid={`button-delete-rate-${r.id}`}
+                    >
+                      حذف
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
-          <div className="space-y-2 pt-2 border-t border-border/50">
+          <div className="space-y-2 pt-2 border-t border-border/80">
             <label className="text-sm font-bold flex items-center gap-2">
               <Wallet className="w-4 h-4 text-primary" />
               نصاب الزكاة
@@ -371,7 +461,7 @@ export default function FamilySettings() {
           />
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="w-full rounded-xl border border-dashed border-primary/30 bg-primary/5 px-4 py-3 text-sm font-bold text-primary hover:bg-primary/10 transition-colors flex items-center justify-center gap-2"
+            className="w-full rounded-xl border border-dashed border-primary/30 bg-primary/10 px-4 py-3 text-sm font-bold text-primary hover:bg-primary/14 transition-colors flex items-center justify-center gap-2"
             data-testid="button-import-backup"
           >
             <Upload className="w-4 h-4" />
@@ -549,7 +639,7 @@ export default function FamilySettings() {
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-full bg-primary/14 flex items-center justify-center">
                   <Users className="w-6 h-6 text-primary" />
                 </div>
                 <div>
@@ -569,7 +659,7 @@ export default function FamilySettings() {
                 animate={{ opacity: 1, scale: 1 }}
                 className="bg-muted/30 rounded-xl p-3 text-center"
               >
-                <div className="w-10 h-10 mx-auto rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary mb-1">
+                <div className="w-10 h-10 mx-auto rounded-full bg-primary/14 flex items-center justify-center text-xs font-bold text-primary mb-1">
                   {member.name.substring(0, 2)}
                 </div>
                 <div className="text-xs font-medium truncate">{member.name}</div>
@@ -597,7 +687,7 @@ export default function FamilySettings() {
               href="/governance"
               className="bg-card border border-border rounded-lg p-4 flex flex-col items-center gap-2 hover:border-primary/30 transition-colors"
             >
-              <div className="w-10 h-10 rounded-full bg-fund-out/14 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full bg-fund-out-bright/20 flex items-center justify-center">
                 <Shield className="w-5 h-5 text-fund-out" />
               </div>
               <span className="text-sm font-medium">الحوكمة</span>
@@ -606,7 +696,7 @@ export default function FamilySettings() {
               href="/audit-log"
               className="bg-card border border-border rounded-lg p-4 flex flex-col items-center gap-2 hover:border-primary/30 transition-colors"
             >
-              <div className="w-10 h-10 rounded-full bg-fund-loan/14 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full bg-fund-loan-bright/20 flex items-center justify-center">
                 <Wallet className="w-5 h-5 text-fund-loan" />
               </div>
               <span className="text-sm font-medium">سجل التدقيق</span>
@@ -614,7 +704,7 @@ export default function FamilySettings() {
           </div>
         </div>
 
-        <div className="bg-fund-in/8 border border-fund-in/25 p-4 rounded-xl">
+        <div className="bg-fund-in-bright/20 border border-fund-in-bright/40 p-4 rounded-xl">
           <p className="text-xs text-fund-in leading-relaxed">
             * يتم حفظ النسخ الاحتياطية كملفات JSON داخل مجلد منفصل في الخادم، مع سياسة احتفاظ تقلل فقدان البيانات على المدى الطويل.
           </p>

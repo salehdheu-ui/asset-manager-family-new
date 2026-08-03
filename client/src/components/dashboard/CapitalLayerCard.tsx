@@ -29,7 +29,7 @@ export default function CapitalLayerCard({ layer, delay = 0 }: CapitalLayerCardP
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.4, delay: delay * 0.1 }}
       data-testid={`card-layer-${layer.id}`}
-      className="relative overflow-hidden rounded-lg bg-card border border-border/50 shadow-sm p-4 flex flex-col justify-between aspect-square hover:shadow-md transition-shadow group"
+      className="relative overflow-hidden rounded-lg bg-card border border-border/80 shadow-sm p-4 flex flex-col justify-between aspect-square hover:shadow-md transition-shadow group"
     >
       <div className={cn("absolute top-0 right-0 w-full h-1 opacity-80", layer.color)} />
       
@@ -58,7 +58,7 @@ export default function CapitalLayerCard({ layer, delay = 0 }: CapitalLayerCardP
                 initial={{ width: 0 }}
                 animate={{ width: `${usedPercent}%` }}
                 transition={{ duration: 1, delay: 0.5 + (delay * 0.1) }}
-                className="h-full rounded-full bg-fund-due/42"
+                className="h-full rounded-full bg-fund-due-bright/20"
               />
             ) : (
               <motion.div 
