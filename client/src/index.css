@@ -48,6 +48,11 @@
   --color-fund-out: hsl(var(--fund-out));
   --color-fund-due: hsl(var(--fund-due));
 
+  --color-fund-in-bright: hsl(var(--fund-in-bright));
+  --color-fund-loan-bright: hsl(var(--fund-loan-bright));
+  --color-fund-out-bright: hsl(var(--fund-out-bright));
+  --color-fund-due-bright: hsl(var(--fund-due-bright));
+
   --font-sans: 'Noto Sans Arabic', sans-serif;
   --font-heading: 'Noto Kufi Arabic', sans-serif;
   
@@ -57,7 +62,7 @@
 :root {
   /* Serene Custodian Palette */
   /* Deep Green (Omani Heritage/Islam) */
-  --primary: 146 50% 25%;
+  --primary: 152 72% 26%;
   --primary-foreground: 45 30% 90%;
 
   /* Warm Sand/Gold */
@@ -81,12 +86,12 @@
   --accent: 45 50% 90%;
   --accent-foreground: 146 50% 25%;
 
-  --destructive: 0 60% 50%;
+  --destructive: 2 80% 41%;
   --destructive-foreground: 0 0% 98%;
 
   --border: 45 20% 85%;
   --input: 45 20% 85%;
-  --ring: 146 50% 25%;
+  --ring: 152 72% 26%;
 
   --chart-1: 146 50% 35%;
   --chart-2: 45 50% 50%;
@@ -95,15 +100,22 @@
   --chart-5: 0 0% 80%;
 
   /* أدوار المال الأربعة — اللون يحمل معنى، لا زينة */
-  --fund-in: 146 50% 25%;    /* داخل الصندوق: مساهمة، معتمد، مسدّد — أخضر الهوية نفسه */
-  --fund-loan: 214 65% 42%;  /* سلفة: مال خرج ويُرد */
-  --fund-out: 32 85% 30%;    /* إنفاق: مال خرج ولا يعود — داكن ليتجاوز 4.5:1 نصاً */
-  --fund-due: 0 60% 45%;     /* متأخر، دَين قائم، مرفوض */
+  --fund-in: 152 72% 26%;    /* داخل الصندوق: مساهمة، معتمد، مسدّد — أخضر الهوية نفسه */
+  --fund-loan: 214 88% 41%;  /* سلفة: مال خرج ويُرد */
+  --fund-out: 30 98% 31%;    /* إنفاق: مال خرج ولا يعود */
+  --fund-due: 2 80% 41%;     /* متأخر، دَين قائم، مرفوض */
+
+  /* نسخة حيّة من كل دور — للتظليل والحدود فقط، حيث لا يقع نص فوقها.
+     اللون الداكن أعلاه يصلح نصاً، وهذا يصلح لوناً يُرى. */
+  --fund-in-bright: 152 68% 42%;
+  --fund-loan-bright: 214 92% 55%;
+  --fund-out-bright: 30 100% 50%;
+  --fund-due-bright: 2 85% 56%;
 
   /* الرسوم البيانية تستخدم الأدوار نفسها — المعنى واحد في الجدول والرسم */
-  --chart-in: hsl(146 50% 32%);
-  --chart-loan: hsl(214 65% 48%);
-  --chart-out: hsl(35 80% 45%);
+  --chart-in: hsl(152 72% 33%);
+  --chart-loan: hsl(214 88% 50%);
+  --chart-out: hsl(30 95% 45%);
   --chart-axis: hsl(146 12% 48%);
   --chart-grid: hsl(45 20% 88%);
 
@@ -140,10 +152,15 @@
   --input: 146 30% 20%;
   --ring: 45 30% 50%;
 
-  --fund-in: 146 45% 55%;
-  --fund-loan: 214 60% 62%;
-  --fund-out: 35 70% 58%;
-  --fund-due: 0 60% 62%;
+  --fund-in: 152 60% 58%;
+  --fund-loan: 214 80% 66%;
+  --fund-out: 30 90% 60%;
+  --fund-due: 2 75% 65%;
+
+  --fund-in-bright: 152 55% 50%;
+  --fund-loan-bright: 214 75% 58%;
+  --fund-out-bright: 30 85% 55%;
+  --fund-due-bright: 2 70% 58%;
 
   --chart-in: hsl(146 45% 58%);
   --chart-loan: hsl(214 60% 65%);

@@ -362,9 +362,9 @@ export default function Analytics() {
   };
 
   const insightCards = [
-    { title: "مؤشر السيولة", desc: `${liquidityRatio}% من إجمالي المساهمات في صافي الأصول.`, icon: Gauge, tone: "bg-fund-in/8 text-fund-in border-fund-in/14" },
-    { title: "ملخص مالي سريع", desc: "راقب التدفقات والمساهمات وجودة السداد بزاوية تحليلية.", icon: Brain, tone: "bg-secondary/5 text-primary border-secondary/10" },
-    { title: "تصدير جاهز", desc: "نزّل تقرير Excel مفصلاً يشمل الملخص والحركات وكشف الأعضاء.", icon: FileSearch, tone: "bg-fund-loan/8 text-fund-loan border-fund-loan/14" },
+    { title: "مؤشر السيولة", desc: `${liquidityRatio}% من إجمالي المساهمات في صافي الأصول.`, icon: Gauge, tone: "bg-fund-in-bright/20 text-fund-in border-fund-in-bright/40" },
+    { title: "ملخص مالي سريع", desc: "راقب التدفقات والمساهمات وجودة السداد بزاوية تحليلية.", icon: Brain, tone: "bg-secondary/10 text-primary border-secondary/22" },
+    { title: "تصدير جاهز", desc: "نزّل تقرير Excel مفصلاً يشمل الملخص والحركات وكشف الأعضاء.", icon: FileSearch, tone: "bg-fund-loan-bright/20 text-fund-loan border-fund-loan-bright/40" },
   ];
 
   /* ── Render ── */
@@ -382,7 +382,7 @@ export default function Analytics() {
           className="relative overflow-hidden rounded-xl bg-gradient-to-br from-primary via-primary/90 to-fund-in p-6 shadow-xl"
         >
           <div className="pointer-events-none absolute -left-10 -top-10 h-40 w-40 rounded-full bg-white/10 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-8 -right-8 h-32 w-32 rounded-full bg-fund-in/9 blur-2xl" />
+          <div className="pointer-events-none absolute -bottom-8 -right-8 h-32 w-32 rounded-full bg-fund-in-bright/20 blur-2xl" />
           <div className="pointer-events-none absolute right-12 top-6 h-20 w-20 rounded-full bg-white/5 blur-xl" />
           <div className="relative flex items-start justify-between gap-4">
             <div className="space-y-3">
@@ -477,21 +477,21 @@ export default function Analytics() {
               label: "أقوى مساهم", name: topContributor?.name || "لا يوجد",
               value: topContributor ? formatCurrency(topContributor.filteredContributionsTotal) : "—",
               Icon: ArrowUpLeft,
-              border: "border-fund-in/20", bg: "bg-gradient-to-br from-fund-in/5 via-white to-fund-in/5",
+              border: "border-fund-in-bright/40", bg: "bg-gradient-to-br from-fund-in-bright/5 via-white to-fund-in-bright/5",
               iconBg: "bg-fund-in text-white", labelColor: "text-fund-in", nameColor: "text-fund-in", valueColor: "text-fund-in",
             },
             {
               label: "أعلى سلفة", name: highestBorrower?.name || "لا يوجد",
               value: highestBorrower ? formatCurrency(highestBorrower.filteredLoansTotal) : "—",
               Icon: ArrowDownLeft,
-              border: "border-fund-loan/20", bg: "bg-gradient-to-br from-fund-loan/5 via-white to-fund-loan/5",
+              border: "border-fund-loan-bright/40", bg: "bg-gradient-to-br from-fund-loan-bright/5 via-white to-fund-loan-bright/5",
               iconBg: "bg-fund-loan text-white", labelColor: "text-fund-loan", nameColor: "text-fund-loan", valueColor: "text-fund-loan",
             },
             {
               label: "متوسط المساهمة", name: formatCurrency(averageContribution),
               value: `${filteredTransactions.filter((t) => t.type === "contribution").length} مساهمة`,
               Icon: CircleDollarSign,
-              border: "border-fund-out/20", bg: "bg-gradient-to-br from-fund-out/5 via-white to-fund-out/5",
+              border: "border-fund-out-bright/40", bg: "bg-gradient-to-br from-fund-out-bright/5 via-white to-fund-out-bright/5",
               iconBg: "bg-fund-out text-white", labelColor: "text-fund-out", nameColor: "text-fund-out", valueColor: "text-fund-out",
             },
           ].map((card, idx) => (
@@ -520,7 +520,7 @@ export default function Analytics() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="font-bold text-lg text-primary flex items-center gap-2 font-heading">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/14">
                 <PieChart className="w-4 h-4" />
               </div>
               الرسوم البيانية
@@ -547,7 +547,7 @@ export default function Analytics() {
         {yearlyReport && (
           <div className="space-y-4">
             <h3 className="font-bold text-lg text-primary flex items-center gap-2 font-heading">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/14">
                 <Calendar className="w-4 h-4" />
               </div>
               التحليل السنوي {selectedYear}
@@ -582,7 +582,7 @@ export default function Analytics() {
                         <span className="text-xs font-bold font-mono text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
                           {month.contributions > 0 ? month.contributions.toLocaleString() : ""}
                         </span>
-                        <div className="w-full rounded-lg bg-gradient-to-t from-fund-in to-fund-in/60 shadow-sm transition-all duration-300 group-hover:from-fund-in group-hover:to-fund-in group-hover:shadow-fund-in/20"
+                        <div className="w-full rounded-lg bg-gradient-to-t from-fund-in to-fund-in-bright/60 shadow-sm transition-all duration-300 group-hover:from-fund-in group-hover:to-fund-in group-hover:shadow-fund-in/20"
                           style={{ height: `${height}%`, minHeight: height > 0 ? "6px" : "0" }} />
                         <span className="text-xs font-medium text-muted-foreground/70 group-hover:text-foreground transition-colors">{month.monthName}</span>
                       </div>
@@ -598,7 +598,7 @@ export default function Analytics() {
         {loansAnalysis && (
           <div className="space-y-4">
             <h3 className="font-bold text-lg text-primary flex items-center gap-2 font-heading">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/14">
                 <CircleDollarSign className="w-4 h-4" />
               </div>
               تحليل السلف
@@ -655,7 +655,7 @@ export default function Analytics() {
           <div className="flex items-start justify-between gap-3">
             <div>
               <h3 className="font-bold text-lg text-primary flex items-center gap-2 font-heading">
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/14">
                   <Filter className="w-4 h-4" />
                 </div>
                 الفلاتر والتصدير
@@ -737,7 +737,7 @@ export default function Analytics() {
         {/* ── Member stats ── */}
         <div className="space-y-4">
           <h3 className="font-bold text-lg text-primary flex items-center gap-2 font-heading">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/14">
               <User className="w-4 h-4" />
             </div>
             كشف الأعضاء
@@ -753,8 +753,8 @@ export default function Analytics() {
           ) : (
             <div className="space-y-3">
               {filteredMemberStats.map((m, idx) => {
-                const rankColors = ["from-fund-out to-fund-out", "from-slate-400 to-slate-500", "from-fund-out/60 to-fund-out"];
-                const rankBg = idx < 3 ? `bg-gradient-to-br ${rankColors[idx]} text-white` : "bg-primary/10 text-primary";
+                const rankColors = ["from-fund-out to-fund-out", "from-slate-400 to-slate-500", "from-fund-out-bright/60 to-fund-out"];
+                const rankBg = idx < 3 ? `bg-gradient-to-br ${rankColors[idx]} text-white` : "bg-primary/14 text-primary";
                 return (
                   <motion.div key={m.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.04 }}
                     className="overflow-hidden rounded-xl border border-border/40 bg-card shadow-md">
@@ -779,22 +779,22 @@ export default function Analytics() {
                         </div>
                         <div className="flex flex-col items-end gap-1.5">
                           <span className={cn("rounded-xl px-3 py-1.5 text-xs font-bold shadow-sm",
-                            m.netPosition >= 0 ? "bg-fund-in/8 text-fund-in border border-fund-in/14" : "bg-fund-out/8 text-fund-out border border-fund-out/14")}>
+                            m.netPosition >= 0 ? "bg-fund-in-bright/20 text-fund-in border border-fund-in-bright/40" : "bg-fund-out-bright/20 text-fund-out border border-fund-out-bright/40")}>
                             {m.netPosition >= 0 ? "إيجابي" : "مديونية"}
                           </span>
                           <button
                             onClick={() => setLocation(`/members/${m.id}`)}
-                            className="tap-target flex items-center gap-1 rounded-xl border border-primary/20 bg-primary/5 px-2.5 py-1 text-xs font-bold text-primary hover:bg-primary/10 transition-colors">
+                            className="tap-target flex items-center gap-1 rounded-xl border border-primary/30 bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary hover:bg-primary/14 transition-colors">
                             <FileSearch className="w-3 h-3" /> تقرير مفصل
                           </button>
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-2.5">
                         {[
-                          { label: "إجمالي المساهمات", value: formatCurrency(m.totalPaid), border: "border-fund-in/14", bg: "bg-fund-in/6", color: "text-fund-in" },
-                          { label: "إجمالي السلف", value: formatCurrency(m.totalLoaned), border: "border-fund-loan/14", bg: "bg-fund-loan/6", color: "text-fund-loan" },
-                          { label: "المسدّد من السلف", value: formatCurrency(m.totalRepaid), border: "border-fund-in/14", bg: "bg-fund-in/6", color: "text-fund-in" },
-                          { label: "الرصيد المتبقي", value: formatCurrency(m.totalBorrowed), border: m.totalBorrowed > 0 ? "border-fund-out/14" : "border-gray-100", bg: m.totalBorrowed > 0 ? "bg-fund-out/6" : "bg-gray-50/70", color: m.totalBorrowed > 0 ? "text-fund-out" : "text-gray-500" },
+                          { label: "إجمالي المساهمات", value: formatCurrency(m.totalPaid), border: "border-fund-in-bright/40", bg: "bg-fund-in-bright/20", color: "text-fund-in" },
+                          { label: "إجمالي السلف", value: formatCurrency(m.totalLoaned), border: "border-fund-loan-bright/40", bg: "bg-fund-loan-bright/20", color: "text-fund-loan" },
+                          { label: "المسدّد من السلف", value: formatCurrency(m.totalRepaid), border: "border-fund-in-bright/40", bg: "bg-fund-in-bright/20", color: "text-fund-in" },
+                          { label: "الرصيد المتبقي", value: formatCurrency(m.totalBorrowed), border: m.totalBorrowed > 0 ? "border-fund-out-bright/40" : "border-gray-100", bg: m.totalBorrowed > 0 ? "bg-fund-out-bright/20" : "bg-gray-50/70", color: m.totalBorrowed > 0 ? "text-fund-out" : "text-gray-500" },
                         ].map((s) => (
                           <div key={s.label} className={cn("rounded-xl border p-2.5", s.border, s.bg)}>
                             <p className={cn("text-xs font-bold uppercase tracking-wider", s.color)}>{s.label}</p>
@@ -813,7 +813,7 @@ export default function Analytics() {
         {/* ── Member Account Statement ── */}
         <div className="space-y-4">
           <h3 className="font-bold text-lg text-primary flex items-center gap-2 font-heading">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/14">
               <Award className="w-4 h-4" />
             </div>
             كشف حساب العضو
@@ -905,10 +905,10 @@ export default function Analytics() {
                 {/* Summary 4-grid */}
                 <div className="grid grid-cols-2 gap-3">
                   {[
-                    { label: "إجمالي المساهمات", value: formatCurrency(memberReport.summary.totalContributions), Icon: TrendingUp, color: "text-fund-in", bg: "bg-fund-in/8 border-fund-in/14" },
-                    { label: "إجمالي السلف", value: formatCurrency(memberReport.summary.totalLoaned), Icon: CreditCard, color: "text-fund-loan", bg: "bg-fund-loan/8 border-fund-loan/14" },
-                    { label: "المسدد من السلف", value: formatCurrency(memberReport.summary.totalLoanPaid), Icon: HandCoins, color: "text-primary", bg: "bg-secondary/5 border-secondary/10" },
-                    { label: "المتبقي عليه", value: formatCurrency(memberReport.summary.totalLoanRemaining), Icon: Wallet, color: "text-fund-out", bg: "bg-fund-out/8 border-fund-out/14" },
+                    { label: "إجمالي المساهمات", value: formatCurrency(memberReport.summary.totalContributions), Icon: TrendingUp, color: "text-fund-in", bg: "bg-fund-in-bright/20 border-fund-in-bright/40" },
+                    { label: "إجمالي السلف", value: formatCurrency(memberReport.summary.totalLoaned), Icon: CreditCard, color: "text-fund-loan", bg: "bg-fund-loan-bright/20 border-fund-loan-bright/40" },
+                    { label: "المسدد من السلف", value: formatCurrency(memberReport.summary.totalLoanPaid), Icon: HandCoins, color: "text-primary", bg: "bg-secondary/10 border-secondary/22" },
+                    { label: "المتبقي عليه", value: formatCurrency(memberReport.summary.totalLoanRemaining), Icon: Wallet, color: "text-fund-out", bg: "bg-fund-out-bright/20 border-fund-out-bright/40" },
                   ].map((s) => (
                     <div key={s.label} className={cn("rounded-lg border p-3.5", s.bg)}>
                       <s.Icon className={cn("w-4 h-4 mb-2", s.color)} />
@@ -926,17 +926,17 @@ export default function Analytics() {
                     </h4>
                     <div className="flex items-center gap-3 text-xs font-bold text-muted-foreground">
                       <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-fund-in inline-block" />مدفوع</span>
-                      <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-fund-out/60 inline-block" />معلق</span>
-                      <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-fund-due/60 inline-block" />غائب</span>
+                      <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-fund-out-bright/20 inline-block" />معلق</span>
+                      <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-fund-due-bright/20 inline-block" />غائب</span>
                     </div>
                   </div>
                   <div className="p-5 grid grid-cols-3 gap-2.5">
                     {memberReport.contributionsGrid.map((mg) => (
                       <div key={mg.month}
                         className={cn("rounded-xl p-2.5 text-center border transition-all",
-                          mg.status === 'approved' ? "bg-fund-in/8 border-fund-in/25" :
-                          mg.status === 'pending_approval' ? "bg-fund-out/8 border-fund-out/25" :
-                          mg.status === 'missing' ? "bg-fund-due/8 border-fund-due/25" :
+                          mg.status === 'approved' ? "bg-fund-in-bright/20 border-fund-in-bright/40" :
+                          mg.status === 'pending_approval' ? "bg-fund-out-bright/20 border-fund-out-bright/40" :
+                          mg.status === 'missing' ? "bg-fund-due-bright/20 border-fund-due-bright/40" :
                           "bg-muted/20 border-border/20"
                         )}>
                         <p className={cn("text-xs font-bold",
@@ -974,8 +974,8 @@ export default function Analytics() {
                     <div className="p-4 space-y-3">
                       {memberReport.loans.map((loan) => {
                         const loanTypeLabels: Record<string, string> = { urgent: "عاجلة", standard: "عادية", emergency: "طوارئ" };
-                        const loanTypeColors: Record<string, string> = { urgent: "bg-fund-due/8 text-fund-due border-fund-due/14", standard: "bg-fund-loan/8 text-fund-loan border-fund-loan/14", emergency: "bg-fund-out/8 text-fund-out border-fund-out/14" };
-                        const statusColors: Record<string, string> = { approved: "bg-fund-in/8 text-fund-in border-fund-in/14", pending: "bg-fund-out/8 text-fund-out border-fund-out/14", rejected: "bg-fund-due/8 text-fund-due border-fund-due/14" };
+                        const loanTypeColors: Record<string, string> = { urgent: "bg-fund-due-bright/20 text-fund-due border-fund-due-bright/40", standard: "bg-fund-loan-bright/20 text-fund-loan border-fund-loan-bright/40", emergency: "bg-fund-out-bright/20 text-fund-out border-fund-out-bright/40" };
+                        const statusColors: Record<string, string> = { approved: "bg-fund-in-bright/20 text-fund-in border-fund-in-bright/40", pending: "bg-fund-out-bright/20 text-fund-out border-fund-out-bright/40", rejected: "bg-fund-due-bright/20 text-fund-due border-fund-due-bright/40" };
                         const statusLabels: Record<string, string> = { approved: "معتمد", pending: "قيد المراجعة", rejected: "مرفوض" };
                         const repaymentPct = loan.amount > 0 ? Math.min(100, Math.round((loan.totalPaid / loan.amount) * 100)) : 0;
                         return (
@@ -998,17 +998,17 @@ export default function Analytics() {
                               </div>
                             </div>
                             <div className="grid grid-cols-3 gap-2">
-                              <div className="rounded-xl bg-fund-loan/8 border border-fund-loan/14 p-2 text-center">
+                              <div className="rounded-xl bg-fund-loan-bright/20 border border-fund-loan-bright/40 p-2 text-center">
                                 <p className="text-xs font-bold text-fund-loan mb-0.5">المبلغ</p>
                                 <p className="text-xs font-extrabold font-mono text-fund-loan">{loan.amount.toLocaleString()}</p>
                                 <p className="text-xs text-fund-loan">ر.ع</p>
                               </div>
-                              <div className="rounded-xl bg-fund-in/8 border border-fund-in/14 p-2 text-center">
+                              <div className="rounded-xl bg-fund-in-bright/20 border border-fund-in-bright/40 p-2 text-center">
                                 <p className="text-xs font-bold text-fund-in mb-0.5">المسدد</p>
                                 <p className="text-xs font-extrabold font-mono text-fund-in">{loan.totalPaid.toLocaleString()}</p>
                                 <p className="text-xs text-fund-in">ر.ع</p>
                               </div>
-                              <div className="rounded-xl bg-fund-out/8 border border-fund-out/14 p-2 text-center">
+                              <div className="rounded-xl bg-fund-out-bright/20 border border-fund-out-bright/40 p-2 text-center">
                                 <p className="text-xs font-bold text-fund-out mb-0.5">المتبقي</p>
                                 <p className="text-xs font-extrabold font-mono text-fund-out">{loan.remaining.toLocaleString()}</p>
                                 <p className="text-xs text-fund-out">ر.ع</p>
@@ -1047,11 +1047,11 @@ export default function Analytics() {
         {/* ── Transaction log ── */}
         <div className="space-y-4">
           <h3 className="font-bold text-lg text-primary flex items-center gap-2 font-heading">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/14">
               <FileText className="w-4 h-4" />
             </div>
             السجل العام للمعاملات
-            <span className="mr-auto text-xs bg-primary/10 px-2.5 py-1 rounded-full font-bold text-primary">
+            <span className="mr-auto text-xs bg-primary/14 px-2.5 py-1 rounded-full font-bold text-primary">
               {filteredTransactions.length} حركة
             </span>
           </h3>
@@ -1065,9 +1065,9 @@ export default function Analytics() {
               <div className="space-y-2.5">
                 {visibleTransactions.map((t, idx) => {
                   const typeConfig = {
-                    contribution: { gradient: "from-fund-in to-fund-in", bg: "bg-fund-in/8", border: "border-fund-in/14", text: "text-fund-in", badge: "bg-fund-in/8 text-fund-in border-fund-in/14" },
-                    loan: { gradient: "from-fund-loan to-fund-loan", bg: "bg-fund-loan/8", border: "border-fund-loan/14", text: "text-fund-loan", badge: "bg-fund-loan/8 text-fund-loan border-fund-loan/14" },
-                    expense: { gradient: "from-fund-out to-fund-out", bg: "bg-fund-out/8", border: "border-fund-out/14", text: "text-fund-out", badge: "bg-fund-out/8 text-fund-out border-fund-out/14" },
+                    contribution: { gradient: "from-fund-in to-fund-in", bg: "bg-fund-in-bright/20", border: "border-fund-in-bright/40", text: "text-fund-in", badge: "bg-fund-in-bright/20 text-fund-in border-fund-in-bright/40" },
+                    loan: { gradient: "from-fund-loan to-fund-loan", bg: "bg-fund-loan-bright/20", border: "border-fund-loan-bright/40", text: "text-fund-loan", badge: "bg-fund-loan-bright/20 text-fund-loan border-fund-loan-bright/40" },
+                    expense: { gradient: "from-fund-out to-fund-out", bg: "bg-fund-out-bright/20", border: "border-fund-out-bright/40", text: "text-fund-out", badge: "bg-fund-out-bright/20 text-fund-out border-fund-out-bright/40" },
                   }[t.type];
                   return (
                     <motion.div key={t.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.025 }}
@@ -1098,7 +1098,7 @@ export default function Analytics() {
                             </div>
                             {t.type === "loan" && (
                               <button onClick={() => loadRepayments(t.id)}
-                                className="tap-target mt-1.5 inline-flex items-center gap-1 rounded-lg border border-primary/20 bg-primary/5 px-3 py-0.5 text-xs font-bold text-primary transition-colors hover:bg-primary/10">
+                                className="tap-target mt-1.5 inline-flex items-center gap-1 rounded-lg border border-primary/30 bg-primary/10 px-3 py-0.5 text-xs font-bold text-primary transition-colors hover:bg-primary/14">
                                 خطة السداد {expandedLoan === t.id ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                               </button>
                             )}
@@ -1144,7 +1144,7 @@ export default function Analytics() {
               </div>
               {filteredTransactions.length > 6 && (
                 <button onClick={() => setShowAllTransactions(!showAllTransactions)}
-                  className="w-full rounded-lg border border-primary/20 bg-primary/5 py-3.5 text-sm font-bold text-primary transition-all hover:bg-primary/10 hover:shadow-md">
+                  className="w-full rounded-lg border border-primary/30 bg-primary/10 py-3.5 text-sm font-bold text-primary transition-all hover:bg-primary/14 hover:shadow-md">
                   {showAllTransactions ? "عرض أقل ↑" : `عرض جميع المعاملات (${filteredTransactions.length})`}
                 </button>
               )}

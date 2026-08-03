@@ -28,19 +28,19 @@ export default function LoanVoteBox({ loanId }: { loanId: string }) {
   if (!tally) return null;
 
   return (
-    <div className="rounded-lg border border-secondary/20 bg-secondary/5 p-3 space-y-2" data-testid={`vote-box-${loanId}`}>
+    <div className="rounded-lg border border-secondary/30 bg-secondary/10 p-3 space-y-2" data-testid={`vote-box-${loanId}`}>
       <div className="flex items-center gap-2 text-primary">
         <Vote className="w-4 h-4" />
         <span className="text-xs font-bold">سلفة كبيرة — تتطلب تصويت العائلة</span>
         {tally.passed && (
-          <span className="mr-auto rounded-full bg-fund-in/14 px-2 py-0.5 text-xs font-bold text-fund-in">اكتمل النصاب ✓</span>
+          <span className="mr-auto rounded-full bg-fund-in-bright/20 px-2 py-0.5 text-xs font-bold text-fund-in">اكتمل النصاب ✓</span>
         )}
       </div>
       <div className="flex items-center justify-between text-xs font-bold">
         <span className="text-fund-in">موافقون: {tally.approve} / {tally.required} المطلوبين</span>
         <span className="text-fund-due">رافضون: {tally.reject}</span>
       </div>
-      <div className="h-1.5 rounded-full bg-secondary/10 overflow-hidden">
+      <div className="h-1.5 rounded-full bg-secondary/14 overflow-hidden">
         <div
           className="h-full rounded-full bg-fund-in transition-all"
           style={{ width: `${Math.min(100, (tally.approve / Math.max(1, tally.required)) * 100)}%` }}
@@ -53,7 +53,7 @@ export default function LoanVoteBox({ loanId }: { loanId: string }) {
             disabled={voteMutation.isPending}
             className={cn("tap-target", 
               "flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50",
-              tally.myVote === "approve" ? "bg-fund-in text-white" : "bg-fund-in/14 text-fund-in hover:bg-fund-in/20",
+              tally.myVote === "approve" ? "bg-fund-in text-white" : "bg-fund-in-bright/20 text-fund-in hover:bg-fund-in-bright/20",
             )}
             data-testid={`button-vote-approve-${loanId}`}
           >
@@ -64,7 +64,7 @@ export default function LoanVoteBox({ loanId }: { loanId: string }) {
             disabled={voteMutation.isPending}
             className={cn("tap-target", 
               "flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50",
-              tally.myVote === "reject" ? "bg-fund-due text-white" : "bg-fund-due/14 text-fund-due hover:bg-fund-due/20",
+              tally.myVote === "reject" ? "bg-fund-due text-white" : "bg-fund-due-bright/20 text-fund-due hover:bg-fund-due-bright/20",
             )}
             data-testid={`button-vote-reject-${loanId}`}
           >

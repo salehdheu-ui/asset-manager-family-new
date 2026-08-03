@@ -461,7 +461,7 @@ export default function FamilySettings() {
           />
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="w-full rounded-xl border border-dashed border-primary/30 bg-primary/5 px-4 py-3 text-sm font-bold text-primary hover:bg-primary/10 transition-colors flex items-center justify-center gap-2"
+            className="w-full rounded-xl border border-dashed border-primary/30 bg-primary/10 px-4 py-3 text-sm font-bold text-primary hover:bg-primary/14 transition-colors flex items-center justify-center gap-2"
             data-testid="button-import-backup"
           >
             <Upload className="w-4 h-4" />
@@ -639,7 +639,7 @@ export default function FamilySettings() {
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-full bg-primary/14 flex items-center justify-center">
                   <Users className="w-6 h-6 text-primary" />
                 </div>
                 <div>
@@ -659,7 +659,7 @@ export default function FamilySettings() {
                 animate={{ opacity: 1, scale: 1 }}
                 className="bg-muted/30 rounded-xl p-3 text-center"
               >
-                <div className="w-10 h-10 mx-auto rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary mb-1">
+                <div className="w-10 h-10 mx-auto rounded-full bg-primary/14 flex items-center justify-center text-xs font-bold text-primary mb-1">
                   {member.name.substring(0, 2)}
                 </div>
                 <div className="text-xs font-medium truncate">{member.name}</div>
@@ -687,7 +687,7 @@ export default function FamilySettings() {
               href="/governance"
               className="bg-card border border-border rounded-lg p-4 flex flex-col items-center gap-2 hover:border-primary/30 transition-colors"
             >
-              <div className="w-10 h-10 rounded-full bg-fund-out/14 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full bg-fund-out-bright/20 flex items-center justify-center">
                 <Shield className="w-5 h-5 text-fund-out" />
               </div>
               <span className="text-sm font-medium">الحوكمة</span>
@@ -696,7 +696,7 @@ export default function FamilySettings() {
               href="/audit-log"
               className="bg-card border border-border rounded-lg p-4 flex flex-col items-center gap-2 hover:border-primary/30 transition-colors"
             >
-              <div className="w-10 h-10 rounded-full bg-fund-loan/14 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full bg-fund-loan-bright/20 flex items-center justify-center">
                 <Wallet className="w-5 h-5 text-fund-loan" />
               </div>
               <span className="text-sm font-medium">سجل التدقيق</span>
@@ -704,7 +704,7 @@ export default function FamilySettings() {
           </div>
         </div>
 
-        <div className="bg-fund-in/8 border border-fund-in/25 p-4 rounded-xl">
+        <div className="bg-fund-in-bright/20 border border-fund-in-bright/40 p-4 rounded-xl">
           <p className="text-xs text-fund-in leading-relaxed">
             * يتم حفظ النسخ الاحتياطية كملفات JSON داخل مجلد منفصل في الخادم، مع سياسة احتفاظ تقلل فقدان البيانات على المدى الطويل.
           </p>

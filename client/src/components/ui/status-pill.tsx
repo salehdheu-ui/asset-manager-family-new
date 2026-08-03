@@ -5,9 +5,9 @@ export type StatusTone = "positive" | "pending" | "danger" | "neutral";
 // أربع حالات فقط في النظام كله — اللون يحمل معنى واحداً لا يتغيّر من شاشة لأخرى:
 // أخضر = تمّ واعتُمد · كهرماني = ينتظر قراراً · أحمر = متأخر أو مرفوض · رمادي = معلومة محايدة
 const TONES: Record<StatusTone, string> = {
-  positive: "bg-primary/10 border-primary/20 text-primary",
-  pending: "bg-fund-out/14 border-fund-out/25 text-fund-out",
-  danger: "bg-destructive/10 border-destructive/25 text-destructive",
+  positive: "bg-primary/14 border-primary/30 text-primary",
+  pending: "bg-fund-out-bright/20 border-fund-out-bright/40 text-fund-out",
+  danger: "bg-destructive/14 border-destructive/35 text-destructive",
   neutral: "bg-muted border-border text-muted-foreground",
 };
 

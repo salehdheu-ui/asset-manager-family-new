@@ -58,7 +58,7 @@ export default function CapitalLayerCard({ layer, delay = 0 }: CapitalLayerCardP
                 initial={{ width: 0 }}
                 animate={{ width: `${usedPercent}%` }}
                 transition={{ duration: 1, delay: 0.5 + (delay * 0.1) }}
-                className="h-full rounded-full bg-fund-due/42"
+                className="h-full rounded-full bg-fund-due-bright/20"
               />
             ) : (
               <motion.div 

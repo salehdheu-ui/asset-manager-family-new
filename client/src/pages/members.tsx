@@ -155,7 +155,7 @@ export default function Members() {
                   data-testid={`card-member-${member.id}`}
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-lg font-bold text-primary border-2 border-primary/5">
+                    <div className="w-14 h-14 rounded-full bg-primary/14 flex items-center justify-center text-lg font-bold text-primary border-2 border-primary/5">
                       {member.avatar || member.name.substring(0, 2)}
                     </div>
                     <div className="flex-1">
@@ -198,7 +198,7 @@ export default function Members() {
                             value={editExpected}
                             onChange={(e) => setEditExpected(e.target.value)}
                             placeholder="الافتراضي العائلي"
-                            className="flex-1 text-sm font-mono bg-muted/50 border border-primary/20 rounded-lg px-3 py-1 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                            className="flex-1 text-sm font-mono bg-muted/50 border border-primary/30 rounded-lg px-3 py-1 focus:outline-none focus:ring-2 focus:ring-primary/20"
                             data-testid={`input-edit-expected-${member.id}`}
                           />
                           <span className="text-xs text-muted-foreground">ر.ع</span>
@@ -213,7 +213,7 @@ export default function Members() {
                           <div className="flex items-center gap-2">
                             <span className={cn(
                               "text-xs font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border",
-                              member.role === 'guardian' ? "bg-primary/10 border-primary/20 text-primary" : "bg-muted border-border text-muted-foreground"
+                              member.role === 'guardian' ? "bg-primary/14 border-primary/30 text-primary" : "bg-muted border-border text-muted-foreground"
                             )}>
                               {member.role === 'guardian' ? 'الوصي' : member.role === 'custodian' ? 'الأمين' : 'عضو'}
                             </span>
@@ -248,7 +248,7 @@ export default function Members() {
                   </div>
 
                   <div className="grid grid-cols-3 gap-3 pt-2 border-t border-border/40">
-                    <div className="bg-fund-in/8 rounded-lg p-3 border border-fund-in/14">
+                    <div className="bg-fund-in-bright/20 rounded-lg p-3 border border-fund-in-bright/40">
                       <p className="text-xs text-fund-in font-bold mb-1 flex items-center gap-1">
                         <CreditCard className="w-3 h-3" /> المساهمات
                       </p>
@@ -256,7 +256,7 @@ export default function Members() {
                         {stats.totalApproved.toLocaleString()} <span className="text-xs font-sans">ر.ع</span>
                       </div>
                     </div>
-                    <div className="bg-fund-out/8 rounded-lg p-3 border border-fund-out/14">
+                    <div className="bg-fund-out-bright/20 rounded-lg p-3 border border-fund-out-bright/40">
                       <p className="text-xs text-fund-out font-bold mb-1 flex items-center gap-1">
                         <History className="w-3 h-3" /> معلق
                       </p>
@@ -264,7 +264,7 @@ export default function Members() {
                         {stats.totalPending.toLocaleString()} <span className="text-xs font-sans">ر.ع</span>
                       </div>
                     </div>
-                    <div className="bg-fund-loan/8 rounded-lg p-3 border border-fund-loan/14">
+                    <div className="bg-fund-loan-bright/20 rounded-lg p-3 border border-fund-loan-bright/40">
                       <p className="text-xs text-fund-loan font-bold mb-1 flex items-center gap-1">
                         <HandCoins className="w-3 h-3" /> السلف
                       </p>

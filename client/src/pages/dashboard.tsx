@@ -74,7 +74,7 @@ export default function Dashboard() {
             {totalCapital.toLocaleString()} <span className="text-xl text-muted-foreground font-sans">ر.ع</span>
           </h2>
           <div className="flex items-center justify-center gap-3 mt-4">
-            <div className="px-4 py-1.5 rounded-full bg-fund-in/14 text-fund-in text-xs font-bold flex items-center gap-1.5 border border-fund-in/25 shadow-sm">
+            <div className="px-4 py-1.5 rounded-full bg-fund-in-bright/20 text-fund-in text-xs font-bold flex items-center gap-1.5 border border-fund-in-bright/40 shadow-sm">
               <ShieldCheck className="w-4 h-4" />
               <span>الاعتمادات نشطة</span>
             </div>
@@ -98,7 +98,7 @@ export default function Dashboard() {
 
         {/* Summary Cards */}
         <div className="grid grid-cols-2 gap-4">
-          <div className="bg-fund-in/5 border border-fund-in/14 rounded-xl p-5 flex flex-col gap-1 relative overflow-hidden group">
+          <div className="bg-fund-in-bright/20 border border-fund-in-bright/40 rounded-xl p-5 flex flex-col gap-1 relative overflow-hidden group">
             <div className="absolute -right-2 -bottom-2 opacity-5 transition-transform group-hover:scale-110">
               <TrendingUp className="w-16 h-16" />
             </div>
@@ -107,7 +107,7 @@ export default function Dashboard() {
               {totalContributions.toLocaleString()} <span className="text-xs">ر.ع</span>
             </span>
           </div>
-          <div className="bg-fund-out/5 border border-fund-out/14 rounded-xl p-5 flex flex-col gap-1 relative overflow-hidden group">
+          <div className="bg-fund-out-bright/20 border border-fund-out-bright/40 rounded-xl p-5 flex flex-col gap-1 relative overflow-hidden group">
             <div className="absolute -right-2 -bottom-2 opacity-5 transition-transform group-hover:scale-110">
               <History className="w-16 h-16" />
             </div>

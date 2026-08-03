@@ -77,7 +77,7 @@ export default function Auth() {
             transition={{ duration: 0.6 }}
             className="flex flex-col items-center gap-4"
           >
-            <div className="w-20 h-20 rounded-lg bg-primary/10 flex items-center justify-center p-2 border border-primary/20 shadow-lg">
+            <div className="w-20 h-20 rounded-lg bg-primary/14 flex items-center justify-center p-2 border border-primary/30 shadow-lg">
               <img src={logo} alt="Family Fund OS" className="w-full h-full object-contain" />
             </div>
             <div>
@@ -105,7 +105,7 @@ export default function Auth() {
                   transition={{ duration: 0.4, delay: 0.3 + idx * 0.1 }}
                   className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-lg p-4 text-center hover:shadow-md transition-shadow"
                 >
-                  <div className="w-10 h-10 mx-auto rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-2">
+                  <div className="w-10 h-10 mx-auto rounded-xl bg-primary/14 flex items-center justify-center text-primary mb-2">
                     <feature.icon className="w-5 h-5" />
                   </div>
                   <h3 className="font-bold text-sm text-foreground">{feature.title}</h3>
@@ -125,7 +125,7 @@ export default function Auth() {
               
               <form onSubmit={handleSubmit} className="space-y-4">
                 {(error || loginError) && (
-                  <div className="bg-destructive/10 border border-destructive/30 text-destructive text-sm p-3 rounded-xl text-center" data-testid="error-message">
+                  <div className="bg-destructive/14 border border-destructive/30 text-destructive text-sm p-3 rounded-xl text-center" data-testid="error-message">
                     {error || loginError}
                   </div>
                 )}

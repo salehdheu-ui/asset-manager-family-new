@@ -207,7 +207,7 @@ export default function AdminDashboard() {
   if (error) {
     return (
       <MobileLayout title="لوحة الإدارة">
-        <div className="text-center py-12 bg-fund-due/8 rounded-xl border border-fund-due/25">
+        <div className="text-center py-12 bg-fund-due-bright/20 rounded-xl border border-fund-due-bright/40">
           <Shield className="w-12 h-12 mx-auto text-fund-due mb-4" />
           <p className="text-fund-due font-bold">غير مصرح لك بالوصول</p>
           <p className="text-fund-due text-sm mt-2">يجب أن تكون مشرفاً للوصول لهذه الصفحة</p>
@@ -244,14 +244,14 @@ export default function AdminDashboard() {
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-fund-out" />
               <span className="font-bold">يحتاج انتباهك</span>
-              <span className="mr-auto rounded-full bg-fund-out/14 px-2 py-0.5 text-xs font-bold text-fund-out">{alerts.length}</span>
+              <span className="mr-auto rounded-full bg-fund-out-bright/20 px-2 py-0.5 text-xs font-bold text-fund-out">{alerts.length}</span>
             </div>
             <div className="space-y-2">
               {alerts.map((alert, idx) => (
                 <div key={idx} className="flex items-start gap-3 rounded-xl border border-border/60 bg-background px-3 py-2.5">
                   <span className={cn(
                     "mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full",
-                    alert.severity === "high" ? "bg-fund-due" : alert.severity === "medium" ? "bg-fund-out" : "bg-fund-loan/60",
+                    alert.severity === "high" ? "bg-fund-due" : alert.severity === "medium" ? "bg-fund-out" : "bg-fund-loan-bright/20",
                   )} />
                   <div className="min-w-0">
                     <p className="text-sm font-bold leading-tight">{alert.title}</p>
@@ -265,11 +265,11 @@ export default function AdminDashboard() {
 
         {/* طلبات استعادة كلمة المرور */}
         {resetRequests.length > 0 && (
-          <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-3" data-testid="reset-requests-panel">
+          <div className="rounded-xl border border-primary/30 bg-primary/10 p-4 space-y-3" data-testid="reset-requests-panel">
             <div className="flex items-center gap-2 text-primary">
               <KeyRound className="h-5 w-5" />
               <span className="font-bold">طلبات استعادة كلمة المرور</span>
-              <span className="mr-auto rounded-full bg-primary/10 px-2 py-0.5 text-xs font-bold">{resetRequests.length}</span>
+              <span className="mr-auto rounded-full bg-primary/14 px-2 py-0.5 text-xs font-bold">{resetRequests.length}</span>
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">
               أصدر كوداً مؤقتاً وأرسله للعضو مباشرة (واتساب مثلاً). الكود صالح 30 دقيقة ويظهر مرة واحدة.
@@ -315,7 +315,7 @@ export default function AdminDashboard() {
               <DialogDescription>أرسل هذا الكود للعضو مباشرة. لن يظهر مرة أخرى، وصالح 30 دقيقة.</DialogDescription>
             </DialogHeader>
             <div className="py-2 space-y-3">
-              <div className="rounded-lg border-2 border-dashed border-primary/40 bg-primary/5 py-5 text-center">
+              <div className="rounded-lg border-2 border-dashed border-primary/40 bg-primary/10 py-5 text-center">
                 <span className="text-4xl font-mono font-bold tracking-[0.3em] text-primary" data-testid="issued-code">{issuedCode?.code}</span>
               </div>
               <button
@@ -336,7 +336,7 @@ export default function AdminDashboard() {
         </Dialog>
 
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          <div className="rounded-xl border border-fund-out/25 bg-fund-out/6 p-4">
+          <div className="rounded-xl border border-fund-out-bright/40 bg-fund-out-bright/20 p-4">
             <div className="mb-2 flex items-center gap-2 text-fund-out">
               <AlertTriangle className="h-4 w-4" />
               <span className="text-xs font-bold">تنبيه أمني</span>
@@ -344,7 +344,7 @@ export default function AdminDashboard() {
             <p className="text-sm font-bold text-fund-out">تأكد من تغيير كلمة مرور المدير الافتراضية قبل اعتماد النظام.</p>
             <p className="mt-1 text-xs leading-6 text-fund-out">يوصى بإعداد كلمة مرور قوية ومراجعة الحسابات الإدارية قبل التشغيل الفعلي.</p>
           </div>
-          <div className="rounded-xl border border-fund-loan/25 bg-fund-loan/6 p-4">
+          <div className="rounded-xl border border-fund-loan-bright/40 bg-fund-loan-bright/20 p-4">
             <div className="mb-2 flex items-center gap-2 text-fund-loan">
               <Lock className="h-4 w-4" />
               <span className="text-xs font-bold">إجراءات حساسة</span>
@@ -531,10 +531,10 @@ export default function AdminDashboard() {
                       <img 
                         src={u.profileImageUrl} 
                         alt={u.firstName || "User"} 
-                        className="w-12 h-12 rounded-full object-cover border-2 border-primary/10"
+                        className="w-12 h-12 rounded-full object-cover border-2 border-primary/22"
                       />
                     ) : (
-                      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
+                      <div className="w-12 h-12 rounded-full bg-primary/14 flex items-center justify-center text-primary font-bold">
                         {(u.firstName?.[0] || u.username?.[0] || "U").toUpperCase()}
                       </div>
                     )}
@@ -546,7 +546,7 @@ export default function AdminDashboard() {
                       <div className="flex items-center gap-2 mt-2">
                         <span className={cn(
                           "text-xs font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border flex items-center gap-1",
-                          u.role === 'admin' ? "bg-primary/10 border-primary/20 text-primary" : "bg-muted border-border text-muted-foreground"
+                          u.role === 'admin' ? "bg-primary/14 border-primary/30 text-primary" : "bg-muted border-border text-muted-foreground"
                         )}>
                           {u.role === 'admin' ? <Crown className="w-3 h-3" /> : <UserIcon className="w-3 h-3" />}
                           {u.role === 'admin' ? 'مشرف' : 'مستخدم'}
@@ -600,7 +600,7 @@ export default function AdminDashboard() {
                                 disabled={linkMemberMutation.isPending}
                                 className="w-full p-3 bg-muted/30 hover:bg-muted rounded-xl text-right flex items-center gap-3 transition-colors"
                               >
-                                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
+                                <div className="w-8 h-8 rounded-full bg-primary/14 flex items-center justify-center text-primary font-bold text-sm">
                                   {m.avatar || m.name.substring(0, 2)}
                                 </div>
                                 <span className="font-medium">{m.name}</span>
@@ -785,13 +785,13 @@ export default function AdminDashboard() {
               </DialogDescription>
             </DialogHeader>
             <div className="py-4 space-y-4">
-              <div className="bg-fund-due/8 border border-fund-due/25 rounded-xl p-4 text-center">
+              <div className="bg-fund-due-bright/20 border border-fund-due-bright/40 rounded-xl p-4 text-center">
                 <p className="text-sm text-fund-due font-bold mb-2">للتأكيد، اكتب "تصفير" في الحقل أدناه</p>
                 <input
                   type="text"
                   value={resetConfirmText}
                   onChange={(e) => setResetConfirmText(e.target.value)}
-                  className="w-full bg-white border border-fund-due/30 rounded-xl px-4 py-3 text-center focus:outline-none focus:ring-2 focus:ring-fund-due/50"
+                  className="w-full bg-white border border-fund-due-bright/40 rounded-xl px-4 py-3 text-center focus:outline-none focus:ring-2 focus:ring-fund-due/50"
                   placeholder='اكتب "تصفير" هنا'
                   data-testid="input-reset-confirm"
                 />

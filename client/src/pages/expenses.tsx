@@ -274,8 +274,8 @@ export default function Expenses() {
                     <div className="flex items-center gap-3">
                       <div className={cn(
                         "w-10 h-10 rounded-xl flex items-center justify-center",
-                        expense.category === 'zakat' ? "bg-primary/10 text-primary" :
-                        expense.category === 'charity' ? "bg-fund-in/14 text-fund-in" : "bg-fund-out/14 text-fund-out"
+                        expense.category === 'zakat' ? "bg-primary/14 text-primary" :
+                        expense.category === 'charity' ? "bg-fund-in-bright/20 text-fund-in" : "bg-fund-out-bright/20 text-fund-out"
                       )}>
                         {expense.category === 'zakat' ? <Scale className="w-5 h-5" /> :
                          expense.category === 'charity' ? <Heart className="w-5 h-5" /> : <Wallet className="w-5 h-5" />}

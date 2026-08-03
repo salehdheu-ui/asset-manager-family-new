@@ -43,7 +43,7 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
       {/* شريط جانبي ثابت للشاشات الكبيرة — تخطيط الجوال لم يتغير */}
       <aside className="relative z-20 hidden lg:flex lg:h-screen lg:w-72 lg:shrink-0 lg:flex-col lg:sticky lg:top-0 lg:border-l lg:border-border/50 lg:bg-card/70 lg:backdrop-blur-sm lg:p-5">
         <div className="flex items-center gap-2 mb-8 px-1">
-          <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
+          <div className="w-9 h-9 rounded-xl bg-primary/14 flex items-center justify-center">
             <img src={logo} alt="" className="w-5 h-5 opacity-80" />
           </div>
           <div>
@@ -60,7 +60,7 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
                 className={cn(
                   "flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all border",
                   activeSection?.key === item.key
-                    ? "bg-primary/5 border-primary/20 text-primary shadow-sm"
+                    ? "bg-primary/10 border-primary/30 text-primary shadow-sm"
                     : "border-transparent hover:bg-muted/50 text-muted-foreground",
                 )}
                 data-testid={`sidebar-link-${item.key}`}
@@ -78,7 +78,7 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
                       href={tab.href}
                       className={cn(
                         "block rounded-lg px-3 py-1.5 text-xs font-bold transition-colors",
-                        location === tab.href ? "text-primary bg-primary/5" : "text-muted-foreground hover:text-primary",
+                        location === tab.href ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-primary",
                       )}
                       data-testid={`sidebar-tab-${tab.href.replace("/", "")}`}
                     >
@@ -98,7 +98,7 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
             } catch (e) {}
             setLocation("/");
           }}
-          className="tap-target mt-4 flex items-center gap-3 rounded-xl px-3 py-2.5 text-destructive hover:bg-destructive/5 transition-all font-bold text-xs"
+          className="tap-target mt-4 flex items-center gap-3 rounded-xl px-3 py-2.5 text-destructive hover:bg-destructive/10 transition-all font-bold text-xs"
           data-testid="sidebar-button-logout"
         >
           <LogOut className="w-4 h-4" />
@@ -127,16 +127,16 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
           </div>
           <button 
             onClick={() => setIsMenuOpen(true)}
-            className="tap-target relative rounded-lg border border-border/60 bg-card/80 p-2.5 shadow-sm transition-all hover:bg-primary/5 active:border-primary/10 lg:hidden"
+            className="tap-target relative rounded-lg border border-border/60 bg-card/80 p-2.5 shadow-sm transition-all hover:bg-primary/10 active:border-primary/22 lg:hidden"
           >
             <Menu className="w-5 h-5 text-primary" />
             <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-fund-in border border-background"></span>
           </button>
         </div>
-        <div className="mt-4 rounded-xl border border-primary/10 bg-card/80 px-4 py-3 shadow-sm backdrop-blur-sm">
+        <div className="mt-4 rounded-xl border border-primary/22 bg-card/80 px-4 py-3 shadow-sm backdrop-blur-sm">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/14 text-primary">
               <Info className="w-4 h-4" />
               </div>
               <div className="text-right">
@@ -145,7 +145,7 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
                 <p className="mt-1 text-xs leading-5 text-muted-foreground">{activeDesc}</p>
               </div>
             </div>
-            <span className="rounded-full bg-fund-in/8 px-2.5 py-1 text-xs font-bold text-fund-in border border-fund-in/14">
+            <span className="rounded-full bg-fund-in-bright/20 px-2.5 py-1 text-xs font-bold text-fund-in border border-fund-in-bright/40">
               {user?.role === "admin" ? "وضع الإدارة" : "وضع العضو"}
             </span>
           </div>
@@ -193,7 +193,7 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
             >
               <div className="flex justify-between items-center mb-10">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-lg bg-primary/14 flex items-center justify-center">
                     <img src={logo} className="w-5 h-5 opacity-80" />
                   </div>
                   <span className="font-bold text-primary font-heading">القائمة الرئيسية</span>
@@ -215,13 +215,13 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
                     className={cn(
                       "flex items-center gap-4 p-4 rounded-lg transition-all border",
                       activeSection?.key === item.key
-                        ? "bg-primary/5 border-primary/20 text-primary shadow-sm" 
+                        ? "bg-primary/10 border-primary/30 text-primary shadow-sm" 
                         : "border-transparent hover:bg-muted/50 text-muted-foreground"
                     )}
                   >
                     <div className={cn(
                       "p-2 rounded-xl",
-                      activeSection?.key === item.key ? "bg-primary/10" : "bg-muted"
+                      activeSection?.key === item.key ? "bg-primary/14" : "bg-muted"
                     )}>
                       <item.icon className="w-5 h-5" />
                     </div>
@@ -230,7 +230,7 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
                       <div className="text-xs opacity-70">{item.desc}</div>
                     </div>
                     <div className="mr-auto flex items-center gap-2">
-                      {activeSection?.key === item.key && <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">نشط</span>}
+                      {activeSection?.key === item.key && <span className="rounded-full bg-primary/14 px-2 py-0.5 text-xs font-bold text-primary">نشط</span>}
                       <ChevronLeft className="w-4 h-4 opacity-30" />
                     </div>
                   </Link>
@@ -265,10 +265,10 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
                     setIsMenuOpen(false);
                     setLocation("/");
                   }}
-                  className="w-full flex items-center gap-3 p-4 rounded-lg text-destructive hover:bg-destructive/5 transition-all border border-transparent hover:border-destructive/10 font-bold text-sm"
+                  className="w-full flex items-center gap-3 p-4 rounded-lg text-destructive hover:bg-destructive/10 transition-all border border-transparent hover:border-destructive/22 font-bold text-sm"
                   data-testid="button-logout"
                 >
-                  <div className="p-2 rounded-xl bg-destructive/10">
+                  <div className="p-2 rounded-xl bg-destructive/14">
                     <LogOut className="w-5 h-5" />
                   </div>
                   <span>تسجيل الخروج</span>
@@ -301,7 +301,7 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
                     {isActive && (
                       <motion.div 
                         layoutId="nav-active"
-                        className="absolute -top-2 h-8 w-14 rounded-lg bg-primary/8"
+                        className="absolute -top-2 h-8 w-14 rounded-lg bg-primary/12"
                       />
                     )}
                     <item.icon className={cn("relative z-10 h-[18px] w-[18px] transition-transform group-active:scale-90", isActive && "fill-current")} strokeWidth={isActive ? 2.5 : 2} />

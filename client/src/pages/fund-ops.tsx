@@ -390,12 +390,12 @@ export default function FundOps() {
             {depositRecords.map((adj: any, idx: number) => (
               <motion.div key={adj.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.04 }}
                 className="bg-card border border-border/60 rounded-lg p-4 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-fund-in/14 text-fund-in shrink-0">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-fund-in-bright/20 text-fund-in shrink-0">
                   <ArrowDownCircle className="w-5 h-5" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-fund-in/14 text-fund-in">إيداع</span>
+                    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-fund-in-bright/20 text-fund-in">إيداع</span>
                     <span className="font-bold text-sm font-mono">{Number(adj.amount).toFixed(3)} ر.ع</span>
                   </div>
                   {adj.description && <p className="text-xs text-muted-foreground mt-1 truncate">{adj.description}</p>}

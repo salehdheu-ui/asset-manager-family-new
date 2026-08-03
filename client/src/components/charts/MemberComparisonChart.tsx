@@ -15,11 +15,11 @@ interface MemberComparisonChartProps {
 }
 
 const rankConfig = [
-  { bg: "bg-fund-out/8", border: "border-fund-out/25", text: "text-fund-out", badge: "bg-fund-out/14 text-fund-out", icon: "🥇" },
+  { bg: "bg-fund-out-bright/20", border: "border-fund-out-bright/40", text: "text-fund-out", badge: "bg-fund-out-bright/20 text-fund-out", icon: "🥇" },
   { bg: "bg-slate-50", border: "border-slate-200", text: "text-slate-500", badge: "bg-slate-100 text-slate-600", icon: "🥈" },
-  { bg: "bg-fund-out/8", border: "border-fund-out/25", text: "text-fund-out", badge: "bg-fund-out/14 text-fund-out", icon: "🥉" },
-  { bg: "bg-fund-loan/5",  border: "border-fund-loan/14",  text: "text-fund-loan",  badge: "bg-fund-loan/8 text-fund-loan",  icon: "4" },
-  { bg: "bg-secondary/5", border: "border-secondary/10", text: "text-primary", badge: "bg-secondary/5 text-primary", icon: "5" },
+  { bg: "bg-fund-out-bright/20", border: "border-fund-out-bright/40", text: "text-fund-out", badge: "bg-fund-out-bright/20 text-fund-out", icon: "🥉" },
+  { bg: "bg-fund-loan-bright/20",  border: "border-fund-loan-bright/40",  text: "text-fund-loan",  badge: "bg-fund-loan-bright/20 text-fund-loan",  icon: "4" },
+  { bg: "bg-secondary/10", border: "border-secondary/22", text: "text-primary", badge: "bg-secondary/10 text-primary", icon: "5" },
 ];
 
 const barColors = ["var(--chart-out)", "var(--chart-axis)", "var(--chart-out)", "var(--chart-loan)", "var(--chart-loan)"];

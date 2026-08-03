@@ -110,10 +110,10 @@ export default function UserDashboard() {
             <img 
               src={profile.profileImageUrl} 
               alt={profile.firstName || "User"} 
-              className="w-24 h-24 rounded-full mx-auto object-cover border-4 border-primary/10 shadow-lg"
+              className="w-24 h-24 rounded-full mx-auto object-cover border-4 border-primary/22 shadow-lg"
             />
           ) : (
-            <div className="w-24 h-24 rounded-full mx-auto bg-primary/10 flex items-center justify-center text-3xl font-bold text-primary border-4 border-primary/5">
+            <div className="w-24 h-24 rounded-full mx-auto bg-primary/14 flex items-center justify-center text-3xl font-bold text-primary border-4 border-primary/5">
               {(profile.firstName?.[0] || profile.email?.[0] || "U").toUpperCase()}
             </div>
           )}
@@ -124,12 +124,12 @@ export default function UserDashboard() {
             <div className="flex items-center justify-center gap-2 mt-2">
               <span className={cn(
                 "text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full border",
-                profile.role === 'admin' ? "bg-primary/10 border-primary/20 text-primary" : "bg-muted border-border text-muted-foreground"
+                profile.role === 'admin' ? "bg-primary/14 border-primary/30 text-primary" : "bg-muted border-border text-muted-foreground"
               )}>
                 {profile.role === 'admin' ? 'مشرف' : 'مستخدم'}
               </span>
               {profile.member && (
-                <span className="text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full bg-fund-in/14 border border-fund-in/25 text-fund-in">
+                <span className="text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full bg-fund-in-bright/20 border border-fund-in-bright/40 text-fund-in">
                   عضو: {profile.member.name}
                 </span>
               )}
@@ -140,7 +140,7 @@ export default function UserDashboard() {
         {/* Stats Cards */}
         {profile.memberId && (
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-fund-in/5 border border-fund-in/14 rounded-xl p-5 flex flex-col gap-1 relative overflow-hidden">
+            <div className="bg-fund-in-bright/20 border border-fund-in-bright/40 rounded-xl p-5 flex flex-col gap-1 relative overflow-hidden">
               <div className="absolute -right-2 -bottom-2 opacity-5">
                 <CreditCard className="w-16 h-16" />
               </div>
@@ -151,7 +151,7 @@ export default function UserDashboard() {
                 {totalContributed.toLocaleString()} <span className="text-xs">ر.ع</span>
               </span>
             </div>
-            <div className="bg-fund-loan/5 border border-fund-loan/14 rounded-xl p-5 flex flex-col gap-1 relative overflow-hidden">
+            <div className="bg-fund-loan-bright/20 border border-fund-loan-bright/40 rounded-xl p-5 flex flex-col gap-1 relative overflow-hidden">
               <div className="absolute -right-2 -bottom-2 opacity-5">
                 <HandCoins className="w-16 h-16" />
               </div>
@@ -169,7 +169,7 @@ export default function UserDashboard() {
         )}
 
         {!profile.memberId && (
-          <div className="bg-fund-out/8 border border-fund-out/25 rounded-lg p-4 text-center">
+          <div className="bg-fund-out-bright/20 border border-fund-out-bright/40 rounded-lg p-4 text-center">
             <p className="text-fund-out text-sm font-medium">حسابك غير مرتبط بعضو في الصندوق</p>
             <p className="text-fund-out text-xs mt-1">تواصل مع المشرف لربط حسابك</p>
           </div>
