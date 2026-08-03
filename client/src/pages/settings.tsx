@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import MobileLayout from "@/components/layout/MobileLayout";
-import { applyBackupRetention, createBackup, getBackups, getBackupSummary, getMembers, getSettings, importBackup, restoreBackup, updateSettings, type BackupContentSummary, type RestoreResult } from "@/lib/api";
+import { applyBackupRetention, createBackup, deleteContributionRate, getBackups, getBackupSummary, getContributionRates, getMembers, getSettings, importBackup, restoreBackup, setContributionRate, updateSettings, type BackupContentSummary, type RestoreResult } from "@/lib/api";
 import { Home, Users, ChevronLeft, Shield, Wallet, DatabaseBackup, CalendarClock, Archive, Download, Upload, ShieldCheck } from "lucide-react";
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
@@ -44,12 +44,16 @@ function invalidateEverything(queryClient: ReturnType<typeof useQueryClient>) {
   queryClient.invalidateQueries();
 }
 
+const MONTHS = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
+
 export default function FamilySettings() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [familyName, setFamilyName] = useState(() => localStorage.getItem("familyName") || "عائلة السعيدي");
   const [defaultMonthly, setDefaultMonthly] = useState("");
   const [zakatNisab, setZakatNisab] = useState("");
+  const [effectiveYear, setEffectiveYear] = useState(new Date().getFullYear());
+  const [effectiveMonth, setEffectiveMonth] = useState(new Date().getMonth() + 2);
   const [backupEnabled, setBackupEnabled] = useState(false);
   const [backupKeepDays, setBackupKeepDays] = useState(7);
   const [backupKeepWeeksPerMonth, setBackupKeepWeeksPerMonth] = useState(4);
@@ -63,6 +67,40 @@ export default function FamilySettings() {
   const { data: settings } = useQuery<FamilySettingsType>({
     queryKey: ["settings"],
     queryFn: getSettings,
+  });
+
+  const { data: rates } = useQuery({ queryKey: ["contribution-rates"], queryFn: getContributionRates });
+
+  useEffect(() => {
+    if (!rates) return;
+    setEffectiveYear(rates.defaultEffective.year);
+    setEffectiveMonth(rates.defaultEffective.month);
+  }, [rates]);
+
+  const saveRateMutation = useMutation({
+    mutationFn: () => setContributionRate({
+      memberId: null,
+      amount: defaultMonthly.trim(),
+      effectiveYear,
+      effectiveMonth,
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contribution-rates"] });
+      queryClient.invalidateQueries({ queryKey: ["settings"] });
+      queryClient.invalidateQueries({ queryKey: ["arrears"] });
+      toast({ title: `اعتُمد المبلغ اعتباراً من ${MONTHS[effectiveMonth - 1]} ${effectiveYear}` });
+    },
+    onError: (error) => toast({ title: "تعذر اعتماد المبلغ", description: (error as Error).message, variant: "destructive" }),
+  });
+
+  const deleteRateMutation = useMutation({
+    mutationFn: (id: string) => deleteContributionRate(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contribution-rates"] });
+      queryClient.invalidateQueries({ queryKey: ["arrears"] });
+      toast({ title: "حُذف السعر" });
+    },
+    onError: (error) => toast({ title: "تعذر الحذف", description: (error as Error).message, variant: "destructive" }),
   });
 
   const { data: backups = [] } = useQuery<SystemBackup[]>({
@@ -255,9 +293,61 @@ export default function FamilySettings() {
               />
               <span className="text-sm text-muted-foreground font-bold">ر.ع</span>
             </div>
+
+            {rates && (
+              <div className="flex items-center gap-2">
+                <label className="text-xs font-bold text-muted-foreground shrink-0">يبدأ من:</label>
+                <select
+                  value={effectiveMonth}
+                  onChange={(e) => setEffectiveMonth(Number(e.target.value))}
+                  className="flex-1 text-xs p-2 border rounded-xl bg-background"
+                  data-testid="select-rate-month"
+                >
+                  {MONTHS.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
+                </select>
+                <input
+                  type="number"
+                  value={effectiveYear}
+                  onChange={(e) => setEffectiveYear(Number(e.target.value))}
+                  className="w-20 text-xs p-2 border rounded-xl bg-background font-mono"
+                  data-testid="input-rate-year"
+                />
+              </div>
+            )}
+
+            <button
+              onClick={() => saveRateMutation.mutate()}
+              disabled={!defaultMonthly.trim() || saveRateMutation.isPending}
+              className="tap-target w-full rounded-xl bg-primary text-primary-foreground text-sm font-bold disabled:opacity-50"
+              data-testid="button-save-rate"
+            >
+              {saveRateMutation.isPending ? "جاري الحفظ..." : "اعتماد المبلغ"}
+            </button>
+
             <p className="text-xs text-muted-foreground leading-relaxed">
-              يُستخدم لحساب المتأخرات بالريال لكل عضو لم يُحدد له مبلغ خاص من صفحة الأعضاء. اتركه صفراً لتعطيل حساب المتأخرات.
+              المبلغ يسري من الشهر المحدد فصاعداً فقط — الأشهر السابقة تبقى محسوبة بالمبلغ الذي كان سارياً فيها،
+              فتغييره كل سنة لا يُنشئ متأخرات وهمية على الماضي.
             </p>
+
+            {rates && rates.rates.length > 0 && (
+              <div className="pt-2 space-y-1">
+                <p className="text-xs font-bold text-muted-foreground">سجل الاشتراكات</p>
+                {rates.rates.map((r) => (
+                  <div key={r.id} className="flex items-center gap-2 bg-muted/40 rounded-lg px-2 py-1.5 text-xs">
+                    <span className="font-bold">{r.scopeName}</span>
+                    <span className="font-mono font-bold tabular">{r.amount.toFixed(3)} ر.ع</span>
+                    <span className="text-muted-foreground">من {MONTHS[r.effectiveMonth - 1]} {r.effectiveYear}</span>
+                    <button
+                      onClick={() => deleteRateMutation.mutate(r.id)}
+                      className="tap-target mr-auto px-2 text-muted-foreground hover:text-destructive"
+                      data-testid={`button-delete-rate-${r.id}`}
+                    >
+                      حذف
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="space-y-2 pt-2 border-t border-border/50">

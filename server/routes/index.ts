@@ -11,3 +11,4 @@ export { registerZakatRoutes } from "./zakat";
 export { registerInvestmentRoutes } from "./investments";
 export { registerProposalRoutes } from "./proposals";
 export { registerAttachmentRoutes } from "./attachments";
+export { registerRateRoutes } from "./rates";

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import MobileLayout from "@/components/layout/MobileLayout";
-import { getMembers, createMember, deleteMember, updateMember, getContributions, getLoans } from "@/lib/api";
+import { getMembers, createMember, deleteMember, updateMember, getContributions, getLoans, setContributionRate, getContributionRates } from "@/lib/api";
 import { UserPlus, Trash2, CreditCard, History, HandCoins, Pencil, Check, X } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -51,11 +51,20 @@ export default function Members() {
     },
   });
 
+  const { data: rates } = useQuery({ queryKey: ["contribution-rates"], queryFn: getContributionRates });
+
   const updateMemberMutation = useMutation({
-    mutationFn: ({ id, name, expectedMonthly }: { id: string; name: string; expectedMonthly: string | null }) =>
-      updateMember(id, { name, avatar: name.substring(0, 2), expectedMonthly }),
+    mutationFn: async ({ id, name, expectedMonthly }: { id: string; name: string; expectedMonthly: string | null }) => {
+      const member = await updateMember(id, { name, avatar: name.substring(0, 2) });
+      // المبلغ يُسجَّل كسعر يبدأ من الشهر القادم — لا يُعاد حساب أي شهر مضى
+      if (expectedMonthly) {
+        await setContributionRate({ memberId: id, amount: expectedMonthly });
+      }
+      return member;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["members"] });
+      queryClient.invalidateQueries({ queryKey: ["contribution-rates"] });
       toast({ title: "تم تحديث بيانات العضو" });
       setEditingMember(null);
       setEditName("");
@@ -193,6 +202,9 @@ export default function Members() {
                             data-testid={`input-edit-expected-${member.id}`}
                           />
                           <span className="text-xs text-muted-foreground">ر.ع</span>
+                        </div>
+                        <div className="text-xs text-muted-foreground leading-relaxed">
+                          يسري من {rates ? `${rates.defaultEffective.month}/${rates.defaultEffective.year}` : "الشهر القادم"} — لا يُعاد حساب الأشهر السابقة
                         </div>
                         </div>
                       ) : (

@@ -125,8 +125,38 @@ export function recentDueMonths(now: Date = new Date(), count = 12): Array<{ yea
 }
 
 // ــــ المتأخرات بالمبلغ ــــ
+
+// الاشتراك الشهري يتغيّر بين سنة وأخرى، فيُسجَّل كسعر له تاريخ سريان.
+// الشهر يُحاسَب بالسعر الذي كان سارياً فيه، فتغيير المبلغ اليوم لا يُعيد كتابة الماضي.
+export interface RatePeriod {
+  amount: number;
+  year: number;   // أول شهر يسري فيه هذا السعر
+  month: number;
+}
+
+// السعر الساري في شهر معيّن: آخر سعر بدأ سريانه في ذلك الشهر أو قبله.
+// الأشهر السابقة لأول سعر مسجَّل لا سعر لها ⇒ لا متأخرات عليها إطلاقاً.
+export function rateForMonth(rates: RatePeriod[], year: number, month: number): number {
+  const key = year * 12 + month;
+  let best: RatePeriod | null = null;
+  for (const r of rates) {
+    const rk = r.year * 12 + r.month;
+    if (rk > key) continue;
+    if (!best || rk > best.year * 12 + best.month) best = r;
+  }
+  return best ? best.amount : 0;
+}
+
+// الشهر الذي يلي شهراً معيّناً — السعر الجديد يبدأ منه افتراضياً لا من الشهر الجاري
+export function nextMonthOf(year: number, month: number): { year: number; month: number } {
+  return month >= 12 ? { year: year + 1, month: 1 } : { year, month: month + 1 };
+}
+
 export interface ArrearsInput {
-  expectedMonthly: number;                     // الاشتراك الشهري المتوقع من العضو
+  /** سجل الأسعار بتواريخ سريانها — يُفضَّل على expectedMonthly */
+  rates?: RatePeriod[];
+  /** سعر ثابت لكل الأشهر (للتوافق مع الاستدعاءات القديمة والاختبارات) */
+  expectedMonthly?: number;
   dueMonths: Array<{ year: number; month: number }>; // الأشهر التي مضت مهلتها
   paidByMonth: Record<string, number>;         // "2026-8" ⇒ المبلغ المعتمد في ذلك الشهر
 }
@@ -137,34 +167,47 @@ export interface ArrearsResult {
   arrears: number;         // المتأخر عليه بالريال
   missedMonths: number;    // أشهر لم يدفع فيها شيئاً
   partialMonths: number;   // أشهر دفع فيها أقل من المتوقع
+  chargedMonths: number;   // الأشهر التي كان لها سعر ساري فحوسبت فعلاً
 }
 
 // يحسب المتأخرات بالريال لا بعدد الأشهر — الشهر الذي دُفع فيه أكثر من المتوقع لا يغطي شهراً آخر
 export function computeArrears(input: ArrearsInput): ArrearsResult {
-  if (input.expectedMonthly <= 0) {
-    return { expectedTotal: 0, paidTotal: 0, arrears: 0, missedMonths: 0, partialMonths: 0 };
+  const rates = input.rates;
+  const flat = input.expectedMonthly ?? 0;
+  if ((!rates || rates.length === 0) && flat <= 0) {
+    return { expectedTotal: 0, paidTotal: 0, arrears: 0, missedMonths: 0, partialMonths: 0, chargedMonths: 0 };
   }
 
+  let expectedTotal = 0;
   let paidTotal = 0;
   let arrears = 0;
   let missedMonths = 0;
   let partialMonths = 0;
+  let chargedMonths = 0;
 
   for (const m of input.dueMonths) {
+    const expected = rates && rates.length > 0 ? rateForMonth(rates, m.year, m.month) : flat;
     const paid = input.paidByMonth[`${m.year}-${m.month}`] ?? 0;
     paidTotal += paid;
-    const shortfall = Math.max(0, input.expectedMonthly - paid);
+
+    // شهر لم يكن له سعر ساري لا يُحاسَب عليه — لا يدخل المتوقع ولا المتأخر
+    if (expected <= 0) continue;
+
+    chargedMonths += 1;
+    expectedTotal += expected;
+    const shortfall = Math.max(0, expected - paid);
     arrears += shortfall;
     if (paid <= 0) missedMonths += 1;
     else if (shortfall > 0) partialMonths += 1;
   }
 
   return {
-    expectedTotal: Number((input.expectedMonthly * input.dueMonths.length).toFixed(3)),
+    expectedTotal: Number(expectedTotal.toFixed(3)),
     paidTotal: Number(paidTotal.toFixed(3)),
     arrears: Number(arrears.toFixed(3)),
     missedMonths,
     partialMonths,
+    chargedMonths,
   };
 }
 

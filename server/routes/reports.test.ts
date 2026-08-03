@@ -34,6 +34,10 @@ vi.mock("../services/dashboard", () => ({
 // سيناريو ثابت: عضو ساهم 25، تسلّف 30 وسدّدها، ثم تسلّف 100 وسدّد 40 ⇒ عليه 60
 const MEMBER = { id: "m1", name: "محمد", role: "member" };
 
+let ratesFixture: any[] = [
+  { id: "r1", memberId: null, amount: "25", effectiveYear: 2025, effectiveMonth: 1, note: null, createdAt: new Date(2025, 0, 1), createdBy: null },
+];
+
 vi.mock("../storage", () => ({
   storage: {
     getMember: vi.fn(async (id: string) => (id === MEMBER.id ? MEMBER : undefined)),
@@ -62,6 +66,8 @@ vi.mock("../storage", () => ({
       { id: "r2", loanId: "l2", installmentNumber: 2, amount: "10", dueDate: new Date(2026, 6, 10), status: "scheduled" },
     ]),
     getFamilySettings: vi.fn(async () => ({ defaultMonthlyContribution: "25" })),
+    // اشتراك عائلي 25 ساري من يناير 2025 — يغطي كل نافذة الاثني عشر شهراً
+    getContributionRates: vi.fn(async () => ratesFixture),
     getAuditLogs: vi.fn(async () => ({ data: [], total: 0, page: 1, limit: 50, totalPages: 0 })),
     getContributionsByYearAndMonth: vi.fn(async () => []),
     getLoansByYear: vi.fn(async () => []),
@@ -159,6 +165,46 @@ describe("المتأخرات بالريال", () => {
     vi.useRealTimers();
     expect(body.arrears.expectedMonthly).toBe(25);
     expect(body.arrears.arrears).toBe(275);
+  });
+
+  it("رفع المبلغ لا يُنشئ متأخرات على الأشهر السابقة له", async () => {
+    // 25 من يناير 2025، ثم 40 من مايو 2026 — الأشهر قبل مايو تبقى على 25
+    ratesFixture = [
+      { id: "r1", memberId: null, amount: "25", effectiveYear: 2025, effectiveMonth: 1, note: null, createdAt: new Date(), createdBy: null },
+      { id: "r2", memberId: null, amount: "40", effectiveYear: 2026, effectiveMonth: 5, note: null, createdAt: new Date(), createdBy: null },
+    ];
+    vi.setSystemTime(new Date(2026, 7, 5, 12, 0)); // النافذة: أغسطس 2025 ← يوليو 2026
+    const body = await (await request("/api/reports/arrears", admin)).json();
+    vi.useRealTimers();
+
+    const row = body.members.find((m: any) => m.memberId === "m1");
+    // 9 أشهر بـ25 (أغسطس 2025 ← أبريل 2026) + 3 أشهر بـ40 (مايو ← يوليو 2026) = 345
+    expect(row.expectedTotal).toBe(345);
+    expect(row.arrears).toBe(320); // ناقص 25 دفعها في يونيو
+    expect(row.expectedMonthly).toBe(40); // الساري الآن
+
+    ratesFixture = [
+      { id: "r1", memberId: null, amount: "25", effectiveYear: 2025, effectiveMonth: 1, note: null, createdAt: new Date(), createdBy: null },
+    ];
+  });
+
+  it("الأشهر السابقة لأول مبلغ مسجَّل لا تُحاسَب إطلاقاً", async () => {
+    // أول مبلغ يبدأ من مايو 2026 فقط
+    ratesFixture = [
+      { id: "r1", memberId: null, amount: "30", effectiveYear: 2026, effectiveMonth: 5, note: null, createdAt: new Date(), createdBy: null },
+    ];
+    vi.setSystemTime(new Date(2026, 7, 5, 12, 0));
+    const body = await (await request("/api/reports/arrears", admin)).json();
+    vi.useRealTimers();
+
+    const row = body.members.find((m: any) => m.memberId === "m1");
+    expect(row.chargedMonths).toBe(3);   // مايو ويونيو ويوليو فقط
+    expect(row.expectedTotal).toBe(90);
+    expect(row.arrears).toBe(65);        // ناقص 25 دفعها في يونيو
+
+    ratesFixture = [
+      { id: "r1", memberId: null, amount: "25", effectiveYear: 2025, effectiveMonth: 1, note: null, createdAt: new Date(), createdBy: null },
+    ];
   });
 
   it("العضو العادي محجوب عن تقرير المتأخرات", async () => {

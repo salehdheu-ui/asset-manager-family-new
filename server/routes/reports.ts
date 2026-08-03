@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { storage } from "../storage";
 import { isAuthenticated, isAdmin } from "../auth";
 import { computeDashboardSummary } from "../services/dashboard";
+import { loadRates } from "../services/rates";
 import { computeCommitmentScore, projectCashflow, dueMonthsInYear, isInstallmentLate, recentDueMonths, MONTHLY_DUE_DAY, computeArrears, computeMemberShares, computeZakat, isHawlComplete } from "@shared/finance";
 import { rebalanceYear } from "../capital-engine";
 
@@ -118,18 +119,16 @@ export function registerReportRoutes(app: Express) {
   // متأخرات المساهمات بالريال لكل عضو — تعتمد الاشتراك الشهري المتوقع ومهلة يوم 26
   app.get("/api/reports/arrears", isAuthenticated, isAdmin, async (_req, res) => {
     try {
-      const [members, contributions, settings] = await Promise.all([
+      const [members, contributions, rates] = await Promise.all([
         storage.getMembers(),
         storage.getContributions(),
-        storage.getFamilySettings(),
+        loadRates(),
       ]);
 
       const now = new Date();
       const dueMonths = recentDueMonths(now, 12);
-      const familyDefault = Number(settings?.defaultMonthlyContribution ?? 0);
 
       const rows = members.map((member) => {
-        const expectedMonthly = Number(member.expectedMonthly ?? 0) || familyDefault;
         const paidByMonth: Record<string, number> = {};
         for (const c of contributions) {
           if (c.memberId !== member.id || c.status !== "approved") continue;
@@ -139,14 +138,14 @@ export function registerReportRoutes(app: Express) {
         return {
           memberId: member.id,
           name: member.name,
-          expectedMonthly,
-          ...computeArrears({ expectedMonthly, dueMonths, paidByMonth }),
+          expectedMonthly: rates.currentRate(member.id, now),
+          ...computeArrears({ rates: rates.ratesFor(member.id), dueMonths, paidByMonth }),
         };
       });
 
       res.json({
         windowMonths: dueMonths.length,
-        familyDefault,
+        familyDefault: rates.currentRate("", now),
         totalArrears: Number(rows.reduce((s, r) => s + r.arrears, 0).toFixed(3)),
         members: rows.sort((a, b) => b.arrears - a.arrears),
       });
@@ -278,7 +277,8 @@ export function registerReportRoutes(app: Express) {
       const currentDebt = Math.max(0, totalBorrowed - totalRepaid);
 
       // متأخرات المساهمات بالريال عن آخر 12 شهراً مضت مهلتها
-      const expectedMonthly = Number(member.expectedMonthly ?? 0) || Number(settings?.defaultMonthlyContribution ?? 0);
+      const rates = await loadRates();
+      const expectedMonthly = rates.currentRate(memberId);
       const paidByMonth: Record<string, number> = {};
       for (const c of contributions) {
         if (c.status !== "approved") continue;
@@ -286,7 +286,7 @@ export function registerReportRoutes(app: Express) {
         paidByMonth[key] = (paidByMonth[key] ?? 0) + Number(c.amount);
       }
       const arrears = computeArrears({
-        expectedMonthly,
+        rates: rates.ratesFor(memberId),
         dueMonths: recentDueMonths(new Date(), 12),
         paidByMonth,
       });
@@ -374,17 +374,16 @@ export function registerReportRoutes(app: Express) {
 
       // متأخرات مساهمات بالريال (إن حُدد اشتراك شهري)
       const settings = await storage.getFamilySettings();
-      const familyDefault = Number(settings?.defaultMonthlyContribution ?? 0);
+      const rateBook = await loadRates();
       const dueWindow = recentDueMonths(now, 12);
       const arrearsRows = members.map((m) => {
-        const expectedMonthly = Number(m.expectedMonthly ?? 0) || familyDefault;
         const paidByMonth: Record<string, number> = {};
         for (const c of contributions) {
           if (c.memberId !== m.id || c.status !== "approved") continue;
           const key = `${c.year}-${c.month}`;
           paidByMonth[key] = (paidByMonth[key] ?? 0) + Number(c.amount);
         }
-        return { name: m.name, ...computeArrears({ expectedMonthly, dueMonths: dueWindow, paidByMonth }) };
+        return { name: m.name, ...computeArrears({ rates: rateBook.ratesFor(m.id), dueMonths: dueWindow, paidByMonth }) };
       }).filter((r) => r.arrears > 0);
 
       if (arrearsRows.length > 0) {

@@ -17,7 +17,8 @@ import {
   type InvestmentValuation, type InsertInvestmentValuation, investmentValuations,
   type Proposal, type InsertProposal, proposals,
   type ProposalVote, proposalVotes,
-  type Attachment, attachments
+  type Attachment, attachments,
+  type ContributionRate, type InsertContributionRate, contributionRates
 } from "@shared/schema";
 import { users } from "@shared/models/auth";
 import { db } from "./db";
@@ -121,6 +122,11 @@ export interface IStorage {
   getAttachment(id: string): Promise<Attachment | undefined>;
   createAttachment(data: Omit<Attachment, "id" | "createdAt">): Promise<Omit<Attachment, "content">>;
   deleteAttachment(id: string): Promise<void>;
+
+  // Contribution rates (الاشتراك الشهري بتواريخ سريانه)
+  getContributionRates(): Promise<ContributionRate[]>;
+  createContributionRate(data: InsertContributionRate): Promise<ContributionRate>;
+  deleteContributionRate(id: string): Promise<void>;
 
   // System Reset
   resetSystemData(): Promise<void>;
@@ -565,6 +571,27 @@ export class DatabaseStorage implements IStorage {
     await db.delete(attachments).where(eq(attachments.id, id));
   }
 
+  // Contribution rates
+  async getContributionRates(): Promise<ContributionRate[]> {
+    return await db.select().from(contributionRates)
+      .orderBy(desc(contributionRates.effectiveYear), desc(contributionRates.effectiveMonth));
+  }
+
+  // تسجيل السعر نفسه لشهر السريان ذاته يستبدل السابق بدل أن يتضاعف
+  async createContributionRate(data: InsertContributionRate): Promise<ContributionRate> {
+    const [row] = await db.insert(contributionRates).values(data)
+      .onConflictDoUpdate({
+        target: [contributionRates.memberId, contributionRates.effectiveYear, contributionRates.effectiveMonth],
+        set: { amount: data.amount, note: data.note ?? null, createdAt: new Date(), createdBy: data.createdBy ?? null },
+      })
+      .returning();
+    return row;
+  }
+
+  async deleteContributionRate(id: string): Promise<void> {
+    await db.delete(contributionRates).where(eq(contributionRates.id, id));
+  }
+
   async resetSystemData(): Promise<void> {
     await db.transaction(async (tx: any) => {
       await tx.update(familySettings).set({
@@ -583,6 +610,7 @@ export class DatabaseStorage implements IStorage {
 
       await tx.delete(auditLogs);
       await tx.delete(systemBackups);
+      await tx.delete(contributionRates);
       await tx.delete(attachments);
       await tx.delete(proposalVotes);
       await tx.delete(proposals);

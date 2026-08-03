@@ -8,6 +8,8 @@ import {
   computeMemberShares,
   computeNetAssets,
   computeZakat,
+  rateForMonth,
+  nextMonthOf,
   daysUntilHawl,
   dueMonthsInYear,
   isHawlComplete,
@@ -277,5 +279,78 @@ describe("عائد الاستثمار", () => {
 
   it("استثمار بصفر لا يقسم على صفر", () => {
     expect(computeInvestmentReturn({ amount: 0, currentValue: 0 }).returnPercent).toBe(0);
+  });
+});
+
+
+describe("الاشتراك الشهري المتغيّر بين السنوات", () => {
+  // 25 ر.ع من يناير 2025، ثم 30 ر.ع من يناير 2026
+  const rates = [
+    { amount: 25, year: 2025, month: 1 },
+    { amount: 30, year: 2026, month: 1 },
+  ];
+
+  it("كل شهر يُحاسَب بالسعر الذي كان سارياً فيه", () => {
+    expect(rateForMonth(rates, 2025, 6)).toBe(25);
+    expect(rateForMonth(rates, 2025, 12)).toBe(25);
+    expect(rateForMonth(rates, 2026, 1)).toBe(30);
+    expect(rateForMonth(rates, 2026, 8)).toBe(30);
+  });
+
+  it("الأشهر السابقة لأول سعر لا سعر لها ⇒ لا متأخرات عليها", () => {
+    expect(rateForMonth(rates, 2024, 11)).toBe(0);
+    const r = computeArrears({
+      rates,
+      dueMonths: [{ year: 2024, month: 10 }, { year: 2024, month: 11 }],
+      paidByMonth: {},
+    });
+    expect(r.arrears).toBe(0);
+    expect(r.chargedMonths).toBe(0);
+    expect(r.missedMonths).toBe(0);
+  });
+
+  it("رفع المبلغ لا يُعيد حساب الماضي", () => {
+    // لم يدفع شيئاً: شهران بـ25 وشهران بـ30 ⇒ 110 لا 120
+    const r = computeArrears({
+      rates,
+      dueMonths: [
+        { year: 2025, month: 11 }, { year: 2025, month: 12 },
+        { year: 2026, month: 1 }, { year: 2026, month: 2 },
+      ],
+      paidByMonth: {},
+    });
+    expect(r.expectedTotal).toBe(110);
+    expect(r.arrears).toBe(110);
+    expect(r.chargedMonths).toBe(4);
+  });
+
+  it("الدفع بالسعر القديم في شهر قديم يُبرئ ذمته كاملاً", () => {
+    const r = computeArrears({
+      rates,
+      dueMonths: [{ year: 2025, month: 12 }, { year: 2026, month: 1 }],
+      paidByMonth: { "2025-12": 25, "2026-1": 30 },
+    });
+    expect(r.arrears).toBe(0);
+    expect(r.missedMonths).toBe(0);
+  });
+
+  it("السعر الجديد يبدأ من الشهر القادم لا الجاري", () => {
+    expect(nextMonthOf(2026, 8)).toEqual({ year: 2026, month: 9 });
+    expect(nextMonthOf(2026, 12)).toEqual({ year: 2027, month: 1 });
+
+    // سُجّل 30 في أغسطس ليسري من سبتمبر ⇒ أغسطس يبقى على 25
+    const withNext = [...rates, { amount: 40, year: 2026, month: 9 }];
+    expect(rateForMonth(withNext, 2026, 8)).toBe(30);
+    expect(rateForMonth(withNext, 2026, 9)).toBe(40);
+  });
+
+  it("السعر الثابت القديم ما زال يعمل للاستدعاءات التي لا تمرر سجلاً", () => {
+    const r = computeArrears({
+      expectedMonthly: 25,
+      dueMonths: [{ year: 2026, month: 1 }, { year: 2026, month: 2 }],
+      paidByMonth: { "2026-1": 25 },
+    });
+    expect(r.arrears).toBe(25);
+    expect(r.chargedMonths).toBe(2);
   });
 });

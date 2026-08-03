@@ -361,3 +361,30 @@ export const attachments = pgTable("attachments", {
 });
 
 export type Attachment = typeof attachments.$inferSelect;
+
+// سجل الاشتراك الشهري بتواريخ سريانه — المبلغ يتغيّر بين سنة وأخرى،
+// فيُحاسَب كل شهر بالسعر الذي كان سارياً فيه، ولا يُعاد حساب الماضي عند التغيير.
+export const contributionRates = pgTable("contribution_rates", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  memberId: varchar("member_id").references(() => members.id, { onDelete: "cascade" }), // فارغ = السعر العائلي الافتراضي
+  amount: decimal("amount", { precision: 10, scale: 3 }).notNull(),
+  effectiveYear: integer("effective_year").notNull(),
+  effectiveMonth: integer("effective_month").notNull(),
+  note: text("note"),
+  createdAt: timestamp("created_at").defaultNow(),
+  createdBy: varchar("created_by"),
+}, (table) => ({
+  scopeMonthUnique: uniqueIndex("contribution_rates_scope_month_unique")
+    .on(table.memberId, table.effectiveYear, table.effectiveMonth),
+}));
+
+export const insertContributionRateSchema = createInsertSchema(contributionRates)
+  .omit({ id: true, createdAt: true })
+  .extend({
+    memberId: z.string().nullable().optional(),
+    amount: z.string().refine((v) => Number(v) >= 0, "المبلغ لا يمكن أن يكون سالباً"),
+    effectiveYear: z.number().int().min(2020).max(2100),
+    effectiveMonth: z.number().int().min(1).max(12),
+  });
+export type InsertContributionRate = z.infer<typeof insertContributionRateSchema>;
+export type ContributionRate = typeof contributionRates.$inferSelect;
