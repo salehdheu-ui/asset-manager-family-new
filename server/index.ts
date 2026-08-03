@@ -65,6 +65,28 @@ app.use((req, res, next) => {
   next();
 });
 
+// فحص الصحة — يُجيب قبل تسجيل بقية المسارات حتى يبقى صالحاً
+// حتى لو تعثّر شيء بعده. منصّات النشر (Coolify وغيرها) تعتمد عليه
+// لتقرّر هل نجح النشر أم تُبقي الحاوية القديمة.
+app.get("/api/health", async (_req, res) => {
+  try {
+    const { pool } = await import("./db");
+    // هل قاعدة البيانات متصلة، وهل جرى ترحيل المخطط بعد آخر تحديث؟
+    const { rows } = await pool.query(
+      "select to_regclass('public.contribution_rates') is not null as ready",
+    );
+    const schemaReady = Boolean(rows[0]?.ready);
+    res.status(200).json({
+      status: "ok",
+      database: "connected",
+      schemaReady,
+      ...(schemaReady ? {} : { hint: "شغّل npm run db:push لإنشاء الجداول الجديدة" }),
+    });
+  } catch (error) {
+    res.status(503).json({ status: "error", database: "unreachable" });
+  }
+});
+
 (async () => {
   await registerRoutes(httpServer, app);
 
