@@ -66,7 +66,7 @@ export default function Dashboard() {
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center space-y-2 py-8 bg-card border border-border/40 rounded-xl shadow-sm relative overflow-hidden"
+          className="text-center space-y-2 py-8 bg-card border border-border/70 rounded-xl shadow-sm relative overflow-hidden"
         >
           <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
           <p className="text-sm text-muted-foreground font-medium">صافي الأصول المعتمدة</p>

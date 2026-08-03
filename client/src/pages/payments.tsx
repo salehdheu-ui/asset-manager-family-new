@@ -198,7 +198,7 @@ export default function YearlyPaymentMatrix() {
           <div className="flex items-center justify-between">
             <button 
               onClick={() => setSelectedYear(prev => Math.max(2020, prev - 1))}
-              className="w-11 h-11 flex items-center justify-center bg-card hover:bg-primary/14 rounded-lg transition-all border border-border/50 active:scale-90 shadow-sm"
+              className="w-11 h-11 flex items-center justify-center bg-card hover:bg-primary/14 rounded-lg transition-all border border-border/80 active:scale-90 shadow-sm"
               data-testid="button-prev-year"
             >
               <ChevronRight className="w-5 h-5 text-primary" />
@@ -227,7 +227,7 @@ export default function YearlyPaymentMatrix() {
 
             <button 
               onClick={() => setSelectedYear(prev => Math.min(2099, prev + 1))}
-              className="w-11 h-11 flex items-center justify-center bg-card hover:bg-primary/14 rounded-lg transition-all border border-border/50 active:scale-90 shadow-sm"
+              className="w-11 h-11 flex items-center justify-center bg-card hover:bg-primary/14 rounded-lg transition-all border border-border/80 active:scale-90 shadow-sm"
               data-testid="button-next-year"
             >
               <ChevronLeft className="w-5 h-5 text-primary" />
@@ -274,7 +274,7 @@ export default function YearlyPaymentMatrix() {
         </div>
 
         {members.length === 0 ? (
-          <div className="text-center py-16 bg-muted/10 rounded-xl border border-dashed border-border/60">
+          <div className="text-center py-16 bg-muted/10 rounded-xl border border-dashed border-border/80">
             <Coins className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
             <p className="text-sm text-muted-foreground font-bold">لا يوجد أعضاء</p>
             <p className="text-xs text-muted-foreground/70 mt-1">يرجى إضافة أعضاء من صفحة الأعضاء أولاً</p>
@@ -296,7 +296,7 @@ export default function YearlyPaymentMatrix() {
                   initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: mIdx * 0.06 }}
-                  className="bg-card border border-border/50 rounded-xl overflow-hidden shadow-sm"
+                  className="bg-card border border-border/80 rounded-xl overflow-hidden shadow-sm"
                   data-testid={`card-member-${member.id}`}
                 >
                   {/* Member Header */}
@@ -510,7 +510,7 @@ export default function YearlyPaymentMatrix() {
                                     ? "bg-fund-out-bright/20 border-fund-out-bright/40 hover:bg-fund-out-bright/20" 
                                     : isCurrentMonth
                                       ? "bg-primary/10 border-primary/30 hover:bg-primary/14"
-                                      : "bg-muted/20 border-transparent hover:bg-muted/40 hover:border-border/30"
+                                      : "bg-muted/20 border-transparent hover:bg-muted/40 hover:border-border/70"
                               )}
                               data-testid={`button-month-${member.id}-${month.id}`}
                             >

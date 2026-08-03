@@ -294,19 +294,19 @@ export default function Loans() {
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-card border border-border/60 rounded-lg p-4">
+          <div className="bg-card border border-border/80 rounded-lg p-4">
             <p className="text-xs font-bold text-muted-foreground">إجمالي السلف</p>
             <p className="text-lg font-mono font-bold text-primary">{totalLoanAmount.toFixed(3)} ر.ع</p>
           </div>
-          <div className="bg-card border border-border/60 rounded-lg p-4">
+          <div className="bg-card border border-border/80 rounded-lg p-4">
             <p className="text-xs font-bold text-muted-foreground">إجمالي المسدد</p>
             <p className="text-lg font-mono font-bold text-fund-in">{totalPaidAmount.toFixed(3)} ر.ع</p>
           </div>
-          <div className="bg-card border border-border/60 rounded-lg p-4">
+          <div className="bg-card border border-border/80 rounded-lg p-4">
             <p className="text-xs font-bold text-muted-foreground">إجمالي المتبقي</p>
             <p className="text-lg font-mono font-bold text-fund-out">{totalRemainingAmount.toFixed(3)} ر.ع</p>
           </div>
-          <div className="bg-card border border-border/60 rounded-lg p-4">
+          <div className="bg-card border border-border/80 rounded-lg p-4">
             <p className="text-xs font-bold text-muted-foreground">نوع السلف</p>
             <p className="text-xs font-bold text-primary">{scheduledLoansCount} بخطة • {openLoansCount} مفتوحة</p>
           </div>
@@ -435,7 +435,7 @@ export default function Loans() {
                           </select>
                         </div>
                         )}
-                        <div className="bg-muted/30 p-4 rounded-lg text-xs text-muted-foreground space-y-2 border border-border/50 font-medium">
+                        <div className="bg-muted/30 p-4 rounded-lg text-xs text-muted-foreground space-y-2 border border-border/80 font-medium">
                           <p>• المال وسيلة لخدمة العائلة، وليس غاية.</p>
                           <p>• بتقديمك لهذا الطلب، أنت تتعهد بالمسؤولية تجاه مستقبل العائلة.</p>
                         </div>
@@ -515,7 +515,7 @@ export default function Loans() {
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
                       data-testid={`card-loan-${loan.id}`}
-                      className="bg-card border border-border/60 rounded-lg p-4 shadow-sm space-y-3"
+                      className="bg-card border border-border/80 rounded-lg p-4 shadow-sm space-y-3"
                     >
                       <div className="flex justify-between items-start">
                         <div className="flex items-center gap-3">
@@ -548,7 +548,7 @@ export default function Loans() {
                       </div>
 
                       {(loan.description || loan.status === 'approved') && (
-                        <div className="bg-muted/20 border border-border/40 rounded-xl p-3 space-y-2">
+                        <div className="bg-muted/20 border border-border/70 rounded-xl p-3 space-y-2">
                           {loan.description && (
                             <p className="text-xs text-muted-foreground leading-relaxed">
                               <span className="font-bold text-foreground">الملاحظة: </span>{loan.description}
@@ -578,7 +578,7 @@ export default function Loans() {
                       )}
 
                       {isGuardian && loan.status === 'pending' && scoreOf(loan.memberId) && (
-                        <div className="flex items-center gap-2 rounded-xl bg-muted/30 border border-border/40 px-3 py-2" data-testid={`score-badge-${loan.id}`}>
+                        <div className="flex items-center gap-2 rounded-xl bg-muted/30 border border-border/70 px-3 py-2" data-testid={`score-badge-${loan.id}`}>
                           <Gauge className="w-4 h-4 text-primary shrink-0" />
                           <span className="text-xs font-bold text-muted-foreground">درجة التزام الطالب:</span>
                           <span className={cn(
@@ -597,7 +597,7 @@ export default function Loans() {
                       )}
 
                       {isGuardian && loan.status === 'pending' && (
-                        <div className="flex gap-2 pt-1 border-t border-border/40">
+                        <div className="flex gap-2 pt-1 border-t border-border/70">
                           <button 
                             data-testid={`button-approve-${loan.id}`}
                             onClick={() => statusMutation.mutate({ id: loan.id, status: "approved" })}
@@ -623,7 +623,7 @@ export default function Loans() {
                         <button 
                           data-testid={`button-repayments-${loan.id}`}
                           onClick={() => loadRepayments(loan.id)}
-                          className="tap-target w-full text-xs font-bold text-primary flex items-center justify-center gap-1 pt-2 border-t border-border/40"
+                          className="tap-target w-full text-xs font-bold text-primary flex items-center justify-center gap-1 pt-2 border-t border-border/70"
                         >
                           <Calendar className="w-3 h-3" />
                           عرض تفاصيل السداد {expandedLoan === loan.id ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
@@ -705,7 +705,7 @@ export default function Loans() {
                                   {repayments[loan.id].map((step) => (
                                   <div key={step.id} className={cn(
                                     "p-3 rounded-xl border flex justify-between items-center",
-                                    step.status === 'paid' ? "bg-fund-in-bright/20 border-fund-in-bright/40" : "bg-muted/30 border-border/30"
+                                    step.status === 'paid' ? "bg-fund-in-bright/20 border-fund-in-bright/40" : "bg-muted/30 border-border/70"
                                   )}>
                                     <div className="flex items-center gap-2">
                                       <div className={cn(
@@ -759,7 +759,7 @@ export default function Loans() {
                       </AnimatePresence>
 
                       {isGuardian && (
-                        <div className="flex gap-2 pt-2 border-t border-border/40">
+                        <div className="flex gap-2 pt-2 border-t border-border/70">
                           <button
                             data-testid={`button-edit-${loan.id}`}
                             onClick={() => {

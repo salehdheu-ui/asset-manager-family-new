@@ -32,7 +32,7 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
   const activeDesc = activeSection?.desc || "واجهة متابعة مبسطة ومهيأة للجوال";
 
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden flex flex-col mx-auto max-w-md shadow-[0_20px_60px_rgba(16,24,40,0.08)] lg:max-w-none lg:flex-row lg:bg-muted/30 lg:shadow-none">
+    <div className="min-h-screen bg-background relative overflow-hidden flex flex-col mx-auto max-w-md shadow-[0_20px_60px_rgba(16,24,40,0.08)] lg:max-w-none lg:flex-row lg:bg-canvas lg:shadow-none">
       {/* Background Texture */}
       <div 
         className="absolute inset-0 opacity-[0.03] pointer-events-none z-0"
@@ -41,7 +41,7 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
 
 
       {/* شريط جانبي ثابت للشاشات الكبيرة — تخطيط الجوال لم يتغير */}
-      <aside className="relative z-20 hidden lg:flex lg:h-screen lg:w-72 lg:shrink-0 lg:flex-col lg:sticky lg:top-0 lg:border-l lg:border-border/50 lg:bg-card/70 lg:backdrop-blur-sm lg:p-5">
+      <aside className="relative z-20 hidden lg:flex lg:h-screen lg:w-72 lg:shrink-0 lg:flex-col lg:sticky lg:top-0 lg:border-l lg:border-border/80 lg:bg-card/70 lg:backdrop-blur-sm lg:p-5">
         <div className="flex items-center gap-2 mb-8 px-1">
           <div className="w-9 h-9 rounded-xl bg-primary/14 flex items-center justify-center">
             <img src={logo} alt="" className="w-5 h-5 opacity-80" />
@@ -127,7 +127,7 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
           </div>
           <button 
             onClick={() => setIsMenuOpen(true)}
-            className="tap-target relative rounded-lg border border-border/60 bg-card/80 p-2.5 shadow-sm transition-all hover:bg-primary/10 active:border-primary/22 lg:hidden"
+            className="tap-target relative rounded-lg border border-border/80 bg-card/80 p-2.5 shadow-sm transition-all hover:bg-primary/10 active:border-primary/22 lg:hidden"
           >
             <Menu className="w-5 h-5 text-primary" />
             <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-fund-in border border-background"></span>
@@ -162,7 +162,7 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
                   "shrink-0 rounded-full px-3.5 py-1.5 text-xs font-bold border transition-all",
                   location === tab.href
                     ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                    : "bg-card/80 text-muted-foreground border-border/60 hover:text-primary",
+                    : "bg-card/80 text-muted-foreground border-border/80 hover:text-primary",
                 )}
                 data-testid={`tab-${tab.href.replace("/", "")}`}
               >
@@ -237,7 +237,7 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
                 ))}
               </div>
 
-              <div className="mt-6 pt-6 border-t border-border/50 space-y-4">
+              <div className="mt-6 pt-6 border-t border-border/80 space-y-4">
                 <div className="bg-muted/30 p-4 rounded-lg">
                   <div className="flex items-center gap-3 mb-2">
                     {user?.profileImageUrl ? (
@@ -285,7 +285,7 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 mx-auto max-w-md lg:hidden border-t border-border/40 bg-card/90 px-5 pb-5 pt-2 backdrop-blur-xl shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 mx-auto max-w-md lg:hidden border-t border-border/70 bg-card/90 px-5 pb-5 pt-2 backdrop-blur-xl shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
         <ul className="flex justify-between items-center">
           {bottomNavItems.map((item) => {
             const isActive = activeSection?.key === item.key;

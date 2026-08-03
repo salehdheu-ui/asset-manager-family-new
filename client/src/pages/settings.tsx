@@ -276,7 +276,7 @@ export default function FamilySettings() {
             placeholder="مثال: عائلة السعيدي"
           />
 
-          <div className="space-y-2 pt-2 border-t border-border/50">
+          <div className="space-y-2 pt-2 border-t border-border/80">
             <label className="text-sm font-bold flex items-center gap-2">
               <Wallet className="w-4 h-4 text-primary" />
               الاشتراك الشهري الافتراضي للعضو
@@ -350,7 +350,7 @@ export default function FamilySettings() {
             )}
           </div>
 
-          <div className="space-y-2 pt-2 border-t border-border/50">
+          <div className="space-y-2 pt-2 border-t border-border/80">
             <label className="text-sm font-bold flex items-center gap-2">
               <Wallet className="w-4 h-4 text-primary" />
               نصاب الزكاة

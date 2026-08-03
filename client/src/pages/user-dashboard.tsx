@@ -102,7 +102,7 @@ export default function UserDashboard() {
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center space-y-4 py-8 bg-card border border-border/40 rounded-xl shadow-sm relative overflow-hidden"
+          className="text-center space-y-4 py-8 bg-card border border-border/70 rounded-xl shadow-sm relative overflow-hidden"
         >
           <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
           
@@ -225,7 +225,7 @@ export default function UserDashboard() {
             </div>
             <div className="space-y-2">
               {memberContributions.slice(0, 5).map((c) => (
-                <div key={c.id} className="bg-card border border-border/50 rounded-xl p-3 flex justify-between items-center">
+                <div key={c.id} className="bg-card border border-border/80 rounded-xl p-3 flex justify-between items-center">
                   <div>
                     <p className="text-sm font-medium">مساهمة شهر {c.month}/{c.year}</p>
                     <p className="text-xs text-muted-foreground">

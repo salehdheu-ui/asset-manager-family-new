@@ -64,7 +64,7 @@ export function ContributionsTrendChart({
     >
       {/* stat pills */}
       <div className="mb-4 grid grid-cols-2 gap-2.5">
-        <div className="flex items-center gap-3 rounded-xl border border-border/30 bg-card p-3">
+        <div className="flex items-center gap-3 rounded-xl border border-border/70 bg-card p-3">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-fund-in to-fund-in text-white shadow-md">
             <Star className="w-4 h-4" />
           </div>
@@ -76,7 +76,7 @@ export function ContributionsTrendChart({
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-3 rounded-xl border border-border/30 bg-card p-3">
+        <div className="flex items-center gap-3 rounded-xl border border-border/70 bg-card p-3">
           <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl shadow-md text-white ${isUpward ? "bg-gradient-to-br from-fund-in to-fund-in" : "bg-gradient-to-br from-fund-out to-fund-out"}`}>
             {isUpward ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
           </div>
@@ -91,7 +91,7 @@ export function ContributionsTrendChart({
       </div>
 
       {/* chart */}
-      <div className="h-56 rounded-lg border border-border/30 bg-gradient-to-b from-muted/20 to-card p-3">
+      <div className="h-56 rounded-lg border border-border/70 bg-gradient-to-b from-muted/20 to-card p-3">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={data} margin={{ top: 8, right: 4, left: -8, bottom: 0 }}>
             <defs>
@@ -137,7 +137,7 @@ export function ContributionsTrendChart({
 
       {/* footer summary */}
       <div className="mt-4 grid grid-cols-2 gap-2.5">
-        <div className="flex items-center gap-2.5 rounded-xl border border-border/30 bg-card px-3.5 py-3">
+        <div className="flex items-center gap-2.5 rounded-xl border border-border/70 bg-card px-3.5 py-3">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-fund-in to-fund-in text-white shadow-sm">
             <Sigma className="w-3.5 h-3.5" />
           </div>
@@ -148,7 +148,7 @@ export function ContributionsTrendChart({
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2.5 rounded-xl border border-border/30 bg-card px-3.5 py-3">
+        <div className="flex items-center gap-2.5 rounded-xl border border-border/70 bg-card px-3.5 py-3">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary/80 to-primary text-white shadow-sm">
             <BarChart2 className="w-3.5 h-3.5" />
           </div>

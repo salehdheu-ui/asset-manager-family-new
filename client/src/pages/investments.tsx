@@ -292,7 +292,7 @@ export default function Investments() {
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2 text-center text-xs pt-2 border-t border-border/40">
+                  <div className="grid grid-cols-3 gap-2 text-center text-xs pt-2 border-t border-border/70">
                     <div><p className="text-muted-foreground mb-1">المبلغ</p><p className="font-bold font-mono">{fmt(Number(inv.amount))}</p></div>
                     <div><p className="text-muted-foreground mb-1">القيمة</p><p className="font-bold font-mono">{fmt(inv.currentValue)}</p></div>
                     <div>

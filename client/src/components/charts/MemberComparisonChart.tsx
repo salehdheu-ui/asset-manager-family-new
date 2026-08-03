@@ -50,7 +50,7 @@ export function MemberComparisonChart({
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="rounded-lg border border-border/60 bg-white px-4 py-3 text-xs shadow-xl">
+        <div className="rounded-lg border border-border/80 bg-white px-4 py-3 text-xs shadow-xl">
           <p className="mb-1.5 font-bold text-foreground">{label}</p>
           <p className="text-base font-bold font-mono text-fund-loan">
             {payload[0].value.toLocaleString("en-US")}
@@ -73,7 +73,7 @@ export function MemberComparisonChart({
     >
       {/* top member hero */}
       {limitedData[0] && (
-        <div className="mb-4 flex items-center gap-4 rounded-xl border border-border/30 bg-card px-4 py-3.5">
+        <div className="mb-4 flex items-center gap-4 rounded-xl border border-border/70 bg-card px-4 py-3.5">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-fund-out to-fund-out text-white shadow-lg">
             <Trophy className="w-5 h-5" />
           </div>
@@ -89,7 +89,7 @@ export function MemberComparisonChart({
       )}
 
       {/* bar chart */}
-      <div className="h-52 rounded-lg border border-border/30 bg-gradient-to-b from-muted/20 to-card p-3">
+      <div className="h-52 rounded-lg border border-border/70 bg-gradient-to-b from-muted/20 to-card p-3">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={limitedData} margin={{ top: 8, right: 4, left: -10, bottom: 12 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" opacity={0.6} vertical={false} />
@@ -129,7 +129,7 @@ export function MemberComparisonChart({
           return (
             <div
               key={member.name}
-              className="flex items-center gap-3 rounded-xl border border-border/30 bg-card px-3 py-2.5 transition-colors hover:bg-muted/20"
+              className="flex items-center gap-3 rounded-xl border border-border/70 bg-card px-3 py-2.5 transition-colors hover:bg-muted/20"
             >
               <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-extrabold ${cfg.badge}`}>
                 {cfg.icon}

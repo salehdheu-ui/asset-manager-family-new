@@ -188,7 +188,7 @@ export default function MemberDetail() {
         </div>
 
         {/* Commitment bar */}
-        <div className="bg-card border border-border/60 rounded-lg p-4">
+        <div className="bg-card border border-border/80 rounded-lg p-4">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm font-bold">معدل الالتزام بالمساهمات</p>
             <span className={cn("text-sm font-bold font-mono", ratingColor)}>{report.performance.commitmentRate}%</span>
@@ -244,7 +244,7 @@ export default function MemberDetail() {
             </h3>
             {report.loans.map((loan, idx) => (
               <motion.div key={loan.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}
-                className="bg-card border border-border/60 rounded-lg overflow-hidden">
+                className="bg-card border border-border/80 rounded-lg overflow-hidden">
                 <button className="w-full p-4 flex items-center gap-3 text-right"
                   onClick={() => setExpandedLoan(expandedLoan === loan.id ? null : loan.id)}>
                   <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
@@ -267,7 +267,7 @@ export default function MemberDetail() {
                 <AnimatePresence>
                   {expandedLoan === loan.id && (
                     <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-                      className="overflow-hidden border-t border-border/40">
+                      className="overflow-hidden border-t border-border/70">
                       <div className="p-4 space-y-3">
                         <div className="grid grid-cols-3 gap-2">
                           <div className="bg-muted/30 rounded-xl p-2.5 text-center">

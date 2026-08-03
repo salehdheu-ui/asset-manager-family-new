@@ -247,7 +247,7 @@ export default function Members() {
                     )}
                   </div>
 
-                  <div className="grid grid-cols-3 gap-3 pt-2 border-t border-border/40">
+                  <div className="grid grid-cols-3 gap-3 pt-2 border-t border-border/70">
                     <div className="bg-fund-in-bright/20 rounded-lg p-3 border border-fund-in-bright/40">
                       <p className="text-xs text-fund-in font-bold mb-1 flex items-center gap-1">
                         <CreditCard className="w-3 h-3" /> المساهمات

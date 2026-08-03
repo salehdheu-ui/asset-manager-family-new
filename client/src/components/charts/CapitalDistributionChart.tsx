@@ -50,7 +50,7 @@ export function CapitalDistributionChart({
       const item = payload[0].payload;
       const percentage = total > 0 ? Math.round((item.value / total) * 100) : 0;
       return (
-        <div className="rounded-lg border border-border/60 bg-background/95 px-3 py-2 text-xs shadow-xl backdrop-blur">
+        <div className="rounded-lg border border-border/80 bg-background/95 px-3 py-2 text-xs shadow-xl backdrop-blur">
           <p className="mb-1 font-bold text-foreground">{item.name}</p>
           <p className="text-muted-foreground">
             {item.value.toLocaleString()} ر.ع
@@ -68,7 +68,7 @@ export function CapitalDistributionChart({
       icon={<PieChartIcon className="w-6 h-6" />}
       delay={delay}
     >
-      <div className="mb-5 rounded-xl border border-border/40 bg-gradient-to-l from-primary/[0.04] via-card to-card px-4 py-4">
+      <div className="mb-5 rounded-xl border border-border/70 bg-gradient-to-l from-primary/[0.04] via-card to-card px-4 py-4">
         <div className="flex items-center justify-between gap-4">
           <div>
             <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">أكبر مكوّن</p>
@@ -84,7 +84,7 @@ export function CapitalDistributionChart({
       </div>
 
       <div className="space-y-4">
-        <div className="rounded-lg border border-border/30 bg-gradient-to-b from-muted/20 to-card p-4">
+        <div className="rounded-lg border border-border/70 bg-gradient-to-b from-muted/20 to-card p-4">
           <div className="mx-auto h-[250px] max-w-[320px] rounded-xl bg-card">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -115,7 +115,7 @@ export function CapitalDistributionChart({
             return (
               <div
                 key={item.name}
-                className="rounded-lg border border-border/30 bg-card px-4 py-3 shadow-sm"
+                className="rounded-lg border border-border/70 bg-card px-4 py-3 shadow-sm"
                 style={{ boxShadow: `inset 0 0 0 1px ${item.fill}20` }}
               >
                 <div className="flex items-start justify-between gap-3">

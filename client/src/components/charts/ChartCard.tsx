@@ -17,7 +17,7 @@ export function ChartCard({ title, children, className, delay = 0, icon }: Chart
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: delay * 0.1, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       className={cn(
-        "group relative overflow-hidden rounded-xl border border-border/40 bg-gradient-to-b from-card via-card to-muted/10 p-5 shadow-md transition-shadow hover:shadow-lg",
+        "group relative overflow-hidden rounded-xl border border-border/70 bg-gradient-to-b from-card via-card to-muted/10 p-5 shadow-md transition-shadow hover:shadow-lg",
         className
       )}
     >

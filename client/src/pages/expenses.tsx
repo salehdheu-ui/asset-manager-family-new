@@ -267,7 +267,7 @@ export default function Expenses() {
                   key={expense.id}
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="bg-card border border-border/60 rounded-lg p-4 shadow-sm"
+                  className="bg-card border border-border/80 rounded-lg p-4 shadow-sm"
                   data-testid={`card-expense-record-${expense.id}`}
                 >
                   <div className="flex justify-between items-start">
@@ -296,14 +296,14 @@ export default function Expenses() {
                       </div>
                     </div>
                   </div>
-                  <div className="pt-3 mt-3 border-t border-border/40">
+                  <div className="pt-3 mt-3 border-t border-border/70">
                     <AttachmentBox entityType="expense" entityId={expense.id} canDelete label="الفاتورة أو الإيصال" />
                   </div>
 
                   <button 
                     onClick={() => deleteMutation.mutate(expense.id)}
                     disabled={deleteMutation.isPending}
-                    className="tap-target w-full text-xs text-muted-foreground flex items-center justify-center gap-1 pt-3 mt-3 border-t border-border/40 hover:text-destructive transition-colors disabled:opacity-50"
+                    className="tap-target w-full text-xs text-muted-foreground flex items-center justify-center gap-1 pt-3 mt-3 border-t border-border/70 hover:text-destructive transition-colors disabled:opacity-50"
                     data-testid={`button-delete-expense-${expense.id}`}
                   >
                     <Trash2 className="w-3 h-3" /> حذف السجل

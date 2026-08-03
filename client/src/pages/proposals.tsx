@@ -113,7 +113,7 @@ export default function Proposals() {
 
         {p.description && <p className="text-xs text-muted-foreground leading-relaxed">{p.description}</p>}
 
-        <div className="flex items-center gap-3 text-xs pt-2 border-t border-border/40">
+        <div className="flex items-center gap-3 text-xs pt-2 border-t border-border/70">
           <span className="flex items-center gap-1 text-fund-in font-bold">
             <ThumbsUp className="w-3.5 h-3.5" /> {p.approve}
           </span>

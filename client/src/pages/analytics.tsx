@@ -426,7 +426,7 @@ export default function Analytics() {
         </div>
 
         {/* ── Year + Period selector ── */}
-        <div className="rounded-xl border border-border/50 bg-card/50 p-4 backdrop-blur-sm">
+        <div className="rounded-xl border border-border/80 bg-card/50 p-4 backdrop-blur-sm">
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div>
               <h2 className="font-bold text-base text-primary font-heading flex items-center gap-2">
@@ -552,7 +552,7 @@ export default function Analytics() {
               </div>
               التحليل السنوي {selectedYear}
             </h3>
-            <div className="overflow-hidden rounded-xl border border-border/50 bg-card shadow-md">
+            <div className="overflow-hidden rounded-xl border border-border/80 bg-card shadow-md">
               {/* Summary row */}
               <div className="grid grid-cols-3">
                 {[
@@ -560,7 +560,7 @@ export default function Analytics() {
                   { label: "السلف", value: yearlyReport.summary.totalLoans, gradient: "from-fund-loan to-fund-loan", icon: CreditCard },
                   { label: "المصروفات", value: yearlyReport.summary.totalExpenses, gradient: "from-fund-out to-fund-out", icon: Wallet },
                 ].map((item, idx) => (
-                  <div key={item.label} className={cn("flex flex-col items-center gap-1.5 p-5 relative", idx < 2 && "border-l border-border/30")}>
+                  <div key={item.label} className={cn("flex flex-col items-center gap-1.5 p-5 relative", idx < 2 && "border-l border-border/70")}>
                     <div className={cn("flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br text-white shadow-md", item.gradient)}>
                       <item.icon className="w-4.5 h-4.5" />
                     </div>
@@ -571,7 +571,7 @@ export default function Analytics() {
                 ))}
               </div>
               {/* Monthly bars */}
-              <div className="border-t border-border/30 bg-gradient-to-b from-muted/20 to-transparent p-5">
+              <div className="border-t border-border/70 bg-gradient-to-b from-muted/20 to-transparent p-5">
                 <p className="mb-4 text-xs font-bold uppercase tracking-widest text-muted-foreground">التطور الشهري للمساهمات</p>
                 <div className="flex items-end gap-1.5 h-24">
                   {yearlyReport.monthlyData.map((month, idx) => {
@@ -603,9 +603,9 @@ export default function Analytics() {
               </div>
               تحليل السلف
             </h3>
-            <div className="overflow-hidden rounded-xl border border-border/50 bg-card shadow-md">
+            <div className="overflow-hidden rounded-xl border border-border/80 bg-card shadow-md">
               <div className="grid grid-cols-2">
-                <div className="flex flex-col items-center gap-2 p-6 border-l border-border/30">
+                <div className="flex flex-col items-center gap-2 p-6 border-l border-border/70">
                   <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-fund-loan to-fund-loan text-white shadow-lg">
                     <CreditCard className="w-5 h-5" />
                   </div>
@@ -622,7 +622,7 @@ export default function Analytics() {
                   <p className="text-xs text-muted-foreground/70">ر.ع</p>
                 </div>
               </div>
-              <div className="border-t border-border/30 bg-gradient-to-b from-muted/20 to-transparent p-5 space-y-4">
+              <div className="border-t border-border/70 bg-gradient-to-b from-muted/20 to-transparent p-5 space-y-4">
                 <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">التوزيع حسب النوع</p>
                 {Object.entries(loansAnalysis.byType).map(([type, data]) => {
                   const labels: Record<string, string> = { urgent: "عاجلة", standard: "عادية", emergency: "طوارئ" };
@@ -651,7 +651,7 @@ export default function Analytics() {
         )}
 
         {/* ── Filter + Export ── */}
-        <div className="rounded-xl border border-border/50 bg-gradient-to-b from-card via-card to-muted/10 p-5 shadow-md space-y-4">
+        <div className="rounded-xl border border-border/80 bg-gradient-to-b from-card via-card to-muted/10 p-5 shadow-md space-y-4">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h3 className="font-bold text-lg text-primary flex items-center gap-2 font-heading">
@@ -663,7 +663,7 @@ export default function Analytics() {
               <p className="mt-1 text-xs text-muted-foreground">اختر السنة والشهر ثم نزّل تقرير Excel مفصلاً.</p>
             </div>
             <button onClick={() => setShowFilters(!showFilters)}
-              className="flex h-11 w-11 items-center justify-center rounded-xl border border-border/50 bg-muted/40 text-muted-foreground transition-all hover:bg-muted/70">
+              className="flex h-11 w-11 items-center justify-center rounded-xl border border-border/80 bg-muted/40 text-muted-foreground transition-all hover:bg-muted/70">
               <ChevronDown className={cn("h-4 w-4 transition-transform duration-300", showFilters && "rotate-180")} />
             </button>
           </div>
@@ -676,14 +676,14 @@ export default function Analytics() {
                   <div>
                     <label className="mb-2 block text-xs font-bold text-muted-foreground">السنة</label>
                     <select value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))}
-                      className="h-11 w-full rounded-lg border border-border/50 bg-background px-4 text-sm font-medium outline-none transition-colors focus:border-primary/50 focus:ring-2 focus:ring-primary/10">
+                      className="h-11 w-full rounded-lg border border-border/80 bg-background px-4 text-sm font-medium outline-none transition-colors focus:border-primary/50 focus:ring-2 focus:ring-primary/10">
                       {availableYears.map((y) => <option key={y} value={y}>{y}</option>)}
                     </select>
                   </div>
                   <div>
                     <label className="mb-2 block text-xs font-bold text-muted-foreground">الشهر</label>
                     <select value={filterMonth || ""} onChange={(e) => setFilterMonth(e.target.value ? Number(e.target.value) : null)}
-                      className="h-11 w-full rounded-lg border border-border/50 bg-background px-4 text-sm font-medium outline-none transition-colors focus:border-primary/50 focus:ring-2 focus:ring-primary/10">
+                      className="h-11 w-full rounded-lg border border-border/80 bg-background px-4 text-sm font-medium outline-none transition-colors focus:border-primary/50 focus:ring-2 focus:ring-primary/10">
                       <option value="">كل الأشهر</option>
                       {monthNames.map((m, i) => <option key={i + 1} value={i + 1}>{m}</option>)}
                     </select>
@@ -720,7 +720,7 @@ export default function Analytics() {
             ].map((s) => {
               const SIcon = s.icon;
               return (
-                <div key={s.label} className="rounded-lg border border-border/40 bg-background/80 px-3.5 py-3">
+                <div key={s.label} className="rounded-lg border border-border/70 bg-background/80 px-3.5 py-3">
                   <div className="flex items-center gap-1.5 mb-1.5">
                     <SIcon className="w-3 h-3 text-muted-foreground/60" />
                     <p className="text-xs font-bold text-muted-foreground">{s.label}</p>
@@ -746,7 +746,7 @@ export default function Analytics() {
             </span>
           </h3>
           {filteredMemberStats.length === 0 ? (
-            <div className="text-center py-10 bg-muted/10 rounded-xl border border-dashed border-border/50">
+            <div className="text-center py-10 bg-muted/10 rounded-xl border border-dashed border-border/80">
               <Users className="w-8 h-8 mx-auto text-muted-foreground/40 mb-2" />
               <p className="text-sm text-muted-foreground font-medium">لا يوجد أعضاء</p>
             </div>
@@ -757,7 +757,7 @@ export default function Analytics() {
                 const rankBg = idx < 3 ? `bg-gradient-to-br ${rankColors[idx]} text-white` : "bg-primary/14 text-primary";
                 return (
                   <motion.div key={m.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.04 }}
-                    className="overflow-hidden rounded-xl border border-border/40 bg-card shadow-md">
+                    className="overflow-hidden rounded-xl border border-border/70 bg-card shadow-md">
                     <div className="p-4">
                       <div className="mb-4 flex items-center justify-between gap-3">
                         <div className="flex items-center gap-3">
@@ -820,13 +820,13 @@ export default function Analytics() {
           </h3>
 
           {/* Selector card */}
-          <div className="rounded-xl border border-border/50 bg-card/50 p-4 space-y-3">
+          <div className="rounded-xl border border-border/80 bg-card/50 p-4 space-y-3">
             <div>
               <label className="mb-2 block text-xs font-bold text-muted-foreground">اختر العضو</label>
               <select
                 value={selectedMemberId || ""}
                 onChange={(e) => setSelectedMemberId(e.target.value || null)}
-                className="h-11 w-full rounded-lg border border-border/50 bg-background px-4 text-sm font-medium outline-none transition-colors focus:border-primary/50 focus:ring-2 focus:ring-primary/10"
+                className="h-11 w-full rounded-lg border border-border/80 bg-background px-4 text-sm font-medium outline-none transition-colors focus:border-primary/50 focus:ring-2 focus:ring-primary/10"
               >
                 <option value="">-- اختر عضواً لعرض كشف حسابه --</option>
                 {members.map((m) => (
@@ -855,7 +855,7 @@ export default function Analytics() {
           {/* Report content */}
           {selectedMemberId && (
             memberReportLoading ? (
-              <div className="text-center py-10 bg-muted/10 rounded-xl border border-dashed border-border/50">
+              <div className="text-center py-10 bg-muted/10 rounded-xl border border-dashed border-border/80">
                 <div className="w-8 h-8 mx-auto mb-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                 <p className="text-sm text-muted-foreground">جاري تحميل التقرير...</p>
               </div>
@@ -919,8 +919,8 @@ export default function Analytics() {
                 </div>
 
                 {/* Contributions grid */}
-                <div className="overflow-hidden rounded-xl border border-border/50 bg-card shadow-md">
-                  <div className="border-b border-border/30 bg-muted/20 px-5 py-3.5 flex items-center justify-between">
+                <div className="overflow-hidden rounded-xl border border-border/80 bg-card shadow-md">
+                  <div className="border-b border-border/70 bg-muted/20 px-5 py-3.5 flex items-center justify-between">
                     <h4 className="font-bold text-sm text-primary flex items-center gap-2">
                       <Calendar className="w-4 h-4" /> سجل المساهمات {memberReport.year}
                     </h4>
@@ -937,7 +937,7 @@ export default function Analytics() {
                           mg.status === 'approved' ? "bg-fund-in-bright/20 border-fund-in-bright/40" :
                           mg.status === 'pending_approval' ? "bg-fund-out-bright/20 border-fund-out-bright/40" :
                           mg.status === 'missing' ? "bg-fund-due-bright/20 border-fund-due-bright/40" :
-                          "bg-muted/20 border-border/20"
+                          "bg-muted/20 border-border/60"
                         )}>
                         <p className={cn("text-xs font-bold",
                           mg.status === 'approved' ? "text-fund-in" :
@@ -961,8 +961,8 @@ export default function Analytics() {
 
                 {/* Loans list */}
                 {memberReport.loans.length > 0 && (
-                  <div className="overflow-hidden rounded-xl border border-border/50 bg-card shadow-md">
-                    <div className="border-b border-border/30 bg-muted/20 px-5 py-3.5">
+                  <div className="overflow-hidden rounded-xl border border-border/80 bg-card shadow-md">
+                    <div className="border-b border-border/70 bg-muted/20 px-5 py-3.5">
                       <h4 className="font-bold text-sm text-primary flex items-center gap-2">
                         <HandCoins className="w-4 h-4" />
                         سجل السلف
@@ -979,7 +979,7 @@ export default function Analytics() {
                         const statusLabels: Record<string, string> = { approved: "معتمد", pending: "قيد المراجعة", rejected: "مرفوض" };
                         const repaymentPct = loan.amount > 0 ? Math.min(100, Math.round((loan.totalPaid / loan.amount) * 100)) : 0;
                         return (
-                          <div key={loan.id} className="rounded-lg border border-border/40 bg-background/70 p-4 space-y-3">
+                          <div key={loan.id} className="rounded-lg border border-border/70 bg-background/70 p-4 space-y-3">
                             <div className="flex items-start justify-between gap-2">
                               <div className="min-w-0">
                                 <h5 className="font-bold text-sm leading-tight truncate">{loan.title}</h5>
@@ -1056,7 +1056,7 @@ export default function Analytics() {
             </span>
           </h3>
           {filteredTransactions.length === 0 ? (
-            <div className="text-center py-10 bg-muted/10 rounded-xl border border-dashed border-border/50">
+            <div className="text-center py-10 bg-muted/10 rounded-xl border border-dashed border-border/80">
               <FileText className="w-8 h-8 mx-auto text-muted-foreground/40 mb-2" />
               <p className="text-sm text-muted-foreground font-medium">لا توجد معاملات في الفترة المحددة</p>
             </div>
@@ -1071,7 +1071,7 @@ export default function Analytics() {
                   }[t.type];
                   return (
                     <motion.div key={t.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.025 }}
-                      className="overflow-hidden rounded-xl border border-border/40 bg-card shadow-sm">
+                      className="overflow-hidden rounded-xl border border-border/70 bg-card shadow-sm">
                       <div className="p-4">
                         <div className="flex justify-between items-start gap-3">
                           <div className="flex gap-3 min-w-0">
@@ -1109,7 +1109,7 @@ export default function Analytics() {
                         {expandedLoan === t.id && repayments[t.id] && (
                           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
                             transition={{ duration: 0.3 }} className="overflow-hidden">
-                            <div className="border-t border-border/30 bg-gradient-to-b from-muted/15 to-transparent px-4 pb-4 pt-3 space-y-3">
+                            <div className="border-t border-border/70 bg-gradient-to-b from-muted/15 to-transparent px-4 pb-4 pt-3 space-y-3">
                               <div className="flex items-center justify-between">
                                 <span className="text-xs font-bold text-muted-foreground flex items-center gap-1.5">
                                   <Calendar className="w-3 h-3" /> جدولة الأقساط ({t.repaymentMonths || 12} شهر)
@@ -1117,7 +1117,7 @@ export default function Analytics() {
                               </div>
                               <div className="grid grid-cols-2 gap-2">
                                 {repayments[t.id].slice(0, 4).map((step) => (
-                                  <div key={step.id} className="flex items-center justify-between rounded-xl border border-border/30 bg-card p-2.5">
+                                  <div key={step.id} className="flex items-center justify-between rounded-xl border border-border/70 bg-card p-2.5">
                                     <div>
                                       <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">القسط {step.installmentNumber}</div>
                                       <div className="text-xs font-extrabold font-mono text-foreground">{Number(step.amount).toFixed(3)} ر.ع</div>

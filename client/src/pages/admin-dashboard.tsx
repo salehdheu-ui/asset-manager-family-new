@@ -248,7 +248,7 @@ export default function AdminDashboard() {
             </div>
             <div className="space-y-2">
               {alerts.map((alert, idx) => (
-                <div key={idx} className="flex items-start gap-3 rounded-xl border border-border/60 bg-background px-3 py-2.5">
+                <div key={idx} className="flex items-start gap-3 rounded-xl border border-border/80 bg-background px-3 py-2.5">
                   <span className={cn(
                     "mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full",
                     alert.severity === "high" ? "bg-fund-due" : alert.severity === "medium" ? "bg-fund-out" : "bg-fund-loan-bright/20",
@@ -524,7 +524,7 @@ export default function AdminDashboard() {
                   initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.05 }}
-                  className="bg-card border border-border/60 rounded-xl p-4 shadow-sm space-y-4"
+                  className="bg-card border border-border/80 rounded-xl p-4 shadow-sm space-y-4"
                 >
                   <div className="flex items-center gap-4">
                     {u.profileImageUrl ? (
@@ -558,7 +558,7 @@ export default function AdminDashboard() {
                     </div>
                   </div>
 
-                  <div className="flex gap-2 pt-2 border-t border-border/40">
+                  <div className="flex gap-2 pt-2 border-t border-border/70">
                     {/* Change Role */}
                     <button
                       onClick={() => updateRoleMutation.mutate({ 
@@ -704,7 +704,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Capital Allocation Lock Section */}
-        <div className="border-t border-border/40 my-2" />
+        <div className="border-t border-border/70 my-2" />
 
         <div className="bg-fund-in text-white p-6 rounded-xl relative overflow-hidden shadow-lg shadow-fund-in/20">
           <div className="relative z-10">
@@ -751,7 +751,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* System Reset Section */}
-        <div className="border-t border-border/40 my-2" />
+        <div className="border-t border-border/70 my-2" />
         
         <div className="bg-fund-due text-white p-6 rounded-xl relative overflow-hidden shadow-lg shadow-fund-due/20">
           <div className="relative z-10">

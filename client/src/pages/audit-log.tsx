@@ -43,7 +43,7 @@ export default function AuditLog() {
         </div>
 
         {isLoading ? (
-          <div className="rounded-xl border border-border/60 bg-card p-8 text-center">
+          <div className="rounded-xl border border-border/80 bg-card p-8 text-center">
             <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
             <p className="text-sm font-medium text-muted-foreground">جاري تحميل السجل...</p>
           </div>
@@ -66,7 +66,7 @@ export default function AuditLog() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.03 }}
-                className="rounded-xl border border-border/60 bg-card p-4 shadow-sm"
+                className="rounded-xl border border-border/80 bg-card p-4 shadow-sm"
               >
                 <div className="flex items-start gap-3">
                   <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/14 text-primary">
