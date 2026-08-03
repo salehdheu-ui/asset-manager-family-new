@@ -134,4 +134,24 @@
   h1, h2, h3, h4, h5, h6 {
     @apply font-heading font-bold;
   }
+
+  /* أرضية القراءة: لا نص في النظام أصغر من 12px.
+     الجمهور عائلة تقرأ على الجوال، والمقاسات الأصغر لا تُقرأ في ضوء النهار. */
+  html {
+    font-size: 16px;
+  }
+}
+
+@layer utilities {
+  /* مساحة لمس آمنة — 44px هو الحد الأدنى الموصى به لإصبع بالغ */
+  .tap-target {
+    min-height: 2.75rem;
+    min-width: 2.75rem;
+  }
+
+  /* الأرقام المالية: خانات متساوية العرض حتى تصطف المبالغ رأسياً في الجداول */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
 }

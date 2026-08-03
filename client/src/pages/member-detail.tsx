@@ -155,33 +155,33 @@ export default function MemberDetail() {
           <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4">
             <div className="flex items-center gap-1.5 mb-1">
               <TrendingUp className="w-4 h-4 text-emerald-600" />
-              <p className="text-[10px] font-bold text-emerald-700">إجمالي المساهمات</p>
+              <p className="text-xs font-bold text-emerald-700">إجمالي المساهمات</p>
             </div>
             <p className="font-mono font-bold text-emerald-700 text-base">{fmt(report.summary.totalContributions)}</p>
-            <p className="text-[10px] text-emerald-600 mt-0.5">{report.summary.contributionCount} مساهمة</p>
+            <p className="text-xs text-emerald-600 mt-0.5">{report.summary.contributionCount} مساهمة</p>
           </div>
           <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4">
             <div className="flex items-center gap-1.5 mb-1">
               <HandCoins className="w-4 h-4 text-blue-600" />
-              <p className="text-[10px] font-bold text-blue-700">إجمالي السلف</p>
+              <p className="text-xs font-bold text-blue-700">إجمالي السلف</p>
             </div>
             <p className="font-mono font-bold text-blue-700 text-base">{fmt(report.summary.totalLoaned)}</p>
-            <p className="text-[10px] text-blue-600 mt-0.5">{report.summary.loanCount} سلفة</p>
+            <p className="text-xs text-blue-600 mt-0.5">{report.summary.loanCount} سلفة</p>
           </div>
           <div className="bg-green-50 border border-green-200 rounded-2xl p-4">
             <div className="flex items-center gap-1.5 mb-1">
               <CheckCircle2 className="w-4 h-4 text-green-600" />
-              <p className="text-[10px] font-bold text-green-700">المسدد من السلف</p>
+              <p className="text-xs font-bold text-green-700">المسدد من السلف</p>
             </div>
             <p className="font-mono font-bold text-green-700 text-base">{fmt(report.summary.totalLoanPaid)}</p>
           </div>
           <div className={cn("border rounded-2xl p-4", report.summary.totalLoanRemaining > 0 ? "bg-amber-50 border-amber-200" : "bg-gray-50 border-gray-200")}>
             <div className="flex items-center gap-1.5 mb-1">
               <Scale className={cn("w-4 h-4", report.summary.totalLoanRemaining > 0 ? "text-amber-600" : "text-gray-500")} />
-              <p className={cn("text-[10px] font-bold", report.summary.totalLoanRemaining > 0 ? "text-amber-700" : "text-gray-600")}>الرصيد القائم</p>
+              <p className={cn("text-xs font-bold", report.summary.totalLoanRemaining > 0 ? "text-amber-700" : "text-gray-600")}>الرصيد القائم</p>
             </div>
             <p className={cn("font-mono font-bold text-base", report.summary.totalLoanRemaining > 0 ? "text-amber-700" : "text-gray-500")}>{fmt(report.summary.totalLoanRemaining)}</p>
-            <p className={cn("text-[10px] mt-0.5", report.summary.totalLoanRemaining > 0 ? "text-amber-600" : "text-gray-400")}>
+            <p className={cn("text-xs mt-0.5", report.summary.totalLoanRemaining > 0 ? "text-amber-600" : "text-gray-400")}>
               {report.summary.totalLoanRemaining > 0 ? "مديونية قائمة" : "لا توجد ديون"}
             </p>
           </div>
@@ -197,7 +197,7 @@ export default function MemberDetail() {
             <motion.div initial={{ width: 0 }} animate={{ width: `${report.performance.commitmentRate}%` }} transition={{ duration: 0.8, ease: "easeOut" }}
               className={cn("h-full rounded-full", report.performance.commitmentRate >= 80 ? "bg-emerald-500" : report.performance.commitmentRate >= 50 ? "bg-amber-500" : "bg-red-500")} />
           </div>
-          <p className="text-[11px] text-muted-foreground mt-1.5">
+          <p className="text-xs text-muted-foreground mt-1.5">
             {report.performance.paidMonths} شهر مدفوع من أصل {report.performance.expectedMonths} شهر متوقع
           </p>
         </div>
@@ -216,18 +216,18 @@ export default function MemberDetail() {
                 c.status === "upcoming" ? "bg-gray-50 border-gray-200" :
                 "bg-red-50 border-red-200"
               )}>
-                <p className="text-[9px] font-bold text-muted-foreground">{monthNames[c.month - 1].substring(0, 3)}</p>
+                <p className="text-xs font-bold text-muted-foreground">{monthNames[c.month - 1].substring(0, 3)}</p>
                 <div className="mt-1 flex justify-center">
                   {c.status === "approved" ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> :
                    c.status === "pending_approval" ? <Clock className="w-4 h-4 text-blue-600" /> :
                    c.status === "upcoming" ? <div className="w-4 h-4 rounded-full border-2 border-gray-300" /> :
                    <AlertCircle className="w-4 h-4 text-red-500" />}
                 </div>
-                {c.amount > 0 && <p className="text-[8px] font-mono font-bold text-muted-foreground mt-0.5">{c.amount.toFixed(0)}</p>}
+                {c.amount > 0 && <p className="text-xs font-mono font-bold text-muted-foreground mt-0.5">{c.amount.toFixed(0)}</p>}
               </div>
             ))}
           </div>
-          <div className="flex flex-wrap gap-2 text-[10px]">
+          <div className="flex flex-wrap gap-2 text-xs">
             <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-emerald-600" />مدفوع</span>
             <span className="flex items-center gap-1"><Clock className="w-3 h-3 text-blue-600" />قيد الاعتماد</span>
             <span className="flex items-center gap-1"><AlertCircle className="w-3 h-3 text-red-500" />غائب</span>
@@ -240,7 +240,7 @@ export default function MemberDetail() {
           <div className="space-y-3">
             <h3 className="font-bold text-base text-primary font-heading px-1 flex items-center gap-2">
               <HandCoins className="w-4 h-4" /> تفاصيل السلف
-              <span className="text-[10px] bg-muted px-2 py-0.5 rounded-full font-bold text-muted-foreground mr-auto">{report.loans.length}</span>
+              <span className="text-xs bg-muted px-2 py-0.5 rounded-full font-bold text-muted-foreground mr-auto">{report.loans.length}</span>
             </h3>
             {report.loans.map((loan, idx) => (
               <motion.div key={loan.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}
@@ -255,7 +255,7 @@ export default function MemberDetail() {
                     <p className="font-bold text-sm">{loan.title}</p>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className="font-mono text-xs font-bold text-primary">{fmt(loan.amount)}</span>
-                      <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full font-bold",
+                      <span className={cn("text-xs px-1.5 py-0.5 rounded-full font-bold",
                         loan.status === "approved" ? "bg-blue-50 text-blue-700" : loan.status === "rejected" ? "bg-red-50 text-red-700" : "bg-amber-50 text-amber-700")}>
                         {loan.status === "approved" ? "معتمدة" : loan.status === "rejected" ? "مرفوضة" : "معلقة"}
                       </span>
@@ -271,22 +271,22 @@ export default function MemberDetail() {
                       <div className="p-4 space-y-3">
                         <div className="grid grid-cols-3 gap-2">
                           <div className="bg-muted/30 rounded-xl p-2.5 text-center">
-                            <p className="text-[9px] font-bold text-muted-foreground">المبلغ</p>
+                            <p className="text-xs font-bold text-muted-foreground">المبلغ</p>
                             <p className="font-mono font-bold text-xs text-primary mt-0.5">{fmt(loan.amount)}</p>
                           </div>
                           <div className="bg-green-50 rounded-xl p-2.5 text-center">
-                            <p className="text-[9px] font-bold text-green-700">المسدد</p>
+                            <p className="text-xs font-bold text-green-700">المسدد</p>
                             <p className="font-mono font-bold text-xs text-green-700 mt-0.5">{fmt(loan.totalPaid)}</p>
                           </div>
                           <div className={cn("rounded-xl p-2.5 text-center", loan.remaining > 0 ? "bg-amber-50" : "bg-gray-50")}>
-                            <p className={cn("text-[9px] font-bold", loan.remaining > 0 ? "text-amber-700" : "text-gray-500")}>المتبقي</p>
+                            <p className={cn("text-xs font-bold", loan.remaining > 0 ? "text-amber-700" : "text-gray-500")}>المتبقي</p>
                             <p className={cn("font-mono font-bold text-xs mt-0.5", loan.remaining > 0 ? "text-amber-700" : "text-gray-500")}>{fmt(loan.remaining)}</p>
                           </div>
                         </div>
 
                         {loan.amount > 0 && (
                           <div>
-                            <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
+                            <div className="flex justify-between text-xs text-muted-foreground mb-1">
                               <span>نسبة السداد</span>
                               <span className="font-bold">{loan.amount > 0 ? Math.round((loan.totalPaid / loan.amount) * 100) : 0}%</span>
                             </div>
@@ -297,7 +297,7 @@ export default function MemberDetail() {
                           </div>
                         )}
 
-                        <div className="grid grid-cols-2 gap-2 text-[11px]">
+                        <div className="grid grid-cols-2 gap-2 text-xs">
                           <div><span className="text-muted-foreground">النوع: </span><span className="font-bold">{loan.type}</span></div>
                           <div><span className="text-muted-foreground">السداد: </span><span className="font-bold">{loan.repaymentType === "scheduled" ? `${loan.repaymentMonths} شهر` : "مفتوح"}</span></div>
                           {loan.createdAt && <div><span className="text-muted-foreground">تاريخ الطلب: </span><span className="font-bold">{new Date(loan.createdAt).toLocaleDateString("ar-OM")}</span></div>}
@@ -305,7 +305,7 @@ export default function MemberDetail() {
                         </div>
 
                         {loan.description && (
-                          <p className="text-[11px] text-muted-foreground bg-muted/30 rounded-lg p-2 leading-5">
+                          <p className="text-xs text-muted-foreground bg-muted/30 rounded-lg p-2 leading-5">
                             {loan.description}
                           </p>
                         )}

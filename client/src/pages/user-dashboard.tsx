@@ -123,13 +123,13 @@ export default function UserDashboard() {
             <p className="text-sm text-muted-foreground">{profile.email}</p>
             <div className="flex items-center justify-center gap-2 mt-2">
               <span className={cn(
-                "text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full border",
+                "text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full border",
                 profile.role === 'admin' ? "bg-primary/10 border-primary/20 text-primary" : "bg-muted border-border text-muted-foreground"
               )}>
                 {profile.role === 'admin' ? 'مشرف' : 'مستخدم'}
               </span>
               {profile.member && (
-                <span className="text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-700">
+                <span className="text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-700">
                   عضو: {profile.member.name}
                 </span>
               )}
@@ -144,7 +144,7 @@ export default function UserDashboard() {
               <div className="absolute -right-2 -bottom-2 opacity-5">
                 <CreditCard className="w-16 h-16" />
               </div>
-              <span className="text-[10px] text-emerald-700 font-bold uppercase tracking-wider flex items-center gap-1">
+              <span className="text-xs text-emerald-700 font-bold uppercase tracking-wider flex items-center gap-1">
                 <CreditCard className="w-3 h-3" /> المساهمات
               </span>
               <span className="text-2xl font-bold font-mono text-emerald-600">
@@ -155,14 +155,14 @@ export default function UserDashboard() {
               <div className="absolute -right-2 -bottom-2 opacity-5">
                 <HandCoins className="w-16 h-16" />
               </div>
-              <span className="text-[10px] text-blue-700 font-bold uppercase tracking-wider flex items-center gap-1">
+              <span className="text-xs text-blue-700 font-bold uppercase tracking-wider flex items-center gap-1">
                 <HandCoins className="w-3 h-3" /> المتبقي من السلف
               </span>
               <span className="text-2xl font-bold font-mono text-blue-600">
                 {totalBorrowed.toLocaleString()} <span className="text-xs">ر.ع</span>
               </span>
               {totalBorrowed === 0 && memberLoans.length > 0 && (
-                <span className="text-[9px] font-bold text-emerald-600">الذمة صفر — كل السلف مسددة ✓</span>
+                <span className="text-xs font-bold text-emerald-600">الذمة صفر — كل السلف مسددة ✓</span>
               )}
             </div>
           </div>
@@ -228,7 +228,7 @@ export default function UserDashboard() {
                 <div key={c.id} className="bg-card border border-border/50 rounded-xl p-3 flex justify-between items-center">
                   <div>
                     <p className="text-sm font-medium">مساهمة شهر {c.month}/{c.year}</p>
-                    <p className="text-[10px] text-muted-foreground">
+                    <p className="text-xs text-muted-foreground">
                       {c.createdAt ? new Date(c.createdAt).toLocaleDateString('ar-OM') : ''}
                     </p>
                   </div>

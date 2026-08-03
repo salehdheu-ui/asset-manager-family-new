@@ -36,7 +36,7 @@ export default class ErrorBoundary extends Component<Props, State> {
                 نعتذر عن هذا الخلل. بياناتك سليمة ولم تتأثر — هذه مشكلة عرض فقط.
               </p>
               {this.state.message && (
-                <p className="mt-3 text-[11px] text-muted-foreground/70 font-mono break-all bg-muted/40 rounded-lg p-2" dir="ltr">
+                <p className="mt-3 text-xs text-muted-foreground/70 font-mono break-all bg-muted/40 rounded-lg p-2" dir="ltr">
                   {this.state.message}
                 </p>
               )}

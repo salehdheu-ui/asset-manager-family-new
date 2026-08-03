@@ -31,12 +31,12 @@ export default function LoanVoteBox({ loanId }: { loanId: string }) {
     <div className="rounded-2xl border border-violet-200 bg-violet-50/60 p-3 space-y-2" data-testid={`vote-box-${loanId}`}>
       <div className="flex items-center gap-2 text-violet-700">
         <Vote className="w-4 h-4" />
-        <span className="text-[11px] font-bold">سلفة كبيرة — تتطلب تصويت العائلة</span>
+        <span className="text-xs font-bold">سلفة كبيرة — تتطلب تصويت العائلة</span>
         {tally.passed && (
-          <span className="mr-auto rounded-full bg-emerald-100 px-2 py-0.5 text-[9px] font-bold text-emerald-700">اكتمل النصاب ✓</span>
+          <span className="mr-auto rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-700">اكتمل النصاب ✓</span>
         )}
       </div>
-      <div className="flex items-center justify-between text-[10px] font-bold">
+      <div className="flex items-center justify-between text-xs font-bold">
         <span className="text-emerald-700">موافقون: {tally.approve} / {tally.required} المطلوبين</span>
         <span className="text-red-600">رافضون: {tally.reject}</span>
       </div>
@@ -51,8 +51,8 @@ export default function LoanVoteBox({ loanId }: { loanId: string }) {
           <button
             onClick={() => voteMutation.mutate("approve")}
             disabled={voteMutation.isPending}
-            className={cn(
-              "flex-1 py-2 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50",
+            className={cn("tap-target", 
+              "flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50",
               tally.myVote === "approve" ? "bg-emerald-600 text-white" : "bg-emerald-100 text-emerald-700 hover:bg-emerald-200",
             )}
             data-testid={`button-vote-approve-${loanId}`}
@@ -62,8 +62,8 @@ export default function LoanVoteBox({ loanId }: { loanId: string }) {
           <button
             onClick={() => voteMutation.mutate("reject")}
             disabled={voteMutation.isPending}
-            className={cn(
-              "flex-1 py-2 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50",
+            className={cn("tap-target", 
+              "flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50",
               tally.myVote === "reject" ? "bg-red-600 text-white" : "bg-red-100 text-red-700 hover:bg-red-200",
             )}
             data-testid={`button-vote-reject-${loanId}`}
@@ -73,7 +73,7 @@ export default function LoanVoteBox({ loanId }: { loanId: string }) {
         </div>
       )}
       {tally.voters && tally.voters.length > 0 && (
-        <p className="text-[9px] text-muted-foreground pt-1">
+        <p className="text-xs text-muted-foreground pt-1">
           {tally.voters.map((v) => `${v.name} (${v.vote === "approve" ? "موافق" : "رافض"})`).join("، ")}
         </p>
       )}

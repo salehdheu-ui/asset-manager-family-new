@@ -285,7 +285,7 @@ export default function Loans() {
             <div className="text-4xl font-mono font-bold tracking-tighter" data-testid="text-available-capital">
               {availableCapital.toLocaleString()} <span className="text-lg font-sans font-normal opacity-80 text-white/90">ر.ع</span>
             </div>
-            <p className="text-[10px] opacity-70 mt-3 flex items-center gap-1.5">
+            <p className="text-xs opacity-70 mt-3 flex items-center gap-1.5">
               <AlertCircle className="w-3 h-3" />
               يتم الصرف من رأس المال المرن واحتياطي الطوارئ
             </p>
@@ -295,19 +295,19 @@ export default function Loans() {
 
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-card border border-border/60 rounded-2xl p-4">
-            <p className="text-[10px] font-bold text-muted-foreground">إجمالي السلف</p>
+            <p className="text-xs font-bold text-muted-foreground">إجمالي السلف</p>
             <p className="text-lg font-mono font-bold text-primary">{totalLoanAmount.toFixed(3)} ر.ع</p>
           </div>
           <div className="bg-card border border-border/60 rounded-2xl p-4">
-            <p className="text-[10px] font-bold text-muted-foreground">إجمالي المسدد</p>
+            <p className="text-xs font-bold text-muted-foreground">إجمالي المسدد</p>
             <p className="text-lg font-mono font-bold text-emerald-600">{totalPaidAmount.toFixed(3)} ر.ع</p>
           </div>
           <div className="bg-card border border-border/60 rounded-2xl p-4">
-            <p className="text-[10px] font-bold text-muted-foreground">إجمالي المتبقي</p>
+            <p className="text-xs font-bold text-muted-foreground">إجمالي المتبقي</p>
             <p className="text-lg font-mono font-bold text-amber-600">{totalRemainingAmount.toFixed(3)} ر.ع</p>
           </div>
           <div className="bg-card border border-border/60 rounded-2xl p-4">
-            <p className="text-[10px] font-bold text-muted-foreground">نوع السلف</p>
+            <p className="text-xs font-bold text-muted-foreground">نوع السلف</p>
             <p className="text-xs font-bold text-primary">{scheduledLoansCount} بخطة • {openLoansCount} مفتوحة</p>
           </div>
         </div>
@@ -339,14 +339,14 @@ export default function Loans() {
                         <div className="flex-1">
                           <div className="flex justify-between items-start">
                             <h4 className="font-bold text-base leading-none mb-1">{loan.title}</h4>
-                            <span className="text-[9px] bg-white/80 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
+                            <span className="text-xs bg-white/80 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
                               حتى {loan.maxAmount}
                             </span>
                           </div>
                           <p className="text-xs opacity-80 mt-1 mb-3 leading-relaxed">{loan.description}</p>
                           <ul className="flex flex-wrap gap-2">
                             {loan.features.map((feature, i) => (
-                              <li key={i} className="text-[9px] flex items-center gap-1 font-bold opacity-70">
+                              <li key={i} className="text-xs flex items-center gap-1 font-bold opacity-70">
                                 <CheckCircle2 className="w-2.5 h-2.5" /> {feature}
                               </li>
                             ))}
@@ -390,7 +390,7 @@ export default function Loans() {
                             />
                             <div className="absolute left-6 top-1/2 -translate-y-1/2 text-primary font-bold text-lg">ر.ع</div>
                           </div>
-                          <p className="text-[10px] text-muted-foreground mr-1">
+                          <p className="text-xs text-muted-foreground mr-1">
                             الحد المتاح: <span className="font-mono font-bold text-primary">{availableCapital.toLocaleString()}</span> ر.ع
                           </p>
                         </div>
@@ -498,7 +498,7 @@ export default function Loans() {
                       <div className="space-y-1">
                         <CheckCircle2 className="w-8 h-8 mx-auto text-emerald-500" />
                         <p className="text-sm font-bold text-emerald-700">لا توجد سلف قائمة — الذمة صفر ✓</p>
-                        <p className="text-[11px] text-muted-foreground">كل السلف السابقة مسددة بالكامل، وتفاصيلها محفوظة في التقارير</p>
+                        <p className="text-xs text-muted-foreground">كل السلف السابقة مسددة بالكامل، وتفاصيلها محفوظة في التقارير</p>
                       </div>
                     ) : (
                       <p className="text-sm text-muted-foreground font-medium">لا توجد طلبات قائمة حالياً</p>
@@ -528,17 +528,17 @@ export default function Loans() {
                           </div>
                           <div>
                             <h4 className="font-bold text-sm leading-none">{loan.title}</h4>
-                            <p className="text-[10px] text-muted-foreground mt-1 font-medium">
+                            <p className="text-xs text-muted-foreground mt-1 font-medium">
                               {getMemberName(loan.memberId)} • {loan.createdAt ? new Date(loan.createdAt).toLocaleDateString('ar-OM') : ''}
                             </p>
                           </div>
                         </div>
                         <div className="text-right">
                           <div className="text-lg font-mono font-bold text-primary">
-                            {Number(loan.amount).toLocaleString()} <span className="text-[10px] font-sans">ر.ع</span>
+                            {Number(loan.amount).toLocaleString()} <span className="text-xs font-sans">ر.ع</span>
                           </div>
                           <div className={cn(
-                            "text-[9px] font-bold px-2 py-0.5 rounded-full inline-block mt-1 uppercase",
+                            "text-xs font-bold px-2 py-0.5 rounded-full inline-block mt-1 uppercase",
                             loan.status === 'approved' ? "bg-emerald-500/10 text-emerald-700" :
                             loan.status === 'rejected' ? "bg-red-500/10 text-red-700" : "bg-amber-500/10 text-amber-700"
                           )}>
@@ -550,23 +550,23 @@ export default function Loans() {
                       {(loan.description || loan.status === 'approved') && (
                         <div className="bg-muted/20 border border-border/40 rounded-xl p-3 space-y-2">
                           {loan.description && (
-                            <p className="text-[10px] text-muted-foreground leading-relaxed">
+                            <p className="text-xs text-muted-foreground leading-relaxed">
                               <span className="font-bold text-foreground">الملاحظة: </span>{loan.description}
                             </p>
                           )}
                           {loan.status === 'approved' && (
                             <div className="grid grid-cols-3 gap-2 text-center">
                               <div>
-                                <p className="text-[9px] text-muted-foreground font-bold">طريقة السداد</p>
-                                <p className="text-[10px] font-bold text-primary">{loan.repaymentType === "open" ? "مفتوحة" : "بخطة"}</p>
+                                <p className="text-xs text-muted-foreground font-bold">طريقة السداد</p>
+                                <p className="text-xs font-bold text-primary">{loan.repaymentType === "open" ? "مفتوحة" : "بخطة"}</p>
                               </div>
                               <div>
-                                <p className="text-[9px] text-muted-foreground font-bold">المسدد</p>
-                                <p className="text-[10px] font-mono font-bold text-emerald-600">{paidTotal.toFixed(3)}</p>
+                                <p className="text-xs text-muted-foreground font-bold">المسدد</p>
+                                <p className="text-xs font-mono font-bold text-emerald-600">{paidTotal.toFixed(3)}</p>
                               </div>
                               <div>
-                                <p className="text-[9px] text-muted-foreground font-bold">المتبقي</p>
-                                <p className="text-[10px] font-mono font-bold text-amber-600">{remainingTotal.toFixed(3)}</p>
+                                <p className="text-xs text-muted-foreground font-bold">المتبقي</p>
+                                <p className="text-xs font-mono font-bold text-amber-600">{remainingTotal.toFixed(3)}</p>
                               </div>
                             </div>
                           )}
@@ -580,7 +580,7 @@ export default function Loans() {
                       {isGuardian && loan.status === 'pending' && scoreOf(loan.memberId) && (
                         <div className="flex items-center gap-2 rounded-xl bg-muted/30 border border-border/40 px-3 py-2" data-testid={`score-badge-${loan.id}`}>
                           <Gauge className="w-4 h-4 text-primary shrink-0" />
-                          <span className="text-[10px] font-bold text-muted-foreground">درجة التزام الطالب:</span>
+                          <span className="text-xs font-bold text-muted-foreground">درجة التزام الطالب:</span>
                           <span className={cn(
                             "text-sm font-mono font-bold",
                             (scoreOf(loan.memberId)?.score ?? 0) >= 80 ? "text-emerald-600" :
@@ -589,7 +589,7 @@ export default function Loans() {
                             {scoreOf(loan.memberId)?.score}/100
                           </span>
                           {(scoreOf(loan.memberId)?.overdueInstallments ?? 0) > 0 && (
-                            <span className="mr-auto text-[9px] font-bold text-red-600">
+                            <span className="mr-auto text-xs font-bold text-red-600">
                               {scoreOf(loan.memberId)?.overdueInstallments} قسط متأخر
                             </span>
                           )}
@@ -602,7 +602,7 @@ export default function Loans() {
                             data-testid={`button-approve-${loan.id}`}
                             onClick={() => statusMutation.mutate({ id: loan.id, status: "approved" })}
                             disabled={statusMutation.isPending}
-                            className="flex-1 bg-emerald-600 text-white py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform disabled:opacity-50"
+                            className="tap-target flex-1 bg-emerald-600 text-white py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform disabled:opacity-50"
                           >
                             <UserCheck className="w-3.5 h-3.5" />
                             اعتماد
@@ -611,7 +611,7 @@ export default function Loans() {
                             data-testid={`button-reject-${loan.id}`}
                             onClick={() => statusMutation.mutate({ id: loan.id, status: "rejected" })}
                             disabled={statusMutation.isPending}
-                            className="flex-1 bg-red-600 text-white py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform disabled:opacity-50"
+                            className="tap-target flex-1 bg-red-600 text-white py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform disabled:opacity-50"
                           >
                             <X className="w-3.5 h-3.5" />
                             رفض
@@ -623,7 +623,7 @@ export default function Loans() {
                         <button 
                           data-testid={`button-repayments-${loan.id}`}
                           onClick={() => loadRepayments(loan.id)}
-                          className="w-full text-[10px] font-bold text-primary flex items-center justify-center gap-1 pt-2 border-t border-border/40"
+                          className="tap-target w-full text-xs font-bold text-primary flex items-center justify-center gap-1 pt-2 border-t border-border/40"
                         >
                           <Calendar className="w-3 h-3" />
                           عرض تفاصيل السداد {expandedLoan === loan.id ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
@@ -641,7 +641,7 @@ export default function Loans() {
                             <div className="pt-3 space-y-3">
                               {isGuardian && remainingTotal > 0 && (
                                 <div className="bg-primary/5 border border-primary/10 rounded-2xl p-3 space-y-2">
-                                  <p className="text-[10px] font-bold text-primary">تسجيل سداد يدوي</p>
+                                  <p className="text-xs font-bold text-primary">تسجيل سداد يدوي</p>
                                   <div className="grid grid-cols-2 gap-2">
                                     <input
                                       type="number"
@@ -670,7 +670,7 @@ export default function Loans() {
                                       paymentMutation.mutate({ loanId: loan.id, amount, note: paymentNotes[loan.id]?.trim() });
                                     }}
                                     disabled={paymentMutation.isPending}
-                                    className="w-full bg-primary text-primary-foreground py-2 rounded-xl text-xs font-bold disabled:opacity-50"
+                                    className="tap-target w-full bg-primary text-primary-foreground py-2 rounded-xl text-xs font-bold disabled:opacity-50"
                                     data-testid={`button-payment-${loan.id}`}
                                   >
                                     تسجيل سداد
@@ -680,14 +680,14 @@ export default function Loans() {
 
                               {loanPayments.length > 0 && (
                                 <div className="space-y-2">
-                                  <p className="text-[10px] font-bold text-muted-foreground px-1">دفعات السداد</p>
+                                  <p className="text-xs font-bold text-muted-foreground px-1">دفعات السداد</p>
                                   {loanPayments.map((payment) => (
                                     <div key={payment.id} className="p-3 rounded-xl border bg-emerald-50/40 border-emerald-200/50 flex justify-between items-start gap-3">
                                       <div>
                                         <p className="text-xs font-mono font-bold text-emerald-700">{Number(payment.amount).toFixed(3)} ر.ع</p>
-                                        {payment.note && <p className="text-[9px] text-muted-foreground mt-1">{payment.note}</p>}
+                                        {payment.note && <p className="text-xs text-muted-foreground mt-1">{payment.note}</p>}
                                       </div>
-                                      <span className="text-[8px] text-muted-foreground">{payment.paidAt ? new Date(payment.paidAt).toLocaleDateString('ar-OM') : ""}</span>
+                                      <span className="text-xs text-muted-foreground">{payment.paidAt ? new Date(payment.paidAt).toLocaleDateString('ar-OM') : ""}</span>
                                     </div>
                                   ))}
                                 </div>
@@ -696,8 +696,8 @@ export default function Loans() {
                               {loan.repaymentType !== "open" && repayments[loan.id] && (
                               <>
                                 <div className="flex items-center justify-between px-1">
-                                  <span className="text-[10px] font-bold text-muted-foreground">جدولة الأقساط ({loan.repaymentMonths} شهر)</span>
-                                  <span className="text-[10px] font-bold text-emerald-600">
+                                  <span className="text-xs font-bold text-muted-foreground">جدولة الأقساط ({loan.repaymentMonths} شهر)</span>
+                                  <span className="text-xs font-bold text-emerald-600">
                                     {repayments[loan.id].filter(r => r.status === 'paid').length}/{repayments[loan.id].length} مدفوع
                                   </span>
                                 </div>
@@ -709,14 +709,14 @@ export default function Loans() {
                                   )}>
                                     <div className="flex items-center gap-2">
                                       <div className={cn(
-                                        "w-7 h-7 rounded-lg flex items-center justify-center text-[9px] font-bold",
+                                        "w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold",
                                         step.status === 'paid' ? "bg-emerald-500 text-white" : "bg-muted text-muted-foreground"
                                       )}>
                                         {step.installmentNumber}
                                       </div>
                                       <div>
-                                        <div className="text-xs font-bold font-mono">{Number(step.amount).toFixed(3)} <span className="text-[9px] font-sans text-muted-foreground">ر.ع</span></div>
-                                        <div className="text-[8px] text-muted-foreground">
+                                        <div className="text-xs font-bold font-mono">{Number(step.amount).toFixed(3)} <span className="text-xs font-sans text-muted-foreground">ر.ع</span></div>
+                                        <div className="text-xs text-muted-foreground">
                                           {step.status === 'paid' && step.paidAt 
                                             ? `مدفوع ${new Date(step.paidAt).toLocaleDateString('ar-OM')}` 
                                             : step.dueDate 
@@ -727,7 +727,7 @@ export default function Loans() {
                                     </div>
                                     <div className="flex items-center gap-2">
                                       {step.status === 'paid' ? (
-                                        <span className="text-[9px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-1 rounded-lg flex items-center gap-1">
+                                        <span className="text-xs font-bold text-emerald-600 bg-emerald-500/10 px-2 py-1 rounded-lg flex items-center gap-1">
                                           <CheckCircle2 className="w-3 h-3" /> مدفوع
                                         </span>
                                       ) : (
@@ -735,14 +735,14 @@ export default function Loans() {
                                           <button
                                             onClick={() => repayMutation.mutate(step.id)}
                                             disabled={repayMutation.isPending}
-                                            className="text-[9px] font-bold text-primary bg-primary/10 hover:bg-primary/20 px-3 py-1.5 rounded-lg flex items-center gap-1.5 active:scale-95 transition-all disabled:opacity-50"
+                                            className="tap-target text-xs font-bold text-primary bg-primary/10 hover:bg-primary/20 px-3 py-1.5 rounded-lg flex items-center gap-1.5 active:scale-95 transition-all disabled:opacity-50"
                                             data-testid={`button-repay-${step.id}`}
                                           >
                                             <RotateCcw className="w-3.5 h-3.5" />
                                             تسديد
                                           </button>
                                         ) : (
-                                          <span className="text-[9px] font-bold text-amber-600 bg-amber-500/10 px-2 py-1 rounded-lg flex items-center gap-1">
+                                          <span className="text-xs font-bold text-amber-600 bg-amber-500/10 px-2 py-1 rounded-lg flex items-center gap-1">
                                             <Clock className="w-3 h-3" /> مجدول
                                           </span>
                                         )
@@ -772,7 +772,7 @@ export default function Loans() {
                                 repaymentMonths: String(loan.repaymentMonths ?? 12),
                               });
                             }}
-                            className="flex-1 text-[10px] text-muted-foreground flex items-center justify-center gap-1 py-1 hover:text-primary transition-colors"
+                            className="tap-target flex-1 text-xs text-muted-foreground flex items-center justify-center gap-1 py-1 hover:text-primary transition-colors"
                           >
                             <Pencil className="w-3 h-3" /> تعديل
                           </button>
@@ -780,7 +780,7 @@ export default function Loans() {
                             data-testid={`button-delete-${loan.id}`}
                             onClick={() => setDeleteTarget({ id: loan.id, title: loan.title })}
                             disabled={deleteMutation.isPending}
-                            className="flex-1 text-[10px] text-muted-foreground flex items-center justify-center gap-1 py-1 hover:text-red-500 transition-colors disabled:opacity-50"
+                            className="tap-target flex-1 text-xs text-muted-foreground flex items-center justify-center gap-1 py-1 hover:text-red-500 transition-colors disabled:opacity-50"
                           >
                             <Trash2 className="w-3 h-3" /> حذف السجل
                           </button>
@@ -805,7 +805,7 @@ export default function Loans() {
                       </div>
                       <div>
                         <p className="text-xs font-bold text-emerald-800">{settledLoans.length} سلفة مسددة بالكامل</p>
-                        <p className="text-[10px] text-emerald-700/70">انتقلت من القائمة النشطة — التفاصيل الكاملة في التقارير</p>
+                        <p className="text-xs text-emerald-700/70">انتقلت من القائمة النشطة — التفاصيل الكاملة في التقارير</p>
                       </div>
                     </div>
                     <BarChart3 className="w-4 h-4 text-emerald-600/50" />

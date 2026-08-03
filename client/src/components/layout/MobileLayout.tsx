@@ -47,7 +47,7 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
             <img src={logo} alt="" className="w-5 h-5 opacity-80" />
           </div>
           <div>
-            <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-primary/60">صندوق العائلة</p>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary/60">صندوق العائلة</p>
             <p className="font-bold text-primary font-heading leading-tight">{familyName}</p>
           </div>
         </div>
@@ -77,7 +77,7 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
                       key={tab.href}
                       href={tab.href}
                       className={cn(
-                        "block rounded-lg px-3 py-1.5 text-[11px] font-bold transition-colors",
+                        "block rounded-lg px-3 py-1.5 text-xs font-bold transition-colors",
                         location === tab.href ? "text-primary bg-primary/5" : "text-muted-foreground hover:text-primary",
                       )}
                       data-testid={`sidebar-tab-${tab.href.replace("/", "")}`}
@@ -98,7 +98,7 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
             } catch (e) {}
             setLocation("/");
           }}
-          className="mt-4 flex items-center gap-3 rounded-xl px-3 py-2.5 text-destructive hover:bg-destructive/5 transition-all font-bold text-xs"
+          className="tap-target mt-4 flex items-center gap-3 rounded-xl px-3 py-2.5 text-destructive hover:bg-destructive/5 transition-all font-bold text-xs"
           data-testid="sidebar-button-logout"
         >
           <LogOut className="w-4 h-4" />
@@ -115,11 +115,11 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
                 <img src={logo} alt="Logo" className="w-full h-full object-contain opacity-85" />
              </div>
              <div>
-               <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-primary/65">صندوق العائلة</p>
+               <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary/65">صندوق العائلة</p>
                <h1 className="text-lg font-bold font-heading text-primary leading-tight">{activeLabel}</h1>
                <div className="mt-0.5 flex items-center gap-1.5">
                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                 <p className="text-[9px] text-muted-foreground font-sans uppercase tracking-wider">
+                 <p className="text-xs text-muted-foreground font-sans uppercase tracking-wider">
                    {user?.role === 'admin' ? 'مشرف النظام' : 'عضو الصندوق'}
                  </p>
                </div>
@@ -127,7 +127,7 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
           </div>
           <button 
             onClick={() => setIsMenuOpen(true)}
-            className="relative rounded-2xl border border-border/60 bg-card/80 p-2.5 shadow-sm transition-all hover:bg-primary/5 active:border-primary/10 lg:hidden"
+            className="tap-target relative rounded-2xl border border-border/60 bg-card/80 p-2.5 shadow-sm transition-all hover:bg-primary/5 active:border-primary/10 lg:hidden"
           >
             <Menu className="w-5 h-5 text-primary" />
             <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-emerald-500 border border-background"></span>
@@ -140,12 +140,12 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
               <Info className="w-4 h-4" />
               </div>
               <div className="text-right">
-                <p className="text-[10px] font-bold text-muted-foreground">القسم الحالي</p>
+                <p className="text-xs font-bold text-muted-foreground">القسم الحالي</p>
                 <p className="text-sm font-bold text-primary">{activeLabel}</p>
-                <p className="mt-1 text-[11px] leading-5 text-muted-foreground">{activeDesc}</p>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">{activeDesc}</p>
               </div>
             </div>
-            <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-700 border border-emerald-100">
+            <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700 border border-emerald-100">
               {user?.role === "admin" ? "وضع الإدارة" : "وضع العضو"}
             </span>
           </div>
@@ -159,7 +159,7 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
                 key={tab.href}
                 href={tab.href}
                 className={cn(
-                  "shrink-0 rounded-full px-3.5 py-1.5 text-[11px] font-bold border transition-all",
+                  "shrink-0 rounded-full px-3.5 py-1.5 text-xs font-bold border transition-all",
                   location === tab.href
                     ? "bg-primary text-primary-foreground border-primary shadow-sm"
                     : "bg-card/80 text-muted-foreground border-border/60 hover:text-primary",
@@ -200,7 +200,7 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
                 </div>
                 <button 
                   onClick={() => setIsMenuOpen(false)}
-                  className="p-2 hover:bg-muted rounded-full transition-colors"
+                  className="tap-target p-2 hover:bg-muted rounded-full transition-colors"
                 >
                   <X className="w-5 h-5 text-muted-foreground" />
                 </button>
@@ -227,10 +227,10 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
                     </div>
                     <div>
                       <div className="font-bold text-sm">{item.label}</div>
-                      <div className="text-[10px] opacity-70">{item.desc}</div>
+                      <div className="text-xs opacity-70">{item.desc}</div>
                     </div>
                     <div className="mr-auto flex items-center gap-2">
-                      {activeSection?.key === item.key && <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[9px] font-bold text-primary">نشط</span>}
+                      {activeSection?.key === item.key && <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary">نشط</span>}
                       <ChevronLeft className="w-4 h-4 opacity-30" />
                     </div>
                   </Link>
@@ -249,10 +249,10 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
                     )}
                     <div>
                       <div className="text-xs font-bold">{user?.firstName} {user?.lastName}</div>
-                      <div className="text-[9px] text-muted-foreground uppercase tracking-widest">{user?.role === 'admin' ? 'مشرف' : 'مستخدم'}</div>
+                      <div className="text-xs text-muted-foreground uppercase tracking-widest">{user?.role === 'admin' ? 'مشرف' : 'مستخدم'}</div>
                     </div>
                   </div>
-                  <p className="text-[10px] text-muted-foreground leading-relaxed italic">
+                  <p className="text-xs text-muted-foreground leading-relaxed italic">
                     "نحن نؤمن بأن المال وسيلة لتمكين العائلة وتعزيز أواصر المودة."
                   </p>
                 </div>
@@ -305,7 +305,7 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
                       />
                     )}
                     <item.icon className={cn("relative z-10 h-[18px] w-[18px] transition-transform group-active:scale-90", isActive && "fill-current")} strokeWidth={isActive ? 2.5 : 2} />
-                    <span className="relative z-10 text-[9px] font-bold tracking-tight">{item.label}</span>
+                    <span className="relative z-10 text-xs font-bold tracking-tight">{item.label}</span>
                 </Link>
               </li>
             );

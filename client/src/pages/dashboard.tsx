@@ -74,7 +74,7 @@ export default function Dashboard() {
             {totalCapital.toLocaleString()} <span className="text-xl text-muted-foreground font-sans">ر.ع</span>
           </h2>
           <div className="flex items-center justify-center gap-3 mt-4">
-            <div className="px-4 py-1.5 rounded-full bg-emerald-500/10 text-emerald-700 text-[11px] font-bold flex items-center gap-1.5 border border-emerald-500/20 shadow-sm">
+            <div className="px-4 py-1.5 rounded-full bg-emerald-500/10 text-emerald-700 text-xs font-bold flex items-center gap-1.5 border border-emerald-500/20 shadow-sm">
               <ShieldCheck className="w-4 h-4" />
               <span>الاعتمادات نشطة</span>
             </div>
@@ -102,7 +102,7 @@ export default function Dashboard() {
             <div className="absolute -right-2 -bottom-2 opacity-5 transition-transform group-hover:scale-110">
               <TrendingUp className="w-16 h-16" />
             </div>
-            <span className="text-[10px] text-emerald-700 font-bold uppercase tracking-wider">الإيداعات</span>
+            <span className="text-xs text-emerald-700 font-bold uppercase tracking-wider">الإيداعات</span>
             <span className="text-2xl font-bold font-mono text-emerald-600">
               {totalContributions.toLocaleString()} <span className="text-xs">ر.ع</span>
             </span>
@@ -111,7 +111,7 @@ export default function Dashboard() {
             <div className="absolute -right-2 -bottom-2 opacity-5 transition-transform group-hover:scale-110">
               <History className="w-16 h-16" />
             </div>
-            <span className="text-[10px] text-amber-700 font-bold uppercase tracking-wider">المصروفات</span>
+            <span className="text-xs text-amber-700 font-bold uppercase tracking-wider">المصروفات</span>
             <span className="text-2xl font-bold font-mono text-amber-600">
               {totalExpenses.toLocaleString()} <span className="text-xs">ر.ع</span>
             </span>
@@ -122,7 +122,7 @@ export default function Dashboard() {
         <div className="space-y-4 pb-4">
           <div className="flex items-center justify-between px-1">
             <h3 className="font-bold text-lg text-primary font-heading">توزيع المحفظة</h3>
-            <span className="text-[10px] text-muted-foreground bg-muted px-3 py-1 rounded-full font-bold uppercase tracking-wider">{layers.map(l => l.percentage).join('/')}</span>
+            <span className="text-xs text-muted-foreground bg-muted px-3 py-1 rounded-full font-bold uppercase tracking-wider">{layers.map(l => l.percentage).join('/')}</span>
           </div>
           <div className="grid grid-cols-2 gap-4">
             {layers.map((layer, idx) => (

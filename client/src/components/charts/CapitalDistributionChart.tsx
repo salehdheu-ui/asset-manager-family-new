@@ -71,14 +71,14 @@ export function CapitalDistributionChart({
       <div className="mb-5 rounded-[1.5rem] border border-border/40 bg-gradient-to-l from-primary/[0.04] via-card to-card px-4 py-4">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">أكبر مكوّن</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">أكبر مكوّن</p>
             <p className="mt-1.5 text-xl font-bold leading-tight text-foreground">{highestSlice?.name || "لا يوجد"}</p>
           </div>
           <div className="min-w-[80px] rounded-2xl bg-gradient-to-br from-primary to-emerald-600 px-4 py-2.5 text-center shadow-lg">
             <p className="text-2xl font-extrabold font-mono text-white">
               {highestSlice && total > 0 ? `${Math.round((highestSlice.value / total) * 100)}%` : "0%"}
             </p>
-            <p className="text-[9px] font-medium text-white/70">من الإجمالي</p>
+            <p className="text-xs font-medium text-white/70">من الإجمالي</p>
           </div>
         </div>
       </div>
@@ -123,10 +123,10 @@ export function CapitalDistributionChart({
                     <span className="h-3.5 w-3.5 rounded-md shrink-0 shadow-sm" style={{ backgroundColor: item.fill }} />
                     <div className="min-w-0">
                       <p className="truncate text-[13px] font-bold" style={{ color: item.fill }}>{item.name}</p>
-                      <p className="text-[11px] font-medium text-muted-foreground">{formatCompactCurrency(item.value)} ر.ع</p>
+                      <p className="text-xs font-medium text-muted-foreground">{formatCompactCurrency(item.value)} ر.ع</p>
                     </div>
                   </div>
-                  <span className="rounded-lg px-2 py-1 text-[11px] font-extrabold font-mono text-white shrink-0" style={{ backgroundColor: item.fill }}>
+                  <span className="rounded-lg px-2 py-1 text-xs font-extrabold font-mono text-white shrink-0" style={{ backgroundColor: item.fill }}>
                     {percentage}%
                   </span>
                 </div>
@@ -140,7 +140,7 @@ export function CapitalDistributionChart({
         <p className="text-3xl font-extrabold font-mono text-white">
           {total.toLocaleString("en-US")} <span className="text-sm font-sans font-bold text-white/70">ر.ع</span>
         </p>
-        <p className="mt-1 text-[11px] font-bold text-white/60">إجمالي الأصول</p>
+        <p className="mt-1 text-xs font-bold text-white/60">إجمالي الأصول</p>
       </div>
     </ChartCard>
   );

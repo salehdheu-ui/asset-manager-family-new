@@ -117,7 +117,7 @@ export default function Members() {
           <button 
             onClick={() => addMemberMutation.mutate()}
             disabled={addMemberMutation.isPending}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-xs font-bold shadow-lg shadow-primary/20 active:scale-95 transition-transform disabled:opacity-50"
+            className="tap-target flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-xs font-bold shadow-lg shadow-primary/20 active:scale-95 transition-transform disabled:opacity-50"
             data-testid="button-add-member"
           >
             <UserPlus className="w-4 h-4" />
@@ -168,21 +168,21 @@ export default function Members() {
                           <button
                             onClick={() => saveEdit(member.id)}
                             disabled={updateMemberMutation.isPending}
-                            className="p-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors disabled:opacity-50"
+                            className="tap-target p-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors disabled:opacity-50"
                             data-testid={`button-save-edit-${member.id}`}
                           >
                             <Check className="w-4 h-4" />
                           </button>
                           <button
                             onClick={cancelEditing}
-                            className="p-2 bg-muted text-muted-foreground rounded-lg hover:bg-destructive hover:text-white transition-colors"
+                            className="tap-target p-2 bg-muted text-muted-foreground rounded-lg hover:bg-destructive hover:text-white transition-colors"
                             data-testid={`button-cancel-edit-${member.id}`}
                           >
                             <X className="w-4 h-4" />
                           </button>
                         </div>
                         <div className="flex items-center gap-2">
-                          <label className="text-[11px] font-bold text-muted-foreground shrink-0">الاشتراك الشهري:</label>
+                          <label className="text-xs font-bold text-muted-foreground shrink-0">الاشتراك الشهري:</label>
                           <input
                             type="number"
                             step="0.001"
@@ -192,7 +192,7 @@ export default function Members() {
                             className="flex-1 text-sm font-mono bg-muted/50 border border-primary/20 rounded-lg px-3 py-1 focus:outline-none focus:ring-2 focus:ring-primary/20"
                             data-testid={`input-edit-expected-${member.id}`}
                           />
-                          <span className="text-[11px] text-muted-foreground">ر.ع</span>
+                          <span className="text-xs text-muted-foreground">ر.ع</span>
                         </div>
                         </div>
                       ) : (
@@ -200,13 +200,13 @@ export default function Members() {
                           <h4 className="font-bold text-lg leading-none mb-1">{member.name}</h4>
                           <div className="flex items-center gap-2">
                             <span className={cn(
-                              "text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border",
+                              "text-xs font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border",
                               member.role === 'guardian' ? "bg-primary/10 border-primary/20 text-primary" : "bg-muted border-border text-muted-foreground"
                             )}>
                               {member.role === 'guardian' ? 'الوصي' : member.role === 'custodian' ? 'الأمين' : 'عضو'}
                             </span>
                             {stats.totalPending > 0 && (
-                              <span className="text-[8px] bg-amber-500 text-white px-2 py-0.5 rounded-full font-bold animate-pulse">
+                              <span className="text-xs bg-amber-500 text-white px-2 py-0.5 rounded-full font-bold animate-pulse">
                                 بانتظار الموافقة
                               </span>
                             )}
@@ -218,7 +218,7 @@ export default function Members() {
                       <div className="flex items-center gap-1">
                         <button 
                           onClick={() => startEditing(member)}
-                          className="p-2 text-muted-foreground hover:text-primary transition-colors bg-muted/30 rounded-lg"
+                          className="tap-target p-2 text-muted-foreground hover:text-primary transition-colors bg-muted/30 rounded-lg"
                           data-testid={`button-edit-member-${member.id}`}
                         >
                           <Pencil className="w-4 h-4" />
@@ -226,7 +226,7 @@ export default function Members() {
                         <button 
                           onClick={() => removeMemberMutation.mutate(member.id)}
                           disabled={removeMemberMutation.isPending || members.length <= 1}
-                          className="p-2 text-muted-foreground hover:text-destructive transition-colors bg-muted/30 rounded-lg disabled:opacity-50"
+                          className="tap-target p-2 text-muted-foreground hover:text-destructive transition-colors bg-muted/30 rounded-lg disabled:opacity-50"
                           data-testid={`button-delete-member-${member.id}`}
                         >
                           <Trash2 className="w-4 h-4" />
@@ -237,32 +237,32 @@ export default function Members() {
 
                   <div className="grid grid-cols-3 gap-3 pt-2 border-t border-border/40">
                     <div className="bg-emerald-500/5 rounded-2xl p-3 border border-emerald-500/10">
-                      <p className="text-[9px] text-emerald-700 font-bold mb-1 flex items-center gap-1">
+                      <p className="text-xs text-emerald-700 font-bold mb-1 flex items-center gap-1">
                         <CreditCard className="w-3 h-3" /> المساهمات
                       </p>
                       <div className="text-base font-bold font-mono text-emerald-600">
-                        {stats.totalApproved.toLocaleString()} <span className="text-[10px] font-sans">ر.ع</span>
+                        {stats.totalApproved.toLocaleString()} <span className="text-xs font-sans">ر.ع</span>
                       </div>
                     </div>
                     <div className="bg-amber-500/5 rounded-2xl p-3 border border-amber-500/10">
-                      <p className="text-[9px] text-amber-700 font-bold mb-1 flex items-center gap-1">
+                      <p className="text-xs text-amber-700 font-bold mb-1 flex items-center gap-1">
                         <History className="w-3 h-3" /> معلق
                       </p>
                       <div className="text-base font-bold font-mono text-amber-600">
-                        {stats.totalPending.toLocaleString()} <span className="text-[10px] font-sans">ر.ع</span>
+                        {stats.totalPending.toLocaleString()} <span className="text-xs font-sans">ر.ع</span>
                       </div>
                     </div>
                     <div className="bg-blue-500/5 rounded-2xl p-3 border border-blue-500/10">
-                      <p className="text-[9px] text-blue-700 font-bold mb-1 flex items-center gap-1">
+                      <p className="text-xs text-blue-700 font-bold mb-1 flex items-center gap-1">
                         <HandCoins className="w-3 h-3" /> السلف
                       </p>
                       <div className="text-base font-bold font-mono text-blue-600">
-                        {stats.totalBorrowed.toLocaleString()} <span className="text-[10px] font-sans">ر.ع</span>
+                        {stats.totalBorrowed.toLocaleString()} <span className="text-xs font-sans">ر.ع</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex justify-between items-center text-[10px] text-muted-foreground pt-1">
+                  <div className="flex justify-between items-center text-xs text-muted-foreground pt-1">
                     <div className="flex items-center gap-1">
                       <History className="w-3 h-3" />
                       <span>انضم: {member.createdAt ? new Date(member.createdAt).toLocaleDateString('ar-OM') : 'غير محدد'}</span>

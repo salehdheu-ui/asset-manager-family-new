@@ -109,7 +109,7 @@ export default function Auth() {
                     <feature.icon className="w-5 h-5" />
                   </div>
                   <h3 className="font-bold text-sm text-foreground">{feature.title}</h3>
-                  <p className="text-[10px] text-muted-foreground mt-1">{feature.desc}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{feature.desc}</p>
                 </motion.div>
               ))}
             </div>
@@ -198,7 +198,7 @@ export default function Auth() {
 
         {/* Footer */}
         <footer className="p-6 text-center">
-          <p className="text-[10px] text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             صُمم للعائلات العُمانية - {new Date().getFullYear()}
           </p>
         </footer>

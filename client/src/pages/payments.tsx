@@ -207,7 +207,7 @@ export default function YearlyPaymentMatrix() {
             <div className="flex flex-col items-center gap-1.5">
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-primary/60" />
-                <span className="text-[10px] text-primary/70 uppercase font-bold tracking-[0.2em]">السنة المالية</span>
+                <span className="text-xs text-primary/70 uppercase font-bold tracking-[0.2em]">السنة المالية</span>
               </div>
               <div className="relative">
                 <select 
@@ -221,7 +221,7 @@ export default function YearlyPaymentMatrix() {
                 <div className="h-0.5 w-full bg-gradient-to-l from-transparent via-primary/30 to-transparent mt-1 rounded-full" />
               </div>
               {selectedYear === currentYear && (
-                <span className="text-[9px] bg-primary/15 text-primary px-3 py-0.5 rounded-full font-bold">السنة الحالية</span>
+                <span className="text-xs bg-primary/15 text-primary px-3 py-0.5 rounded-full font-bold">السنة الحالية</span>
               )}
             </div>
 
@@ -236,7 +236,7 @@ export default function YearlyPaymentMatrix() {
 
           <div className="mt-4 flex items-center justify-center gap-2 rounded-2xl bg-card/70 border border-primary/10 px-3 py-2" data-testid="due-day-hint">
             <Calendar className="w-3.5 h-3.5 text-primary/60 shrink-0" />
-            <p className="text-[11px] text-muted-foreground leading-relaxed">
+            <p className="text-xs text-muted-foreground leading-relaxed">
               مهلة مساهمة كل شهر حتى يوم <b className="text-primary">{MONTHLY_DUE_DAY}</b> منه — لا يُحتسب تأخير قبل ذلك.
             </p>
           </div>
@@ -253,8 +253,8 @@ export default function YearlyPaymentMatrix() {
               <TrendingUp className="w-5 h-5 text-emerald-600" />
             </div>
             <div>
-              <p className="text-[10px] text-emerald-600/70 font-bold">إجمالي المعتمد</p>
-              <p className="text-lg font-mono font-bold text-emerald-700" data-testid="text-total-approved">{totalAllApproved.toLocaleString()} <span className="text-[10px] font-sans">ر.ع</span></p>
+              <p className="text-xs text-emerald-600/70 font-bold">إجمالي المعتمد</p>
+              <p className="text-lg font-mono font-bold text-emerald-700" data-testid="text-total-approved">{totalAllApproved.toLocaleString()} <span className="text-xs font-sans">ر.ع</span></p>
             </div>
           </motion.div>
           <motion.div 
@@ -267,7 +267,7 @@ export default function YearlyPaymentMatrix() {
               <Clock className="w-5 h-5 text-amber-600" />
             </div>
             <div>
-              <p className="text-[10px] text-amber-600/70 font-bold">طلبات معلقة</p>
+              <p className="text-xs text-amber-600/70 font-bold">طلبات معلقة</p>
               <p className="text-lg font-mono font-bold text-amber-700" data-testid="text-total-pending">{totalPending}</p>
             </div>
           </motion.div>
@@ -308,10 +308,10 @@ export default function YearlyPaymentMatrix() {
                       <div>
                         <h4 className="font-bold text-sm" data-testid={`text-member-name-${member.id}`}>{member.name}</h4>
                         <div className="flex items-center gap-3 mt-1">
-                          <span className="text-[10px] text-emerald-600 font-bold bg-emerald-500/10 px-2 py-0.5 rounded-md">
+                          <span className="text-xs text-emerald-600 font-bold bg-emerald-500/10 px-2 py-0.5 rounded-md">
                             {totalApproved.toLocaleString()} ر.ع
                           </span>
-                          <span className="text-[10px] text-muted-foreground font-medium">
+                          <span className="text-xs text-muted-foreground font-medium">
                             {paidMonths}/12 شهر
                           </span>
                         </div>
@@ -331,7 +331,7 @@ export default function YearlyPaymentMatrix() {
                         }}>
                           <DialogTrigger asChild>
                             <button
-                              className="px-3 py-2 rounded-xl bg-primary/8 text-primary border border-primary/15 text-[11px] font-bold hover:bg-primary/12 transition-all active:scale-95"
+                              className="tap-target px-3 py-2 rounded-xl bg-primary/8 text-primary border border-primary/15 text-xs font-bold hover:bg-primary/12 transition-all active:scale-95"
                               data-testid={`button-bulk-months-${member.id}`}
                             >
                               تحديد كل الأشهر
@@ -358,14 +358,14 @@ export default function YearlyPaymentMatrix() {
                                     <button
                                       type="button"
                                       onClick={() => setSelectedBulkMonths((prev) => ({ ...prev, [member.id]: availableMonths.map((month) => month.id) }))}
-                                      className="px-2.5 py-1 rounded-md bg-primary/8 text-primary border border-primary/15 text-[10px] font-bold hover:bg-primary/12 transition-all"
+                                      className="tap-target px-2.5 py-1 rounded-md bg-primary/8 text-primary border border-primary/15 text-xs font-bold hover:bg-primary/12 transition-all"
                                     >
                                       تحديد الكل
                                     </button>
                                     <button
                                       type="button"
                                       onClick={() => setSelectedBulkMonths((prev) => ({ ...prev, [member.id]: [] }))}
-                                      className="px-2.5 py-1 rounded-md bg-muted text-muted-foreground border border-border text-[10px] font-bold hover:bg-muted/80 transition-all"
+                                      className="tap-target px-2.5 py-1 rounded-md bg-muted text-muted-foreground border border-border text-xs font-bold hover:bg-muted/80 transition-all"
                                     >
                                       إلغاء الكل
                                     </button>
@@ -387,8 +387,8 @@ export default function YearlyPaymentMatrix() {
                                             return { ...prev, [member.id]: next };
                                           });
                                         }}
-                                        className={cn(
-                                          "min-h-10 px-2 py-2 rounded-lg border text-[11px] font-bold transition-all active:scale-95 leading-tight",
+                                        className={cn("tap-target", 
+                                          "min-h-10 px-2 py-2 rounded-lg border text-xs font-bold transition-all active:scale-95 leading-tight",
                                           isSelected
                                             ? "bg-primary text-primary-foreground border-primary"
                                             : "bg-muted/30 text-muted-foreground border-border hover:bg-muted/50"
@@ -400,7 +400,7 @@ export default function YearlyPaymentMatrix() {
                                     );
                                   })}
                                 </div>
-                                <p className="text-[11px] text-muted-foreground">
+                                <p className="text-xs text-muted-foreground">
                                   تم اختيار {chosenMonths.length} من أصل {availableMonths.length} شهر
                                 </p>
                               </div>
@@ -449,7 +449,7 @@ export default function YearlyPaymentMatrix() {
                         <div className="flex items-center gap-2">
                           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200/60">
                             <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse" />
-                            <span className="text-[9px] font-bold text-amber-600">{memberPending.length} معلق</span>
+                            <span className="text-xs font-bold text-amber-600">{memberPending.length} معلق</span>
                           </div>
                           {isGuardian && (
                             <button
@@ -460,7 +460,7 @@ export default function YearlyPaymentMatrix() {
                                 })
                               }
                               disabled={approvingAllFor === member.id}
-                              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-700 text-[10px] font-bold hover:bg-emerald-500/20 transition-all active:scale-95 disabled:opacity-50"
+                              className="tap-target flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-700 text-xs font-bold hover:bg-emerald-500/20 transition-all active:scale-95 disabled:opacity-50"
                               data-testid={`button-approve-all-${member.id}`}
                             >
                               <Check className="w-3.5 h-3.5" />
@@ -515,7 +515,7 @@ export default function YearlyPaymentMatrix() {
                               data-testid={`button-month-${member.id}-${month.id}`}
                             >
                               <span className={cn(
-                                "text-[10px] font-bold",
+                                "text-xs font-bold",
                                 isApproved ? "text-emerald-600" : isPending ? "text-amber-600" : isCurrentMonth ? "text-primary" : "text-muted-foreground/70"
                               )}>
                                 {month.name}
@@ -526,12 +526,12 @@ export default function YearlyPaymentMatrix() {
                               ) : isPending ? (
                                 <Clock className="w-5 h-5 text-amber-500 mt-0.5 animate-pulse" />
                               ) : (
-                                <span className="text-[11px] font-mono text-muted-foreground/40 mt-0.5">---</span>
+                                <span className="text-xs font-mono text-muted-foreground/40 mt-0.5">---</span>
                               )}
 
                               {amount > 0 && (
                                 <span className={cn(
-                                  "text-[9px] font-mono font-bold mt-0.5",
+                                  "text-xs font-mono font-bold mt-0.5",
                                   isApproved ? "text-emerald-700" : "text-amber-700"
                                 )}>
                                   {amount.toLocaleString()}
