@@ -109,29 +109,31 @@ export default function MobileLayout({ children, title }: MobileLayoutProps) {
       <div className="relative z-10 flex flex-1 flex-col min-w-0 lg:mx-auto lg:my-6 lg:h-fit lg:min-h-[calc(100vh-3rem)] lg:w-full lg:max-w-md lg:rounded-xl lg:bg-background lg:shadow-[0_20px_60px_rgba(16,24,40,0.10)] lg:overflow-hidden">
       {/* Header */}
       <header className="relative z-10 px-5 pt-8 pb-4 bg-gradient-to-b from-background via-background/95 to-transparent shrink-0">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-             <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-primary/15 bg-card/80 p-1.5 shadow-sm">
+        {/* زر القائمة أول العناصر ⇒ يقع على يمين الشاشة في الاتجاه العربي،
+            حيث يصله الإبهام دون أن تُنقل اليد عبر الشاشة */}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setIsMenuOpen(true)}
+            className="tap-target relative shrink-0 rounded-lg border border-border/80 bg-card/80 p-2.5 shadow-sm transition-all hover:bg-primary/10 active:border-primary/22 lg:hidden"
+          >
+            <Menu className="w-5 h-5 text-primary" />
+            <span className="absolute left-2 top-2 h-1.5 w-1.5 rounded-full bg-fund-in border border-background"></span>
+          </button>
+          <div className="flex min-w-0 items-center gap-3">
+             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-primary/15 bg-card/80 p-1.5 shadow-sm">
                 <img src={logo} alt="Logo" className="w-full h-full object-contain opacity-85" />
              </div>
-             <div>
+             <div className="min-w-0">
                <p className="text-xs font-bold uppercase tracking-[0.24em] text-primary/65">صندوق العائلة</p>
-               <h1 className="text-lg font-bold font-heading text-primary leading-tight">{activeLabel}</h1>
+               <h1 className="text-lg font-bold font-heading text-primary leading-tight truncate">{activeLabel}</h1>
                <div className="mt-0.5 flex items-center gap-1.5">
-                 <span className="w-1.5 h-1.5 rounded-full bg-fund-in animate-pulse"></span>
-                 <p className="text-xs text-muted-foreground font-sans uppercase tracking-wider">
+                 <span className="w-1.5 h-1.5 shrink-0 rounded-full bg-fund-in animate-pulse"></span>
+                 <p className="text-xs text-muted-foreground font-sans uppercase tracking-wider truncate">
                    {user?.role === 'admin' ? 'مشرف النظام' : 'عضو الصندوق'}
                  </p>
                </div>
              </div>
           </div>
-          <button 
-            onClick={() => setIsMenuOpen(true)}
-            className="tap-target relative rounded-lg border border-border/80 bg-card/80 p-2.5 shadow-sm transition-all hover:bg-primary/10 active:border-primary/22 lg:hidden"
-          >
-            <Menu className="w-5 h-5 text-primary" />
-            <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-fund-in border border-background"></span>
-          </button>
         </div>
         <div className="mt-4 rounded-xl border border-primary/22 bg-card/80 px-4 py-3 shadow-sm backdrop-blur-sm">
           <div className="flex items-start justify-between gap-3">
