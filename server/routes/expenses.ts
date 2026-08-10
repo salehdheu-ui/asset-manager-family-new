@@ -5,6 +5,7 @@ import { z } from "zod";
 import { isAuthenticated, isAdmin } from "../auth";
 import { rebalanceYear } from "../capital-engine";
 import { zodErrorResponse } from "../validation";
+import { withTransaction } from "../db";
 
 export function registerExpenseRoutes(app: Express) {
   app.get("/api/expenses", isAuthenticated, async (req, res) => {
@@ -21,8 +22,13 @@ export function registerExpenseRoutes(app: Express) {
       const data = insertExpenseSchema.parse(req.body);
       const currentYear = new Date().getFullYear();
 
-      const expense = await storage.createExpense(data);
-      await rebalanceYear(currentYear);
+      // المصروف وإعادة التوازن وحدة واحدة — لا يُسجَّل مصروف بلا تحديث للتخصيص
+      const expense = await withTransaction(async () => {
+        const created = await storage.createExpense(data);
+        await rebalanceYear(currentYear);
+        return created;
+      });
+
       res.status(201).json(expense);
     } catch (error) {
       if (error instanceof z.ZodError) {

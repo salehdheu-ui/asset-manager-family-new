@@ -6,6 +6,7 @@ import { computeDashboardSummary } from "../services/dashboard";
 import { computeZakat, isHawlComplete, daysUntilHawl, HAWL_DAYS } from "@shared/finance";
 import { zodErrorResponse } from "../validation";
 import { rebalanceYear } from "../capital-engine";
+import { withTransaction } from "../db";
 
 const startCycleSchema = z.object({
   cycleStart: z.coerce.date().optional(),
@@ -107,34 +108,40 @@ export function registerZakatRoutes(app: Express) {
         return res.status(400).json({ error: "لا مبلغ زكاة لإخراجه — تحقق من النصاب وصافي الأصول" });
       }
 
-      const expense = await storage.createExpense({
-        title: data.title?.trim() || "زكاة مال الصندوق",
-        amount: amount.toFixed(3),
-        category: "zakat",
-        description: data.note ?? `عن دورة حول بدأت ${new Date(cycle.cycleStart).toLocaleDateString("ar-OM")}`,
-      });
+      // المصروف وإقفال الدورة وإعادة التوازن وسجل التدقيق وحدة واحدة —
+      // دورة معلَّمة "مدفوعة" بلا مصروف مقابل تعني زكاة تظهر مُخرَجة ولم تُخرَج
+      const { updated, expense } = await withTransaction(async () => {
+        const createdExpense = await storage.createExpense({
+          title: data.title?.trim() || "زكاة مال الصندوق",
+          amount: amount.toFixed(3),
+          category: "zakat",
+          description: data.note ?? `عن دورة حول بدأت ${new Date(cycle.cycleStart).toLocaleDateString("ar-OM")}`,
+        });
 
-      const updated = await storage.updateZakatCycle(cycle.id, {
-        status: "paid",
-        dueAt: cycle.dueAt ?? new Date(),
-        netAssetsAtDue: calc.netAssets.toFixed(3),
-        nisabUsed: calc.nisab.toFixed(3),
-        amountDue: amount.toFixed(3),
-        expenseId: expense.id,
-        paidAt: new Date(),
-        paidBy: req.user?.id ?? null,
-      });
+        const updatedCycle = await storage.updateZakatCycle(cycle.id, {
+          status: "paid",
+          dueAt: cycle.dueAt ?? new Date(),
+          netAssetsAtDue: calc.netAssets.toFixed(3),
+          nisabUsed: calc.nisab.toFixed(3),
+          amountDue: amount.toFixed(3),
+          expenseId: createdExpense.id,
+          paidAt: new Date(),
+          paidBy: req.user?.id ?? null,
+        });
 
-      await rebalanceYear(new Date().getFullYear());
+        await rebalanceYear(new Date().getFullYear());
 
-      await storage.createAuditLog({
-        action: "zakat_paid",
-        entityType: "zakat",
-        entityId: cycle.id,
-        actorUserId: req.user?.id ?? null,
-        actorName: req.user?.username ?? "مشرف",
-        description: `أُخرجت زكاة الصندوق بمبلغ ${amount.toLocaleString()} ر.ع`,
-        metadata: { amount, netAssets: calc.netAssets, nisab: calc.nisab, expenseId: expense.id },
+        await storage.createAuditLog({
+          action: "zakat_paid",
+          entityType: "zakat",
+          entityId: cycle.id,
+          actorUserId: req.user?.id ?? null,
+          actorName: req.user?.username ?? "مشرف",
+          description: `أُخرجت زكاة الصندوق بمبلغ ${amount.toLocaleString()} ر.ع`,
+          metadata: { amount, netAssets: calc.netAssets, nisab: calc.nisab, expenseId: createdExpense.id },
+        });
+
+        return { updated: updatedCycle, expense: createdExpense };
       });
 
       res.json({ cycle: updated, expense });

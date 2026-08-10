@@ -20,6 +20,9 @@ vi.mock("../auth", () => ({
 }));
 
 vi.mock("../capital-engine", () => ({ rebalanceYear: vi.fn(async () => ({})) }));
+
+// المعاملات تُختبر مقابل قاعدة حقيقية، لا هنا — هذا الاختبار يعنى بمنطق المسار
+vi.mock("../db", () => ({ withTransaction: (fn: () => unknown) => fn() }));
 vi.mock("../services/dashboard", () => ({
   computeDashboardSummary: vi.fn(async () => ({ netCapital: 10000 })),
 }));

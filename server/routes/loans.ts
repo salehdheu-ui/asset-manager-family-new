@@ -6,7 +6,8 @@ import { isAuthenticated, isAdmin } from "../auth";
 import { blockMembersDuringEmergency } from "../emergency";
 import { rebalanceYear } from "../capital-engine";
 import { buildRepaymentSchedule, LOAN_VOTE_THRESHOLD } from "@shared/finance";
-import { zodErrorResponse } from "../validation";
+import { zodErrorResponse, RequestError } from "../validation";
+import { withTransaction } from "../db";
 
 type LoanRecord = Awaited<ReturnType<typeof storage.getLoans>>[number];
 
@@ -91,11 +92,14 @@ export function registerLoanRoutes(app: Express) {
         });
       }
 
-      const loan = await storage.createLoan(data);
-
-      if (loan.status === "approved") {
-        await createScheduleAndRebalance(loan);
-      }
+      // السلفة وأقساطها وإعادة التوازن وحدة واحدة — لا تُكتب سلفة معتمدة بلا أقساط
+      const loan = await withTransaction(async () => {
+        const created = await storage.createLoan(data);
+        if (created.status === "approved") {
+          await createScheduleAndRebalance(created);
+        }
+        return created;
+      });
 
       res.status(201).json(loan);
     } catch (error) {
@@ -145,18 +149,25 @@ export function registerLoanRoutes(app: Express) {
         }
       }
 
-      const loan = await storage.updateLoanStatus(loanId, status);
-      if (!loan) {
-        return res.status(404).json({ error: "Loan not found" });
-      }
-
-      // إنشاء الأقساط وتحديث التخصيص المالي عند الاعتماد فقط
-      if (status === 'approved') {
-        await createScheduleAndRebalance(loan);
-      }
+      // تغيير الحالة وإنشاء الأقساط وإعادة التوازن وحدة واحدة
+      const loan = await withTransaction(async () => {
+        const updated = await storage.updateLoanStatus(loanId, status);
+        if (!updated) {
+          throw new RequestError(404, "Loan not found");
+        }
+        // إنشاء الأقساط وتحديث التخصيص المالي عند الاعتماد فقط
+        if (status === 'approved') {
+          await createScheduleAndRebalance(updated);
+        }
+        return updated;
+      });
 
       res.json(loan);
     } catch (error) {
+      if (error instanceof RequestError) {
+        return res.status(error.status).json({ error: error.message });
+      }
+      console.error("Update loan status error:", error);
       res.status(500).json({ error: "Failed to update loan status" });
     }
   });
@@ -226,28 +237,31 @@ export function registerLoanRoutes(app: Express) {
       const payments = await storage.getLoanPayments(loanId);
       const totalPaid = payments.reduce((sum, p) => sum + Number(p.amount), 0);
 
-      await storage.deleteLoan(loanId);
+      // الحذف وسجل التدقيق وإعادة التوازن وحدة واحدة — لا تُحذف سلفة بلا أثر في السجل
+      await withTransaction(async () => {
+        await storage.deleteLoan(loanId);
 
-      await storage.createAuditLog({
-        action: "loan_deleted",
-        entityType: "loan",
-        entityId: loanId,
-        actorUserId: req.user?.id ?? null,
-        actorName: req.user?.username ?? req.user?.firstName ?? "مشرف",
-        description: `تم حذف سلفة ${member?.name ?? "عضو غير معروف"} (${loan.title}) بمبلغ ${loan.amount} ر.ع`,
-        metadata: {
-          memberId: loan.memberId,
-          memberName: member?.name ?? null,
-          title: loan.title,
-          amount: loan.amount,
-          status: loan.status,
-          totalPaidBeforeDeletion: totalPaid.toFixed(3),
-          paymentsDeleted: payments.length,
-        },
+        await storage.createAuditLog({
+          action: "loan_deleted",
+          entityType: "loan",
+          entityId: loanId,
+          actorUserId: req.user?.id ?? null,
+          actorName: req.user?.username ?? req.user?.firstName ?? "مشرف",
+          description: `تم حذف سلفة ${member?.name ?? "عضو غير معروف"} (${loan.title}) بمبلغ ${loan.amount} ر.ع`,
+          metadata: {
+            memberId: loan.memberId,
+            memberName: member?.name ?? null,
+            title: loan.title,
+            amount: loan.amount,
+            status: loan.status,
+            totalPaidBeforeDeletion: totalPaid.toFixed(3),
+            paymentsDeleted: payments.length,
+          },
+        });
+
+        const loanYear = (loan.approvedAt || loan.createdAt || new Date()).getFullYear();
+        await rebalanceYear(loanYear);
       });
-
-      const loanYear = (loan.approvedAt || loan.createdAt || new Date()).getFullYear();
-      await rebalanceYear(loanYear);
 
       res.status(204).send();
     } catch (error) {
@@ -351,20 +365,30 @@ export function registerLoanRoutes(app: Express) {
   app.patch("/api/repayments/:id/pay", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const repaymentId = req.params.id as string;
-      const repayment = await storage.markRepaymentPaid(repaymentId);
-      if (!repayment) {
-        return res.status(404).json({ error: "Repayment not found" });
-      }
-      await storage.createLoanPayment({
-        loanId: repayment.loanId,
-        amount: String(repayment.amount),
-        note: `سداد القسط رقم ${repayment.installmentNumber}`,
-        createdBy: (req as any).user?.id
+
+      // تعليم القسط وتسجيل السداد وإعادة التوازن وحدة واحدة
+      const repayment = await withTransaction(async () => {
+        const marked = await storage.markRepaymentPaid(repaymentId);
+        if (!marked) {
+          throw new RequestError(409, "القسط غير موجود أو مسدد مسبقاً");
+        }
+        await storage.createLoanPayment({
+          loanId: marked.loanId,
+          amount: String(marked.amount),
+          note: `سداد القسط رقم ${marked.installmentNumber}`,
+          createdBy: (req as any).user?.id
+        });
+        const paidYear = marked.paidAt ? marked.paidAt.getFullYear() : new Date().getFullYear();
+        await rebalanceYear(paidYear);
+        return marked;
       });
-      const paidYear = repayment.paidAt ? repayment.paidAt.getFullYear() : new Date().getFullYear();
-      await rebalanceYear(paidYear);
+
       res.json(repayment);
     } catch (error) {
+      if (error instanceof RequestError) {
+        return res.status(error.status).json({ error: error.message });
+      }
+      console.error("Mark repayment paid error:", error);
       res.status(500).json({ error: "Failed to mark repayment as paid" });
     }
   });
@@ -398,29 +422,41 @@ export function registerLoanRoutes(app: Express) {
       if (loan.status !== 'approved') {
         return res.status(400).json({ error: "لا يمكن تسجيل سداد إلا لسلفة معتمدة" });
       }
-      const payments = await storage.getLoanPayments(loanId);
-      const paidTotal = payments.reduce((sum, payment) => sum + Number(payment.amount), 0);
       const amount = Number(req.body.amount);
       if (!Number.isFinite(amount) || amount <= 0) {
         return res.status(400).json({ error: "يرجى إدخال مبلغ سداد صحيح" });
       }
-      if (paidTotal + amount > Number(loan.amount)) {
-        return res.status(400).json({ error: "مبلغ السداد أكبر من المتبقي على السلفة" });
-      }
+
       const paymentData = insertLoanPaymentSchema.parse({
         loanId,
         amount: req.body.amount,
         note: req.body.note || null,
         createdBy: req.user?.id
       });
-      const payment = await storage.createLoanPayment(paymentData);
-      const paidYear = payment.paidAt ? payment.paidAt.getFullYear() : new Date().getFullYear();
-      await rebalanceYear(paidYear);
+
+      // فحص التجاوز والكتابة داخل معاملة واحدة: إن فشلت إعادة التوازن
+      // لا يبقى سداد مسجَّل بلا تحديث للتخصيص
+      const payment = await withTransaction(async () => {
+        const payments = await storage.getLoanPayments(loanId);
+        const paidTotal = payments.reduce((sum, p) => sum + Number(p.amount), 0);
+        if (paidTotal + amount > Number(loan.amount)) {
+          throw new RequestError(400, "مبلغ السداد أكبر من المتبقي على السلفة");
+        }
+        const created = await storage.createLoanPayment(paymentData);
+        const paidYear = created.paidAt ? created.paidAt.getFullYear() : new Date().getFullYear();
+        await rebalanceYear(paidYear);
+        return created;
+      });
+
       res.status(201).json(payment);
     } catch (error) {
+      if (error instanceof RequestError) {
+        return res.status(error.status).json({ error: error.message });
+      }
       if (error instanceof z.ZodError) {
         res.status(400).json(zodErrorResponse(error));
       } else {
+        console.error("Create loan payment error:", error);
         res.status(500).json({ error: "Failed to create loan payment" });
       }
     }

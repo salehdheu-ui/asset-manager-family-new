@@ -24,6 +24,9 @@ vi.mock("../auth", () => ({
 
 vi.mock("../capital-engine", () => ({ rebalanceYear: vi.fn() }));
 
+// المعاملات تُختبر مقابل قاعدة حقيقية، لا هنا — هذا الاختبار يعنى بمنطق المسار
+vi.mock("../db", () => ({ withTransaction: (fn: () => unknown) => fn() }));
+
 vi.mock("../storage", () => {
   const echoContribution = vi.fn(async (data: any) => ({ id: "c1", ...data }));
   const echoLoan = vi.fn(async (data: any) => ({ id: "l1", createdAt: new Date(), approvedAt: null, ...data }));
