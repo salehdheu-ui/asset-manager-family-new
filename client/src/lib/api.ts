@@ -964,3 +964,50 @@ export async function setContributionRate(data: {
 export async function deleteContributionRate(id: string): Promise<void> {
   await apiRequest("DELETE", `/api/contribution-rates/${id}`);
 }
+
+// ————— الإشعارات —————
+
+export interface NotificationRow {
+  id: string;
+  title: string;
+  body: string;
+  url: string;
+  audience: "all" | "admins" | "members" | "user";
+  targetUserId: string | null;
+  status: "scheduled" | "sending" | "sent" | "cancelled" | "failed";
+  scheduledAt: string | null;
+  sentAt: string | null;
+  deliveredCount: number;
+  failedCount: number;
+  error: string | null;
+  createdByName: string | null;
+  createdAt: string | null;
+}
+
+export interface NotificationsResponse {
+  configured: boolean;
+  subscribedDevices: number;
+  notifications: NotificationRow[];
+}
+
+export async function getNotifications(): Promise<NotificationsResponse> {
+  const res = await fetch("/api/notifications", { credentials: "include" });
+  if (!res.ok) await parseFetchError(res);
+  return res.json();
+}
+
+export async function sendNotification(data: {
+  title: string;
+  body: string;
+  url: string;
+  audience: "all" | "admins" | "members" | "user";
+  targetUserId?: string | null;
+  scheduledAt?: string | null;
+}): Promise<{ notification: NotificationRow; scheduled: boolean; delivered?: number; failed?: number }> {
+  const res = await apiRequest("POST", "/api/notifications", data);
+  return res.json();
+}
+
+export async function cancelNotification(id: string): Promise<void> {
+  await apiRequest("DELETE", `/api/notifications/${id}`);
+}

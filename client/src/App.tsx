@@ -1,5 +1,5 @@
-import { lazy, Suspense } from "react";
-import { Switch, Route, Redirect } from "wouter";
+import { lazy, Suspense, useEffect, useState } from "react";
+import { Switch, Route, Redirect, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -7,6 +7,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import AuthGuard from "@/components/AuthGuard";
 import AdminGuard from "@/components/AdminGuard";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import InstallPrompt from "@/components/InstallPrompt";
+import UpdateBanner from "@/components/UpdateBanner";
+import { registerServiceWorker } from "@/lib/pwa";
 import Auth from "@/pages/auth";
 
 // تحميل الصفحات عند الطلب لتسريع الفتح الأول على الجوال
@@ -28,6 +31,7 @@ const AnnualReport = lazy(() => import("@/pages/annual-report"));
 const ReportBuilder = lazy(() => import("@/pages/report-builder"));
 const Investments = lazy(() => import("@/pages/investments"));
 const Proposals = lazy(() => import("@/pages/proposals"));
+const Notifications = lazy(() => import("@/pages/notifications"));
 
 function PageLoader() {
   return (
@@ -77,10 +81,28 @@ function Router() {
         <Route path="/report-builder">{() => <AdminRoute component={ReportBuilder} />}</Route>
         <Route path="/investments">{() => <AdminRoute component={Investments} />}</Route>
         <Route path="/proposals">{() => <ProtectedRoute component={Proposals} />}</Route>
+        <Route path="/notifications">{() => <AdminRoute component={Notifications} />}</Route>
         <Route component={NotFound} />
       </Switch>
     </Suspense>
   );
+}
+
+/** يسجّل عامل الخدمة ويصل ضغطة الإشعار بالتوجيه داخل التطبيق */
+function ServiceWorkerHost() {
+  const [, setLocation] = useLocation();
+  const [updateReady, setUpdateReady] = useState(false);
+
+  useEffect(() => {
+    registerServiceWorker({
+      onUpdateReady: () => setUpdateReady(true),
+      // الضغط على إشعار والتطبيق مفتوح: ننتقل داخلياً بدل إعادة تحميل الصفحة
+      onNavigate: (url) => setLocation(url),
+    });
+  }, [setLocation]);
+
+  if (!updateReady) return null;
+  return <UpdateBanner onDismiss={() => setUpdateReady(false)} />;
 }
 
 function App() {
@@ -89,9 +111,11 @@ function App() {
       <TooltipProvider>
         <div dir="rtl" className="min-h-screen bg-background text-foreground font-sans antialiased selection:bg-primary/20">
           <Toaster />
+          <ServiceWorkerHost />
           <ErrorBoundary>
             <Router />
           </ErrorBoundary>
+          <InstallPrompt />
         </div>
       </TooltipProvider>
     </QueryClientProvider>

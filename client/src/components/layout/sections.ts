@@ -88,6 +88,7 @@ export const SECTIONS: Section[] = [
     tabs: [
       { href: "/profile", label: "حسابي" },
       { href: "/settings", label: "إعدادات الصندوق", adminOnly: true },
+      { href: "/notifications", label: "الإشعارات", adminOnly: true },
       { href: "/admin", label: "الإدارة والمستخدمون", adminOnly: true },
     ],
   },

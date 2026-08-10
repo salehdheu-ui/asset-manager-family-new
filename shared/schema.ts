@@ -388,3 +388,71 @@ export const insertContributionRateSchema = createInsertSchema(contributionRates
   });
 export type InsertContributionRate = z.infer<typeof insertContributionRateSchema>;
 export type ContributionRate = typeof contributionRates.$inferSelect;
+
+// ————— الإشعارات —————
+
+// اشتراك جهاز واحد في الإشعارات. للمستخدم أكثر من جهاز، ولكل جهاز مفتاحاه.
+// endpoint فريد لأن المتصفح يعطي عنواناً واحداً لكل تركيبة (جهاز، متصفح، تطبيق).
+export const pushSubscriptions = pgTable("push_subscriptions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  endpoint: text("endpoint").notNull(),
+  p256dh: text("p256dh").notNull(),
+  auth: text("auth").notNull(),
+  platform: text("platform"),                  // 'android' | 'ios' | 'desktop'
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow(),
+  lastUsedAt: timestamp("last_used_at"),
+}, (table) => ({
+  endpointUnique: uniqueIndex("push_subscriptions_endpoint_unique").on(table.endpoint),
+}));
+
+export const insertPushSubscriptionSchema = createInsertSchema(pushSubscriptions)
+  .omit({ id: true, createdAt: true, lastUsedAt: true });
+export type InsertPushSubscription = z.infer<typeof insertPushSubscriptionSchema>;
+export type PushSubscription = typeof pushSubscriptions.$inferSelect;
+
+// سجل الإشعارات: المرسَل والمجدول معاً. المجدول ينتظر حتى scheduledAt
+// ثم يُرسل ويُحدَّث في مكانه، فيبقى للعائلة سجل واحد لكل ما أُرسل.
+export const notifications = pgTable("notifications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: text("title").notNull(),
+  body: text("body").notNull(),
+  url: text("url").notNull().default("/"),     // الصفحة التي يفتحها الضغط على الإشعار
+  audience: text("audience").notNull(),        // 'all' | 'admins' | 'members' | 'user'
+  targetUserId: varchar("target_user_id"),     // مع audience = 'user'
+  status: text("status").notNull().default("scheduled"), // 'scheduled' | 'sent' | 'cancelled' | 'failed'
+  scheduledAt: timestamp("scheduled_at"),      // فارغ = إرسال فوري
+  sentAt: timestamp("sent_at"),
+  deliveredCount: integer("delivered_count").notNull().default(0),
+  failedCount: integer("failed_count").notNull().default(0),
+  error: text("error"),
+  createdBy: varchar("created_by"),
+  createdByName: text("created_by_name"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertNotificationSchema = createInsertSchema(notifications)
+  .omit({
+    id: true,
+    createdAt: true,
+    sentAt: true,
+    deliveredCount: true,
+    failedCount: true,
+    error: true,
+    status: true,
+  })
+  .extend({
+    title: z.string().trim().min(1, "العنوان مطلوب").max(120),
+    body: z.string().trim().min(1, "نص الإشعار مطلوب").max(500),
+    url: z.string().trim().startsWith("/", "الرابط يجب أن يكون مساراً داخل التطبيق").max(200).default("/"),
+    audience: z.enum(["all", "admins", "members", "user"]),
+    targetUserId: z.string().nullable().optional(),
+    scheduledAt: z.coerce.date().nullable().optional(),
+  })
+  .refine((data) => data.audience !== "user" || !!data.targetUserId, {
+    message: "اختر المستخدم المقصود",
+    path: ["targetUserId"],
+  });
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+export type Notification = typeof notifications.$inferSelect;

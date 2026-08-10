@@ -19,6 +19,7 @@ import {
   registerProposalRoutes,
   registerAttachmentRoutes,
   registerRateRoutes,
+  registerNotificationRoutes,
 } from "./routes/index";
 
 export async function registerRoutes(
@@ -50,6 +51,7 @@ export async function registerRoutes(
   registerProposalRoutes(app);
   registerAttachmentRoutes(app);
   registerRateRoutes(app);
+  registerNotificationRoutes(app);
 
   // Auto-backup scheduler: checks every hour, creates a snapshot if 24h have elapsed
   setInterval(async () => {
