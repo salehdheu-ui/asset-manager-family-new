@@ -22,7 +22,7 @@ import {
 } from "@shared/schema";
 import { users } from "@shared/models/auth";
 import { db } from "./db";
-import { eq, and, desc, gte, lte, sql } from "drizzle-orm";
+import { eq, and, desc, gte, lte, ne, sql } from "drizzle-orm";
 
 export interface IStorage {
   // Members
@@ -304,10 +304,12 @@ export class DatabaseStorage implements IStorage {
     return await db.insert(loanRepayments).values(repayments).returning();
   }
 
+  // شرط status <> 'paid' يجعل العملية غير قابلة للتكرار: ضغطتان على "تم السداد"
+  // كانتا تنشئان سجلَي سداد لنفس القسط فيتضخم المسدَّد. الآن الثانية لا تُطابق صفاً.
   async markRepaymentPaid(id: string): Promise<LoanRepayment | undefined> {
     const [updated] = await db.update(loanRepayments)
       .set({ status: "paid", paidAt: new Date() })
-      .where(eq(loanRepayments.id, id))
+      .where(and(eq(loanRepayments.id, id), ne(loanRepayments.status, "paid")))
       .returning();
     return updated;
   }

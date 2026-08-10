@@ -7,6 +7,7 @@ import { db } from "../db";
 import { users } from "@shared/models/auth";
 import { eq } from "drizzle-orm";
 import { rebalanceYear } from "../capital-engine";
+import { withTransaction } from "../db";
 import { computeDashboardSummary } from "../services/dashboard";
 import { zodErrorResponse } from "../validation";
 
@@ -127,9 +128,13 @@ export function registerAdminRoutes(app: Express) {
       if (!['deposit', 'withdrawal'].includes(data.type)) {
         return res.status(400).json({ message: "نوع العملية غير صالح" });
       }
-      const adjustment = await storage.createFundAdjustment(data);
       const currentYear = new Date().getFullYear();
-      await rebalanceYear(currentYear);
+      // القيد المباشر وإعادة التوازن وحدة واحدة
+      const adjustment = await withTransaction(async () => {
+        const created = await storage.createFundAdjustment(data);
+        await rebalanceYear(currentYear);
+        return created;
+      });
       res.status(201).json(adjustment);
     } catch (error: unknown) {
       if (error instanceof z.ZodError) {

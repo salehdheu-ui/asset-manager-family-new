@@ -5,7 +5,8 @@ import { z } from "zod";
 import { isAuthenticated, isAdmin } from "../auth";
 import { blockMembersDuringEmergency } from "../emergency";
 import { rebalanceYear } from "../capital-engine";
-import { zodErrorResponse } from "../validation";
+import { zodErrorResponse, RequestError } from "../validation";
+import { withTransaction } from "../db";
 
 export function registerContributionRoutes(app: Express) {
   app.get("/api/contributions", isAuthenticated, async (req, res) => {
@@ -55,10 +56,14 @@ export function registerContributionRoutes(app: Express) {
         });
       }
 
-      const contribution = await storage.createContribution(data);
-      if (contribution.status === "approved") {
-        await rebalanceYear(contribution.year);
-      }
+      const contribution = await withTransaction(async () => {
+        const created = await storage.createContribution(data);
+        if (created.status === "approved") {
+          await rebalanceYear(created.year);
+        }
+        return created;
+      });
+
       res.status(201).json(contribution);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -72,33 +77,43 @@ export function registerContributionRoutes(app: Express) {
   app.patch("/api/contributions/:id/approve", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const contribId = req.params.id as string;
-      const contribution = await storage.approveContribution(contribId);
-      if (!contribution) {
-        return res.status(404).json({ message: "المساهمة غير موجودة" });
-      }
 
-      const member = await storage.getMember(contribution.memberId);
-      const memberName = member?.name ?? "عضو غير معروف";
+      // الاعتماد وسجل التدقيق وإعادة التوازن وحدة واحدة
+      const contribution = await withTransaction(async () => {
+        const approved = await storage.approveContribution(contribId);
+        if (!approved) {
+          throw new RequestError(404, "المساهمة غير موجودة");
+        }
 
-      await storage.createAuditLog({
-        action: "contribution_approved",
-        entityType: "contribution",
-        entityId: contribution.id,
-        actorUserId: req.user?.id ?? null,
-        actorName: req.user?.username ?? req.user?.firstName ?? "مشرف",
-        description: `تم اعتماد مساهمة ${memberName} للشهر ${contribution.month}/${contribution.year}`,
-        metadata: {
-          memberId: contribution.memberId,
-          memberName,
-          amount: contribution.amount,
-          year: contribution.year,
-          month: contribution.month,
-        },
+        const member = await storage.getMember(approved.memberId);
+        const memberName = member?.name ?? "عضو غير معروف";
+
+        await storage.createAuditLog({
+          action: "contribution_approved",
+          entityType: "contribution",
+          entityId: approved.id,
+          actorUserId: req.user?.id ?? null,
+          actorName: req.user?.username ?? req.user?.firstName ?? "مشرف",
+          description: `تم اعتماد مساهمة ${memberName} للشهر ${approved.month}/${approved.year}`,
+          metadata: {
+            memberId: approved.memberId,
+            memberName,
+            amount: approved.amount,
+            year: approved.year,
+            month: approved.month,
+          },
+        });
+
+        await rebalanceYear(approved.year);
+        return approved;
       });
 
-      await rebalanceYear(contribution.year);
       res.json(contribution);
     } catch (error) {
+      if (error instanceof RequestError) {
+        return res.status(error.status).json({ message: error.message });
+      }
+      console.error("Approve contribution error:", error);
       res.status(500).json({ message: "تعذر اعتماد المساهمة حاليًا" });
     }
   });
@@ -106,33 +121,42 @@ export function registerContributionRoutes(app: Express) {
   app.delete("/api/contributions/:id", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const contribId = req.params.id as string;
-      const deletedContribution = await storage.deleteContribution(contribId);
-      if (!deletedContribution) {
-        return res.status(404).json({ message: "المساهمة غير موجودة" });
-      }
 
-      const deletedMember = await storage.getMember(deletedContribution.memberId);
-      const deletedMemberName = deletedMember?.name ?? "عضو غير معروف";
+      // الحذف وسجل التدقيق وإعادة التوازن وحدة واحدة — لا تُحذف مساهمة بلا أثر في السجل
+      await withTransaction(async () => {
+        const deletedContribution = await storage.deleteContribution(contribId);
+        if (!deletedContribution) {
+          throw new RequestError(404, "المساهمة غير موجودة");
+        }
 
-      await storage.createAuditLog({
-        action: "contribution_deleted",
-        entityType: "contribution",
-        entityId: deletedContribution.id,
-        actorUserId: req.user?.id ?? null,
-        actorName: req.user?.username ?? req.user?.firstName ?? "مشرف",
-        description: `تم حذف مساهمة ${deletedMemberName} للشهر ${deletedContribution.month}/${deletedContribution.year}`,
-        metadata: {
-          memberId: deletedContribution.memberId,
-          memberName: deletedMemberName,
-          amount: deletedContribution.amount,
-          year: deletedContribution.year,
-          month: deletedContribution.month,
-        },
+        const deletedMember = await storage.getMember(deletedContribution.memberId);
+        const deletedMemberName = deletedMember?.name ?? "عضو غير معروف";
+
+        await storage.createAuditLog({
+          action: "contribution_deleted",
+          entityType: "contribution",
+          entityId: deletedContribution.id,
+          actorUserId: req.user?.id ?? null,
+          actorName: req.user?.username ?? req.user?.firstName ?? "مشرف",
+          description: `تم حذف مساهمة ${deletedMemberName} للشهر ${deletedContribution.month}/${deletedContribution.year}`,
+          metadata: {
+            memberId: deletedContribution.memberId,
+            memberName: deletedMemberName,
+            amount: deletedContribution.amount,
+            year: deletedContribution.year,
+            month: deletedContribution.month,
+          },
+        });
+
+        await rebalanceYear(deletedContribution.year);
       });
 
-      await rebalanceYear(deletedContribution.year);
       res.status(204).send();
     } catch (error) {
+      if (error instanceof RequestError) {
+        return res.status(error.status).json({ message: error.message });
+      }
+      console.error("Delete contribution error:", error);
       res.status(500).json({ message: "تعذر حذف المساهمة حاليًا" });
     }
   });

@@ -33,6 +33,9 @@ vi.mock("../capital-engine", () => ({
   })),
 }));
 
+// المعاملات تُختبر مقابل قاعدة حقيقية، لا هنا — هذا الاختبار يعنى بمنطق المسار
+vi.mock("../db", () => ({ withTransaction: (fn: () => unknown) => fn() }));
+
 const state = {
   investments: [] as any[],
   valuations: [] as any[],

@@ -6,6 +6,7 @@ import { insertInvestmentSchema, insertInvestmentValuationSchema } from "@shared
 import { computeInvestmentReturn } from "@shared/finance";
 import { zodErrorResponse } from "../validation";
 import { rebalanceYear } from "../capital-engine";
+import { withTransaction } from "../db";
 
 const exitSchema = z.object({
   exitValue: z.string().refine((v) => Number(v) >= 0, "قيمة الخروج لا يمكن أن تكون سالبة"),
@@ -70,17 +71,22 @@ export function registerInvestmentRoutes(app: Express) {
         });
       }
 
-      const investment = await storage.createInvestment({ ...data, createdBy: req.user?.id ?? null });
-      await rebalanceYear(year);
+      // الاستثمار وإعادة التوازن وسجل التدقيق وحدة واحدة
+      const investment = await withTransaction(async () => {
+        const created = await storage.createInvestment({ ...data, createdBy: req.user?.id ?? null });
+        await rebalanceYear(year);
 
-      await storage.createAuditLog({
-        action: "investment_created",
-        entityType: "investment",
-        entityId: investment.id,
-        actorUserId: req.user?.id ?? null,
-        actorName: req.user?.username ?? "مشرف",
-        description: `استثمار جديد: ${investment.title} بمبلغ ${Number(investment.amount).toLocaleString()} ر.ع`,
-        metadata: { amount: investment.amount, type: investment.type },
+        await storage.createAuditLog({
+          action: "investment_created",
+          entityType: "investment",
+          entityId: created.id,
+          actorUserId: req.user?.id ?? null,
+          actorName: req.user?.username ?? "مشرف",
+          description: `استثمار جديد: ${created.title} بمبلغ ${Number(created.amount).toLocaleString()} ر.ع`,
+          metadata: { amount: created.amount, type: created.type },
+        });
+
+        return created;
       });
 
       res.status(201).json(investment);
@@ -102,16 +108,21 @@ export function registerInvestmentRoutes(app: Express) {
         investmentId: investment.id,
         createdBy: req.user?.id ?? null,
       });
-      const valuation = await storage.createInvestmentValuation(data);
+      // التقييم وسجل التدقيق وحدة واحدة
+      const valuation = await withTransaction(async () => {
+        const created = await storage.createInvestmentValuation(data);
 
-      await storage.createAuditLog({
-        action: "investment_valued",
-        entityType: "investment",
-        entityId: investment.id,
-        actorUserId: req.user?.id ?? null,
-        actorName: req.user?.username ?? "مشرف",
-        description: `تقييم جديد لاستثمار ${investment.title}: ${Number(valuation.value).toLocaleString()} ر.ع`,
-        metadata: { value: valuation.value, valuedAt: valuation.valuedAt },
+        await storage.createAuditLog({
+          action: "investment_valued",
+          entityType: "investment",
+          entityId: investment.id,
+          actorUserId: req.user?.id ?? null,
+          actorName: req.user?.username ?? "مشرف",
+          description: `تقييم جديد لاستثمار ${investment.title}: ${Number(created.value).toLocaleString()} ر.ع`,
+          metadata: { value: created.value, valuedAt: created.valuedAt },
+        });
+
+        return created;
       });
 
       res.status(201).json(valuation);
@@ -133,32 +144,38 @@ export function registerInvestmentRoutes(app: Express) {
       const exitValue = Number(data.exitValue);
       const { gain, returnPercent } = computeInvestmentReturn({ amount: Number(investment.amount), currentValue: exitValue });
 
-      const updated = await storage.updateInvestment(investment.id, {
-        status: "exited",
-        exitedAt: new Date(),
-        exitValue: exitValue.toFixed(3),
-        note: data.note ?? investment.note,
-      });
-
-      if (gain !== 0) {
-        await storage.createFundAdjustment({
-          type: gain > 0 ? "deposit" : "withdrawal",
-          amount: Math.abs(gain).toFixed(3),
-          description: `${gain > 0 ? "عائد" : "خسارة"} استثمار: ${investment.title}`,
-          createdBy: req.user?.id ?? null,
+      // التصفية وقيد الربح/الخسارة وإعادة التوازن وسجل التدقيق وحدة واحدة —
+      // أخطر ما يمكن أن يقع هنا: استثمار يُعلَّم مُصفّى بلا قيد لعائده في الصندوق
+      const updated = await withTransaction(async () => {
+        const exited = await storage.updateInvestment(investment.id, {
+          status: "exited",
+          exitedAt: new Date(),
+          exitValue: exitValue.toFixed(3),
+          note: data.note ?? investment.note,
         });
-      }
 
-      await rebalanceYear(new Date().getFullYear());
+        if (gain !== 0) {
+          await storage.createFundAdjustment({
+            type: gain > 0 ? "deposit" : "withdrawal",
+            amount: Math.abs(gain).toFixed(3),
+            description: `${gain > 0 ? "عائد" : "خسارة"} استثمار: ${investment.title}`,
+            createdBy: req.user?.id ?? null,
+          });
+        }
 
-      await storage.createAuditLog({
-        action: "investment_exited",
-        entityType: "investment",
-        entityId: investment.id,
-        actorUserId: req.user?.id ?? null,
-        actorName: req.user?.username ?? "مشرف",
-        description: `تصفية استثمار ${investment.title} بقيمة ${exitValue.toLocaleString()} ر.ع (${gain >= 0 ? "ربح" : "خسارة"} ${Math.abs(gain).toLocaleString()} ر.ع)`,
-        metadata: { exitValue, gain, returnPercent },
+        await rebalanceYear(new Date().getFullYear());
+
+        await storage.createAuditLog({
+          action: "investment_exited",
+          entityType: "investment",
+          entityId: investment.id,
+          actorUserId: req.user?.id ?? null,
+          actorName: req.user?.username ?? "مشرف",
+          description: `تصفية استثمار ${investment.title} بقيمة ${exitValue.toLocaleString()} ر.ع (${gain >= 0 ? "ربح" : "خسارة"} ${Math.abs(gain).toLocaleString()} ر.ع)`,
+          metadata: { exitValue, gain, returnPercent },
+        });
+
+        return exited;
       });
 
       res.json({ investment: updated, gain, returnPercent });
@@ -174,17 +191,19 @@ export function registerInvestmentRoutes(app: Express) {
       const investment = await storage.getInvestment(req.params.id as string);
       if (!investment) return res.status(404).json({ error: "الاستثمار غير موجود" });
 
-      await storage.deleteInvestment(investment.id);
-      await rebalanceYear(new Date().getFullYear());
+      await withTransaction(async () => {
+        await storage.deleteInvestment(investment.id);
+        await rebalanceYear(new Date().getFullYear());
 
-      await storage.createAuditLog({
-        action: "investment_deleted",
-        entityType: "investment",
-        entityId: investment.id,
-        actorUserId: req.user?.id ?? null,
-        actorName: req.user?.username ?? "مشرف",
-        description: `حُذف استثمار ${investment.title} (${Number(investment.amount).toLocaleString()} ر.ع)`,
-        metadata: { amount: investment.amount, type: investment.type },
+        await storage.createAuditLog({
+          action: "investment_deleted",
+          entityType: "investment",
+          entityId: investment.id,
+          actorUserId: req.user?.id ?? null,
+          actorName: req.user?.username ?? "مشرف",
+          description: `حُذف استثمار ${investment.title} (${Number(investment.amount).toLocaleString()} ر.ع)`,
+          metadata: { amount: investment.amount, type: investment.type },
+        });
       });
 
       res.json({ message: "تم حذف الاستثمار" });
