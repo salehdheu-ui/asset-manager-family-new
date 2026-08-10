@@ -2,7 +2,8 @@
 <html lang="ar" dir="rtl">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <!-- viewport-fit=cover: يمتد التطبيق تحت نتوء الشاشة، وتتكفل env(safe-area-inset-*) بإبعاد المحتوى -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover" />
 
     <meta property="og:title" content="Family Fund OS | Trust & Heritage" />
     <meta property="og:description" content="A secure operating system for family wealth preservation and harmony." />
@@ -12,6 +13,17 @@
     <meta name="twitter:title" content="Family Fund OS" />
     <meta name="twitter:description" content="A secure operating system for family wealth preservation and harmony." />
     <meta name="twitter:image" content="/opengraph.jpg" />
+
+    <!-- تطبيق قابل للتثبيت -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#127247" />
+    <meta name="application-name" content="صندوق العائلة" />
+
+    <!-- iOS لا يقرأ البيان: التثبيت والعرض بلا شريط متصفح يحتاجان هذه الوسوم -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="صندوق العائلة" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
 
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com">

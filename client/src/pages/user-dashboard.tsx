@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
+import NotificationSettings from "@/components/NotificationSettings";
 
 export default function UserDashboard() {
   const { toast } = useToast();
@@ -240,6 +241,8 @@ export default function UserDashboard() {
             </div>
           </div>
         )}
+
+        <NotificationSettings />
 
         {/* Logout Button */}
         <button

@@ -90,6 +90,10 @@ app.get("/api/health", async (_req, res) => {
 (async () => {
   await registerRoutes(httpServer, app);
 
+  // جدولة الإشعارات — تتوقف من تلقائها إن لم تُهيَّأ مفاتيح VAPID
+  const { startNotificationScheduler } = await import("./services/push");
+  startNotificationScheduler();
+
   app.use((err: any, req: Request, res: Response, next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";

@@ -18,11 +18,13 @@ import {
   type Proposal, type InsertProposal, proposals,
   type ProposalVote, proposalVotes,
   type Attachment, attachments,
-  type ContributionRate, type InsertContributionRate, contributionRates
+  type ContributionRate, type InsertContributionRate, contributionRates,
+  type PushSubscription, type InsertPushSubscription, pushSubscriptions,
+  type Notification, type InsertNotification, notifications
 } from "@shared/schema";
 import { users } from "@shared/models/auth";
 import { db } from "./db";
-import { eq, and, desc, gte, lte, ne, sql } from "drizzle-orm";
+import { eq, and, desc, gte, lte, ne, inArray, sql } from "drizzle-orm";
 
 export interface IStorage {
   // Members
@@ -127,6 +129,20 @@ export interface IStorage {
   getContributionRates(): Promise<ContributionRate[]>;
   createContributionRate(data: InsertContributionRate): Promise<ContributionRate>;
   deleteContributionRate(id: string): Promise<void>;
+
+  // Push subscriptions (اشتراكات أجهزة الإشعارات)
+  getPushSubscriptions(userIds?: string[]): Promise<PushSubscription[]>;
+  savePushSubscription(data: InsertPushSubscription): Promise<PushSubscription>;
+  deletePushSubscription(endpoint: string): Promise<void>;
+  touchPushSubscription(endpoint: string): Promise<void>;
+
+  // Notifications (سجل الإشعارات المرسلة والمجدولة)
+  getNotifications(limit?: number): Promise<Notification[]>;
+  getNotification(id: string): Promise<Notification | undefined>;
+  getDueNotifications(now: Date): Promise<Notification[]>;
+  createNotification(data: InsertNotification & { status: string; createdByName?: string | null }): Promise<Notification>;
+  updateNotification(id: string, data: Partial<Notification>): Promise<Notification | undefined>;
+  claimScheduledNotification(id: string): Promise<Notification | undefined>;
 
   // System Reset
   resetSystemData(): Promise<void>;
@@ -629,6 +645,84 @@ export class DatabaseStorage implements IStorage {
       await tx.update(users).set({ memberId: null });
       await tx.delete(members);
     });
+  }
+
+  // ————— Push subscriptions —————
+
+  async getPushSubscriptions(userIds?: string[]): Promise<PushSubscription[]> {
+    if (userIds) {
+      if (userIds.length === 0) return [];
+      return await db.select().from(pushSubscriptions).where(inArray(pushSubscriptions.userId, userIds));
+    }
+    return await db.select().from(pushSubscriptions);
+  }
+
+  // الجهاز نفسه قد يعيد الاشتراك بعد تجديد المتصفح لمفاتيحه — نحدّث صفه بدل تكديس صفوف ميتة
+  async savePushSubscription(data: InsertPushSubscription): Promise<PushSubscription> {
+    const [saved] = await db.insert(pushSubscriptions)
+      .values(data)
+      .onConflictDoUpdate({
+        target: pushSubscriptions.endpoint,
+        set: {
+          userId: data.userId,
+          p256dh: data.p256dh,
+          auth: data.auth,
+          platform: data.platform ?? null,
+          userAgent: data.userAgent ?? null,
+          lastUsedAt: new Date(),
+        },
+      })
+      .returning();
+    return saved;
+  }
+
+  async deletePushSubscription(endpoint: string): Promise<void> {
+    await db.delete(pushSubscriptions).where(eq(pushSubscriptions.endpoint, endpoint));
+  }
+
+  async touchPushSubscription(endpoint: string): Promise<void> {
+    await db.update(pushSubscriptions)
+      .set({ lastUsedAt: new Date() })
+      .where(eq(pushSubscriptions.endpoint, endpoint));
+  }
+
+  // ————— Notifications —————
+
+  async getNotifications(limit = 100): Promise<Notification[]> {
+    return await db.select().from(notifications).orderBy(desc(notifications.createdAt)).limit(limit);
+  }
+
+  async getNotification(id: string): Promise<Notification | undefined> {
+    const [row] = await db.select().from(notifications).where(eq(notifications.id, id));
+    return row;
+  }
+
+  async getDueNotifications(now: Date): Promise<Notification[]> {
+    return await db.select().from(notifications).where(
+      and(eq(notifications.status, "scheduled"), lte(notifications.scheduledAt, now)),
+    );
+  }
+
+  async createNotification(
+    data: InsertNotification & { status: string; createdByName?: string | null },
+  ): Promise<Notification> {
+    const [created] = await db.insert(notifications).values(data as any).returning();
+    return created;
+  }
+
+  async updateNotification(id: string, data: Partial<Notification>): Promise<Notification | undefined> {
+    const [updated] = await db.update(notifications).set(data).where(eq(notifications.id, id)).returning();
+    return updated;
+  }
+
+  // حجز إشعار مجدول قبل إرساله. الشرط على الحالة هو ما يمنع إرساله مرتين
+  // لو تداخلت دورتا الجدولة أو عملت أكثر من نسخة من الخادم.
+  async claimScheduledNotification(id: string): Promise<Notification | undefined> {
+    const [claimed] = await db.update(notifications)
+      .set({ status: "sending" })
+      .where(and(eq(notifications.id, id), eq(notifications.status, "scheduled")))
+      .returning();
+    return claimed;
   }
 }
 
