@@ -1,35 +1,50 @@
-import { apiRequest } from "./queryClient";
+import { apiRequest, throwIfResNotOk } from "./queryClient";
 import type { Member, Contribution, Loan, LoanRepayment, LoanPayment, Expense, FamilySettings, PublicUser, FundAdjustment, SystemBackup, AuditLog } from "@shared/schema";
 
-async function parseFetchError(res: Response) {
-  const contentType = res.headers.get("content-type") || "";
+type QueryParams = Record<string, string | number | boolean | null | undefined>;
 
-  if (contentType.includes("application/json")) {
-    const body = await res.json().catch(() => null);
-    const message = body?.message || body?.error;
-    if (typeof message === "string" && message.trim()) {
-      throw new Error(message);
+/**
+ * قراءة من الخادم.
+ *
+ * كان كل واحدة من خمس وثلاثين دالة قراءة تكرر السطور الثلاثة نفسها: fetch
+ * بـ credentials، ثم فحص res.ok، ثم json. صارت هنا مرة واحدة.
+ *
+ * المعاملات الفارغة تُحذف، فتبقى الروابط نظيفة بلا `?year=undefined`.
+ *
+ * الأخطاء تمر بمسار queryClient نفسه بدل نسخة ثانية كانت ترمي رسالة فارغة
+ * حين لا يرد الخادم بنص — أي إشعار خطأ بلا كلمة واحدة تشرحه.
+ */
+async function get<T>(path: string, params?: QueryParams): Promise<T> {
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(params ?? {})) {
+    if (value !== undefined && value !== null && value !== "") {
+      query.set(key, String(value));
     }
   }
 
-  throw new Error((await res.text().catch(() => "")) || res.statusText);
+  const search = query.toString();
+  const res = await fetch(search ? `${path}?${search}` : path, { credentials: "include" });
+  await throwIfResNotOk(res);
+  return res.json() as Promise<T>;
+}
+
+/** كتابة تُرجع الصف الناتج — apiRequest يتكفّل بالخطأ */
+async function send<T>(method: string, path: string, body?: unknown): Promise<T> {
+  const res = await apiRequest(method, path, body);
+  return res.json() as Promise<T>;
 }
 
 // Members
 export async function getMembers(): Promise<Member[]> {
-  const res = await fetch("/api/members", { credentials: "include" });
-  if (!res.ok) await parseFetchError(res);
-  return res.json();
+  return get<Member[]>("/api/members");
 }
 
 export async function createMember(data: { name: string; role?: string; avatar?: string; expectedMonthly?: string | null }): Promise<Member> {
-  const res = await apiRequest("POST", "/api/members", data);
-  return res.json();
+  return send<Member>("POST", "/api/members", data);
 }
 
 export async function updateMember(id: string, data: Partial<{ name: string; role: string; avatar: string; expectedMonthly: string | null }>): Promise<Member> {
-  const res = await apiRequest("PATCH", `/api/members/${id}`, data);
-  return res.json();
+  return send<Member>("PATCH", `/api/members/${id}`, data);
 }
 
 export async function deleteMember(id: string): Promise<void> {
@@ -38,15 +53,11 @@ export async function deleteMember(id: string): Promise<void> {
 
 // Contributions
 export async function getContributions(year?: number): Promise<Contribution[]> {
-  const url = year ? `/api/contributions?year=${year}` : "/api/contributions";
-  const res = await fetch(url, { credentials: "include" });
-  if (!res.ok) await parseFetchError(res);
-  return res.json();
+  return get<Contribution[]>("/api/contributions", { year });
 }
 
 export async function createContribution(data: { memberId: string; year: number; month: number; amount: string; status?: string }): Promise<Contribution> {
-  const res = await apiRequest("POST", "/api/contributions", data);
-  return res.json();
+  return send<Contribution>("POST", "/api/contributions", data);
 }
 
 export async function deleteContribution(id: string): Promise<void> {
@@ -54,8 +65,7 @@ export async function deleteContribution(id: string): Promise<void> {
 }
 
 export async function approveContribution(id: string): Promise<Contribution> {
-  const res = await apiRequest("PATCH", `/api/contributions/${id}/approve`, {});
-  return res.json();
+  return send<Contribution>("PATCH", `/api/contributions/${id}/approve`, {});
 }
 
 // Loans
@@ -63,27 +73,22 @@ export async function approveContribution(id: string): Promise<Contribution> {
 export type LoanWithBalance = Loan & { totalPaid: number; remaining: number; settled: boolean };
 
 export async function getLoans(): Promise<LoanWithBalance[]> {
-  const res = await fetch("/api/loans", { credentials: "include" });
-  if (!res.ok) await parseFetchError(res);
-  return res.json();
+  return get<LoanWithBalance[]>("/api/loans");
 }
 
 export async function updateLoan(
   id: string,
   data: Partial<{ title: string; description: string | null; type: string; amount: string; repaymentType: string; repaymentMonths: number | null }>,
 ): Promise<Loan> {
-  const res = await apiRequest("PATCH", `/api/loans/${id}`, data);
-  return res.json();
+  return send<Loan>("PATCH", `/api/loans/${id}`, data);
 }
 
 export async function createLoan(data: { memberId: string; type: string; title: string; amount: string; description?: string; repaymentType?: string; repaymentMonths?: number | null; status?: string }): Promise<Loan> {
-  const res = await apiRequest("POST", "/api/loans", data);
-  return res.json();
+  return send<Loan>("POST", "/api/loans", data);
 }
 
 export async function updateLoanStatus(id: string, status: string): Promise<Loan> {
-  const res = await apiRequest("PATCH", `/api/loans/${id}/status`, { status });
-  return res.json();
+  return send<Loan>("PATCH", `/api/loans/${id}/status`, { status });
 }
 
 export async function deleteLoan(id: string): Promise<void> {
@@ -91,37 +96,28 @@ export async function deleteLoan(id: string): Promise<void> {
 }
 
 export async function getLoanRepayments(loanId: string): Promise<LoanRepayment[]> {
-  const res = await fetch(`/api/loans/${loanId}/repayments`, { credentials: "include" });
-  if (!res.ok) await parseFetchError(res);
-  return res.json();
+  return get<LoanRepayment[]>(`/api/loans/${loanId}/repayments`);
 }
 
 export async function markRepaymentPaid(id: string): Promise<LoanRepayment> {
-  const res = await apiRequest("PATCH", `/api/repayments/${id}/pay`, {});
-  return res.json();
+  return send<LoanRepayment>("PATCH", `/api/repayments/${id}/pay`, {});
 }
 
 export async function getLoanPayments(loanId: string): Promise<LoanPayment[]> {
-  const res = await fetch(`/api/loans/${loanId}/payments`, { credentials: "include" });
-  if (!res.ok) await parseFetchError(res);
-  return res.json();
+  return get<LoanPayment[]>(`/api/loans/${loanId}/payments`);
 }
 
 export async function createLoanPayment(loanId: string, data: { amount: string; note?: string }): Promise<LoanPayment> {
-  const res = await apiRequest("POST", `/api/loans/${loanId}/payments`, data);
-  return res.json();
+  return send<LoanPayment>("POST", `/api/loans/${loanId}/payments`, data);
 }
 
 // Expenses
 export async function getExpenses(): Promise<Expense[]> {
-  const res = await fetch("/api/expenses", { credentials: "include" });
-  if (!res.ok) await parseFetchError(res);
-  return res.json();
+  return get<Expense[]>("/api/expenses");
 }
 
 export async function createExpense(data: { title: string; amount: string; category: string; description?: string }): Promise<Expense> {
-  const res = await apiRequest("POST", "/api/expenses", data);
-  return res.json();
+  return send<Expense>("POST", "/api/expenses", data);
 }
 
 export async function deleteExpense(id: string): Promise<void> {
@@ -130,40 +126,31 @@ export async function deleteExpense(id: string): Promise<void> {
 
 // Settings
 export async function getSettings(): Promise<FamilySettings> {
-  const res = await fetch("/api/settings", { credentials: "include" });
-  if (!res.ok) await parseFetchError(res);
-  return res.json();
+  return get<FamilySettings>("/api/settings");
 }
 
 export async function updateSettings(data: Partial<FamilySettings>): Promise<FamilySettings> {
-  const res = await apiRequest("PATCH", "/api/settings", data);
-  return res.json();
+  return send<FamilySettings>("PATCH", "/api/settings", data);
 }
 
 export async function setEmergencyMode(enabled: boolean): Promise<FamilySettings> {
-  const res = await apiRequest("POST", "/api/settings/emergency", { enabled });
-  return res.json();
+  return send<FamilySettings>("POST", "/api/settings/emergency", { enabled });
 }
 
 export async function assignCustodian(memberId: string): Promise<Member> {
-  const res = await apiRequest("POST", `/api/members/${memberId}/assign-custodian`, {});
-  return res.json();
+  return send<Member>("POST", `/api/members/${memberId}/assign-custodian`, {});
 }
 
 export async function getBackups(): Promise<SystemBackup[]> {
-  const res = await fetch("/api/backups", { credentials: "include" });
-  if (!res.ok) await parseFetchError(res);
-  return res.json();
+  return get<SystemBackup[]>("/api/backups");
 }
 
 export async function createBackup(): Promise<SystemBackup> {
-  const res = await apiRequest("POST", "/api/backups/create", {});
-  return res.json();
+  return send<SystemBackup>("POST", "/api/backups/create", {});
 }
 
 export async function applyBackupRetention(): Promise<{ kept: number; deleted: number }> {
-  const res = await apiRequest("POST", "/api/backups/apply-retention", {});
-  return res.json();
+  return send<{ kept: number; deleted: number }>("POST", "/api/backups/apply-retention", {});
 }
 
 export interface BackupContentSummary {
@@ -182,19 +169,15 @@ export interface RestoreResult {
 }
 
 export async function getBackupSummary(id: string): Promise<BackupContentSummary> {
-  const res = await fetch(`/api/backups/${id}/summary`, { credentials: "include" });
-  if (!res.ok) await parseFetchError(res);
-  return res.json();
+  return get<BackupContentSummary>(`/api/backups/${id}/summary`);
 }
 
 export async function restoreBackup(id: string): Promise<RestoreResult> {
-  const res = await apiRequest("POST", `/api/backups/${id}/restore`, {});
-  return res.json();
+  return send<RestoreResult>("POST", `/api/backups/${id}/restore`, {});
 }
 
 export async function importBackup(payload: unknown): Promise<RestoreResult> {
-  const res = await apiRequest("POST", "/api/backups/import", payload);
-  return res.json();
+  return send<RestoreResult>("POST", "/api/backups/import", payload);
 }
 
 // Dashboard
@@ -229,28 +212,21 @@ export interface DashboardSummary {
 }
 
 export async function getDashboardSummary(): Promise<DashboardSummary> {
-  const res = await fetch("/api/dashboard/summary", { credentials: "include" });
-  if (!res.ok) await parseFetchError(res);
-  return res.json();
+  return get<DashboardSummary>("/api/dashboard/summary");
 }
 
 // User Profile
 export async function getUserProfile(): Promise<PublicUser & { member?: Member }> {
-  const res = await fetch("/api/user/profile", { credentials: "include" });
-  if (!res.ok) await parseFetchError(res);
-  return res.json();
+  return get<PublicUser & { member?: Member }>("/api/user/profile");
 }
 
 export async function updateUserProfile(data: { firstName?: string; lastName?: string }): Promise<PublicUser> {
-  const res = await apiRequest("PATCH", "/api/user/profile", data);
-  return res.json();
+  return send<PublicUser>("PATCH", "/api/user/profile", data);
 }
 
 // Admin - Users
 export async function getAdminUsers(): Promise<PublicUser[]> {
-  const res = await fetch("/api/admin/users", { credentials: "include" });
-  if (!res.ok) await parseFetchError(res);
-  return res.json();
+  return get<PublicUser[]>("/api/admin/users");
 }
 
 // التحليلات الذكية
@@ -266,9 +242,7 @@ export interface CommitmentScore {
 }
 
 export async function getCommitmentScores(): Promise<CommitmentScore[]> {
-  const res = await fetch("/api/reports/commitment-scores", { credentials: "include" });
-  if (!res.ok) await parseFetchError(res);
-  return res.json();
+  return get<CommitmentScore[]>("/api/reports/commitment-scores");
 }
 
 export interface CashflowForecast {
@@ -279,9 +253,7 @@ export interface CashflowForecast {
 }
 
 export async function getCashflowForecast(): Promise<CashflowForecast> {
-  const res = await fetch("/api/reports/cashflow-forecast", { credentials: "include" });
-  if (!res.ok) await parseFetchError(res);
-  return res.json();
+  return get<CashflowForecast>("/api/reports/cashflow-forecast");
 }
 
 export interface SystemAlert {
@@ -291,9 +263,7 @@ export interface SystemAlert {
 }
 
 export async function getAlerts(): Promise<SystemAlert[]> {
-  const res = await fetch("/api/reports/alerts", { credentials: "include" });
-  if (!res.ok) await parseFetchError(res);
-  return res.json();
+  return get<SystemAlert[]>("/api/reports/alerts");
 }
 
 // تصويت العائلة على السلف الكبيرة
@@ -310,14 +280,11 @@ export interface LoanVoteTally {
 }
 
 export async function getLoanVotes(loanId: string): Promise<LoanVoteTally> {
-  const res = await fetch(`/api/loans/${loanId}/votes`, { credentials: "include" });
-  if (!res.ok) await parseFetchError(res);
-  return res.json();
+  return get<LoanVoteTally>(`/api/loans/${loanId}/votes`);
 }
 
 export async function castLoanVote(loanId: string, vote: "approve" | "reject"): Promise<{ approve: number; reject: number; required: number; passed: boolean; myVote: string }> {
-  const res = await apiRequest("POST", `/api/loans/${loanId}/vote`, { vote });
-  return res.json();
+  return send<{ approve: number; reject: number; required: number; passed: boolean; myVote: string }>("POST", `/api/loans/${loanId}/vote`, { vote });
 }
 
 // المتأخرات بالريال وحصص الأعضاء
@@ -338,9 +305,7 @@ export interface ArrearsReport {
 }
 
 export async function getArrearsReport(): Promise<ArrearsReport> {
-  const res = await fetch("/api/reports/arrears", { credentials: "include" });
-  if (!res.ok) await parseFetchError(res);
-  return res.json();
+  return get<ArrearsReport>("/api/reports/arrears");
 }
 
 export interface MemberSharesReport {
@@ -350,9 +315,7 @@ export interface MemberSharesReport {
 }
 
 export async function getMemberShares(): Promise<MemberSharesReport> {
-  const res = await fetch("/api/reports/member-shares", { credentials: "include" });
-  if (!res.ok) await parseFetchError(res);
-  return res.json();
+  return get<MemberSharesReport>("/api/reports/member-shares");
 }
 
 // كشف حساب العضو الكامل
@@ -398,22 +361,16 @@ export interface MemberStatement {
 }
 
 export async function getMemberStatement(memberId: string, year?: number | null): Promise<MemberStatement> {
-  const url = new URL(`/api/reports/member-statement/${memberId}`, window.location.origin);
-  if (year) url.searchParams.append("year", String(year));
-  const res = await fetch(url.toString(), { credentials: "include" });
-  if (!res.ok) await parseFetchError(res);
-  return res.json();
+  return get<MemberStatement>(`/api/reports/member-statement/${memberId}`, { year });
 }
 
 // استعادة كلمة المرور
 export async function forgotPassword(username: string): Promise<{ message: string }> {
-  const res = await apiRequest("POST", "/api/auth/forgot-password", { username });
-  return res.json();
+  return send<{ message: string }>("POST", "/api/auth/forgot-password", { username });
 }
 
 export async function resetPassword(data: { username: string; code: string; newPassword: string }): Promise<{ message: string }> {
-  const res = await apiRequest("POST", "/api/auth/reset-password", data);
-  return res.json();
+  return send<{ message: string }>("POST", "/api/auth/reset-password", data);
 }
 
 export interface ResetRequest {
@@ -425,19 +382,15 @@ export interface ResetRequest {
 }
 
 export async function getResetRequests(): Promise<ResetRequest[]> {
-  const res = await fetch("/api/admin/reset-requests", { credentials: "include" });
-  if (!res.ok) await parseFetchError(res);
-  return res.json();
+  return get<ResetRequest[]>("/api/admin/reset-requests");
 }
 
 export async function issueResetCode(id: string): Promise<{ code: string; username: string; expiresAt: string; message: string }> {
-  const res = await apiRequest("POST", `/api/admin/reset-requests/${id}/issue`, {});
-  return res.json();
+  return send<{ code: string; username: string; expiresAt: string; message: string }>("POST", `/api/admin/reset-requests/${id}/issue`, {});
 }
 
 export async function rejectResetRequest(id: string): Promise<{ message: string }> {
-  const res = await apiRequest("POST", `/api/admin/reset-requests/${id}/reject`, {});
-  return res.json();
+  return send<{ message: string }>("POST", `/api/admin/reset-requests/${id}/reject`, {});
 }
 
 export interface AuditLogsResponse {
@@ -449,18 +402,11 @@ export interface AuditLogsResponse {
 }
 
 export async function getAuditLogs(page = 1, limit = 50): Promise<AuditLogsResponse> {
-  const url = new URL("/api/admin/audit-logs", window.location.origin);
-  url.searchParams.append("page", String(page));
-  url.searchParams.append("limit", String(limit));
-  const res = await fetch(url.toString(), { credentials: "include" });
-  if (!res.ok) await parseFetchError(res);
-  return res.json();
+  return get<AuditLogsResponse>("/api/admin/audit-logs", { page, limit });
 }
 
 export async function getAuditLogsPublic(): Promise<AuditLog[]> {
-  const res = await fetch("/api/audit-logs", { credentials: "include" });
-  if (!res.ok) await parseFetchError(res);
-  return res.json();
+  return get<AuditLog[]>("/api/audit-logs");
 }
 
 export async function createUser(data: { 
@@ -472,8 +418,7 @@ export async function createUser(data: {
   role?: string;
   memberId?: string;
 }): Promise<PublicUser> {
-  const res = await apiRequest("POST", "/api/admin/users", data);
-  return res.json();
+  return send<PublicUser>("POST", "/api/admin/users", data);
 }
 
 export async function updateUser(id: string, data: Partial<{
@@ -484,8 +429,7 @@ export async function updateUser(id: string, data: Partial<{
   role: string;
   memberId: string;
 }>): Promise<PublicUser> {
-  const res = await apiRequest("PUT", `/api/admin/users/${id}`, data);
-  return res.json();
+  return send<PublicUser>("PUT", `/api/admin/users/${id}`, data);
 }
 
 export async function updateUserPassword(id: string, password: string): Promise<void> {
@@ -493,13 +437,11 @@ export async function updateUserPassword(id: string, password: string): Promise<
 }
 
 export async function updateUserRole(id: string, role: string): Promise<PublicUser> {
-  const res = await apiRequest("PUT", `/api/admin/users/${id}`, { role });
-  return res.json();
+  return send<PublicUser>("PUT", `/api/admin/users/${id}`, { role });
 }
 
 export async function linkUserToMember(id: string, memberId: string): Promise<PublicUser> {
-  const res = await apiRequest("PUT", `/api/admin/users/${id}`, { memberId });
-  return res.json();
+  return send<PublicUser>("PUT", `/api/admin/users/${id}`, { memberId });
 }
 
 export async function deleteUser(id: string): Promise<void> {
@@ -508,14 +450,11 @@ export async function deleteUser(id: string): Promise<void> {
 
 // Fund Adjustments (Admin)
 export async function getFundAdjustments(): Promise<FundAdjustment[]> {
-  const res = await fetch("/api/fund-adjustments", { credentials: "include" });
-  if (!res.ok) await parseFetchError(res);
-  return res.json();
+  return get<FundAdjustment[]>("/api/fund-adjustments");
 }
 
 export async function createFundAdjustment(data: { type: string; amount: string; description?: string; memberId?: string }): Promise<FundAdjustment> {
-  const res = await apiRequest("POST", "/api/fund-adjustments", data);
-  return res.json();
+  return send<FundAdjustment>("POST", "/api/fund-adjustments", data);
 }
 
 export async function deleteFundAdjustment(id: string): Promise<void> {
@@ -524,13 +463,11 @@ export async function deleteFundAdjustment(id: string): Promise<void> {
 
 // Capital Allocation
 export async function lockYearAllocation(year: number): Promise<any> {
-  const res = await apiRequest("POST", `/api/allocation/${year}/lock`);
-  return res.json();
+  return send<any>("POST", `/api/allocation/${year}/lock`);
 }
 
 export async function resetYearAllocation(year: number): Promise<any> {
-  const res = await apiRequest("POST", `/api/allocation/${year}/reset`);
-  return res.json();
+  return send<any>("POST", `/api/allocation/${year}/reset`);
 }
 
 // System Reset
@@ -553,12 +490,7 @@ export interface MonthlyReport {
 }
 
 export async function getMonthlyReport(year?: number, month?: number): Promise<MonthlyReport> {
-  const url = new URL("/api/reports/monthly", window.location.origin);
-  if (year) url.searchParams.append("year", year.toString());
-  if (month) url.searchParams.append("month", month.toString());
-  const res = await fetch(url.toString(), { credentials: "include" });
-  if (!res.ok) await parseFetchError(res);
-  return res.json();
+  return get<MonthlyReport>("/api/reports/monthly", { year, month });
 }
 
 export interface YearlyReport {
@@ -584,11 +516,7 @@ export interface YearlyReport {
 }
 
 export async function getYearlyReport(year?: number): Promise<YearlyReport> {
-  const url = new URL("/api/reports/yearly", window.location.origin);
-  if (year) url.searchParams.append("year", year.toString());
-  const res = await fetch(url.toString(), { credentials: "include" });
-  if (!res.ok) await parseFetchError(res);
-  return res.json();
+  return get<YearlyReport>("/api/reports/yearly", { year });
 }
 
 export interface MemberPerformance {
@@ -622,11 +550,7 @@ export interface MembersPerformanceReport {
 }
 
 export async function getMembersPerformance(year?: number): Promise<MembersPerformanceReport> {
-  const url = new URL("/api/reports/members-performance", window.location.origin);
-  if (year) url.searchParams.append("year", year.toString());
-  const res = await fetch(url.toString(), { credentials: "include" });
-  if (!res.ok) await parseFetchError(res);
-  return res.json();
+  return get<MembersPerformanceReport>("/api/reports/members-performance", { year });
 }
 
 export interface LoansAnalysis {
@@ -655,11 +579,7 @@ export interface LoansAnalysis {
 }
 
 export async function getLoansAnalysis(year?: number): Promise<LoansAnalysis> {
-  const url = new URL("/api/reports/loans-analysis", window.location.origin);
-  if (year) url.searchParams.append("year", year.toString());
-  const res = await fetch(url.toString(), { credentials: "include" });
-  if (!res.ok) await parseFetchError(res);
-  return res.json();
+  return get<LoansAnalysis>("/api/reports/loans-analysis", { year });
 }
 
 export interface MemberReport {
@@ -705,11 +625,7 @@ export interface MemberReport {
 }
 
 export async function getMemberReport(memberId: string, year?: number): Promise<MemberReport> {
-  const url = new URL(`/api/reports/member/${memberId}`, window.location.origin);
-  if (year) url.searchParams.append("year", year.toString());
-  const res = await fetch(url.toString(), { credentials: "include" });
-  if (!res.ok) await parseFetchError(res);
-  return res.json();
+  return get<MemberReport>(`/api/reports/member/${memberId}`, { year });
 }
 
 export interface ChartDataResponse {
@@ -719,12 +635,7 @@ export interface ChartDataResponse {
 }
 
 export async function getChartData(type: string, period?: string): Promise<ChartDataResponse> {
-  const url = new URL("/api/reports/chart-data", window.location.origin);
-  url.searchParams.append("type", type);
-  if (period) url.searchParams.append("period", period);
-  const res = await fetch(url.toString(), { credentials: "include" });
-  if (!res.ok) await parseFetchError(res);
-  return res.json();
+  return get<ChartDataResponse>("/api/reports/chart-data", { type, period });
 }
 
 // ــــ الزكاة ــــ
@@ -751,19 +662,15 @@ export interface ZakatStatus {
 }
 
 export async function getZakatStatus(): Promise<ZakatStatus> {
-  const res = await fetch("/api/zakat", { credentials: "include" });
-  if (!res.ok) await parseFetchError(res);
-  return res.json();
+  return get<ZakatStatus>("/api/zakat");
 }
 
 export async function startZakatCycle(data: { cycleStart?: string; note?: string | null } = {}): Promise<ZakatCycle> {
-  const res = await apiRequest("POST", "/api/zakat/cycles", data);
-  return res.json();
+  return send<ZakatCycle>("POST", "/api/zakat/cycles", data);
 }
 
 export async function payZakat(cycleId: string, data: { amount?: string; title?: string; note?: string | null } = {}): Promise<{ cycle: ZakatCycle }> {
-  const res = await apiRequest("POST", `/api/zakat/cycles/${cycleId}/pay`, data);
-  return res.json();
+  return send<{ cycle: ZakatCycle }>("POST", `/api/zakat/cycles/${cycleId}/pay`, data);
 }
 
 // ــــ الاستثمارات ــــ
@@ -798,9 +705,7 @@ export interface InvestmentsResponse {
 }
 
 export async function getInvestments(): Promise<InvestmentsResponse> {
-  const res = await fetch("/api/investments", { credentials: "include" });
-  if (!res.ok) await parseFetchError(res);
-  return res.json();
+  return get<InvestmentsResponse>("/api/investments");
 }
 
 export async function createInvestment(data: {
@@ -810,18 +715,15 @@ export async function createInvestment(data: {
   startedAt: string;
   note?: string | null;
 }): Promise<InvestmentRow> {
-  const res = await apiRequest("POST", "/api/investments", data);
-  return res.json();
+  return send<InvestmentRow>("POST", "/api/investments", data);
 }
 
 export async function addInvestmentValuation(id: string, data: { value: string; valuedAt: string; note?: string | null }): Promise<InvestmentValuation> {
-  const res = await apiRequest("POST", `/api/investments/${id}/valuations`, data);
-  return res.json();
+  return send<InvestmentValuation>("POST", `/api/investments/${id}/valuations`, data);
 }
 
 export async function exitInvestment(id: string, data: { exitValue: string; note?: string | null }): Promise<{ gain: number; returnPercent: number }> {
-  const res = await apiRequest("POST", `/api/investments/${id}/exit`, data);
-  return res.json();
+  return send<{ gain: number; returnPercent: number }>("POST", `/api/investments/${id}/exit`, data);
 }
 
 export async function deleteInvestment(id: string): Promise<void> {
@@ -850,9 +752,7 @@ export interface ProposalRow {
 }
 
 export async function getProposals(): Promise<ProposalRow[]> {
-  const res = await fetch("/api/proposals", { credentials: "include" });
-  if (!res.ok) await parseFetchError(res);
-  return res.json();
+  return get<ProposalRow[]>("/api/proposals");
 }
 
 export async function createProposal(data: {
@@ -862,18 +762,15 @@ export async function createProposal(data: {
   amount?: string | null;
   closesAt?: string | null;
 }): Promise<ProposalRow> {
-  const res = await apiRequest("POST", "/api/proposals", data);
-  return res.json();
+  return send<ProposalRow>("POST", "/api/proposals", data);
 }
 
 export async function voteProposal(id: string, vote: "approve" | "reject"): Promise<{ approve: number; reject: number; required: number; passed: boolean }> {
-  const res = await apiRequest("POST", `/api/proposals/${id}/vote`, { vote });
-  return res.json();
+  return send<{ approve: number; reject: number; required: number; passed: boolean }>("POST", `/api/proposals/${id}/vote`, { vote });
 }
 
 export async function closeProposal(id: string, status: "rejected" | "cancelled" = "rejected"): Promise<ProposalRow> {
-  const res = await apiRequest("POST", `/api/proposals/${id}/close`, { status });
-  return res.json();
+  return send<ProposalRow>("POST", `/api/proposals/${id}/close`, { status });
 }
 
 // ــــ المرفقات (إيصالات وفواتير) ــــ
@@ -888,12 +785,7 @@ export interface AttachmentMeta {
 }
 
 export async function getAttachments(entityType: string, entityId: string): Promise<AttachmentMeta[]> {
-  const url = new URL("/api/attachments", window.location.origin);
-  url.searchParams.set("entityType", entityType);
-  url.searchParams.set("entityId", entityId);
-  const res = await fetch(url.toString(), { credentials: "include" });
-  if (!res.ok) await parseFetchError(res);
-  return res.json();
+  return get<AttachmentMeta[]>("/api/attachments", { entityType, entityId });
 }
 
 // يقرأ الملف في المتصفح ويرسله base64 — التخزين في قاعدة البيانات لا على القرص
@@ -945,9 +837,7 @@ export interface RatesResponse {
 }
 
 export async function getContributionRates(): Promise<RatesResponse> {
-  const res = await fetch("/api/contribution-rates", { credentials: "include" });
-  if (!res.ok) await parseFetchError(res);
-  return res.json();
+  return get<RatesResponse>("/api/contribution-rates");
 }
 
 export async function setContributionRate(data: {
@@ -957,8 +847,7 @@ export async function setContributionRate(data: {
   effectiveMonth?: number;
   note?: string | null;
 }): Promise<ContributionRateRow> {
-  const res = await apiRequest("POST", "/api/contribution-rates", data);
-  return res.json();
+  return send<ContributionRateRow>("POST", "/api/contribution-rates", data);
 }
 
 export async function deleteContributionRate(id: string): Promise<void> {
@@ -991,9 +880,7 @@ export interface NotificationsResponse {
 }
 
 export async function getNotifications(): Promise<NotificationsResponse> {
-  const res = await fetch("/api/notifications", { credentials: "include" });
-  if (!res.ok) await parseFetchError(res);
-  return res.json();
+  return get<NotificationsResponse>("/api/notifications");
 }
 
 export async function sendNotification(data: {
@@ -1004,8 +891,7 @@ export async function sendNotification(data: {
   targetUserId?: string | null;
   scheduledAt?: string | null;
 }): Promise<{ notification: NotificationRow; scheduled: boolean; delivered?: number; failed?: number }> {
-  const res = await apiRequest("POST", "/api/notifications", data);
-  return res.json();
+  return send<{ notification: NotificationRow; scheduled: boolean; delivered?: number; failed?: number }>("POST", "/api/notifications", data);
 }
 
 export async function cancelNotification(id: string): Promise<void> {
