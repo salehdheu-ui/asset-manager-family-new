@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import NotificationSettings from "@/components/NotificationSettings";
+import AppInstallCard from "@/components/AppInstallCard";
 
 export default function UserDashboard() {
   const { toast } = useToast();
@@ -241,6 +242,9 @@ export default function UserDashboard() {
             </div>
           </div>
         )}
+
+        {/* التثبيت قبل الإشعارات: على iOS لا تصل الإشعارات أصلاً قبل التثبيت */}
+        <AppInstallCard />
 
         <NotificationSettings />
 
