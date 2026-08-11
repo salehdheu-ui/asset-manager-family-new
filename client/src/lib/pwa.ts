@@ -227,6 +227,14 @@ function urlBase64ToUint8Array(base64: string): Uint8Array {
   return Uint8Array.from(raw, (char) => char.charCodeAt(0));
 }
 
+/** هل عُقد هذا الاشتراك بمفتاح الخادم الحالي؟ */
+function sameKey(subscribed: ArrayBuffer | null | undefined, current: Uint8Array): boolean {
+  if (!subscribed) return false;
+  const bytes = new Uint8Array(subscribed);
+  if (bytes.length !== current.length) return false;
+  return bytes.every((byte, index) => byte === current[index]);
+}
+
 /**
  * يطلب إذن الإشعارات ويسجّل الاشتراك على الخادم.
  *
@@ -253,12 +261,21 @@ export async function enablePush(): Promise<{ ok: boolean; reason?: string }> {
   }
 
   const registration = await navigator.serviceWorker.ready;
-  const existing = await registration.pushManager.getSubscription();
+  const serverKey = urlBase64ToUint8Array(publicKey);
+
+  let existing = await registration.pushManager.getSubscription();
+  // اشتراك معقود بمفتاح قديم لا يصله شيء، ولا يخبرك المتصفح بذلك. نفضّ الاشتراك
+  // القديم ونعقد غيره بالمفتاح الحالي بدل أن يظن المستخدم أن الإشعارات مفعّلة.
+  if (existing && !sameKey(existing.options.applicationServerKey, serverKey)) {
+    await existing.unsubscribe().catch(() => undefined);
+    existing = null;
+  }
+
   const subscription =
     existing ??
     (await registration.pushManager.subscribe({
       userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(publicKey) as BufferSource,
+      applicationServerKey: serverKey as BufferSource,
     }));
 
   const response = await fetch("/api/push/subscribe", {

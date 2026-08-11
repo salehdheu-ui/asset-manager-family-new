@@ -2,28 +2,90 @@ import webpush from "web-push";
 import { storage } from "../storage";
 import { db } from "../db";
 import { users } from "@shared/models/auth";
-import { eq } from "drizzle-orm";
+import { appSecrets } from "@shared/schema";
+import { eq, inArray } from "drizzle-orm";
 import type { Notification } from "@shared/schema";
 
 /**
  * إرسال إشعارات الدفع.
  *
- * الميزة اختيارية بالكامل: بدون مفاتيح VAPID في البيئة يبقى كل شيء آخر يعمل،
- * وتُرفض نقاط الإشعارات برسالة واضحة بدل أن يتعطل الخادم عند الإقلاع.
+ * المفاتيح تأتي من البيئة إن وُضعت فيها، وإلا ولّدها الخادم مرة واحدة وحفظها
+ * في قاعدة البيانات. سبب هذا الحفظ أن زوج المفاتيح هوية الخادم عند خدمات
+ * الدفع: لو تولّد جديد عند كل إقلاع لبطل كل اشتراك على كل جهاز، ولوجب على
+ * العائلة كلها إعادة التفعيل بعد كل نشر. ومتى حُفظ مرة لم يتغيّر أبداً.
  */
 
-const publicKey = process.env.VAPID_PUBLIC_KEY?.trim();
-const privateKey = process.env.VAPID_PRIVATE_KEY?.trim();
+const VAPID_PUBLIC = "vapid_public_key";
+const VAPID_PRIVATE = "vapid_private_key";
+
 const subject = process.env.VAPID_SUBJECT?.trim() || "mailto:admin@example.com";
 
+let publicKey: string | null = null;
 let configured = false;
 
-if (publicKey && privateKey) {
+/** يقرأ الزوج المحفوظ، أو null إن لم يكتمل */
+async function storedKeys(): Promise<{ publicKey: string; privateKey: string } | null> {
+  const rows = await db
+    .select()
+    .from(appSecrets)
+    .where(inArray(appSecrets.key, [VAPID_PUBLIC, VAPID_PRIVATE]));
+
+  const stored = new Map(rows.map((row) => [row.key, row.value]));
+  const found = { publicKey: stored.get(VAPID_PUBLIC), privateKey: stored.get(VAPID_PRIVATE) };
+  return found.publicKey && found.privateKey
+    ? { publicKey: found.publicKey, privateKey: found.privateKey }
+    : null;
+}
+
+/**
+ * يهيّئ الإشعارات: البيئة أولاً، ثم المحفوظ، ثم توليد جديد يُحفظ.
+ *
+ * يُستدعى مرة عند الإقلاع. فشله لا يُسقط الخادم — تبقى الإشعارات وحدها معطّلة.
+ */
+export async function initPush(): Promise<boolean> {
+  const fromEnv = {
+    publicKey: process.env.VAPID_PUBLIC_KEY?.trim(),
+    privateKey: process.env.VAPID_PRIVATE_KEY?.trim(),
+  };
+
+  let keys: { publicKey: string; privateKey: string } | null =
+    fromEnv.publicKey && fromEnv.privateKey
+      ? { publicKey: fromEnv.publicKey, privateKey: fromEnv.privateKey }
+      : null;
+
   try {
-    webpush.setVapidDetails(subject, publicKey, privateKey);
+    if (!keys) {
+      keys = await storedKeys();
+
+      if (!keys) {
+        const generated = webpush.generateVAPIDKeys();
+        // الإدراج المشروط يحسم السباق بين نسختين تقلعان معاً: الفائز يكتب،
+        // والخاسر يقرأ ما كتبه الفائز بدل أن يفرض مفاتيحه
+        await db
+          .insert(appSecrets)
+          .values([
+            { key: VAPID_PUBLIC, value: generated.publicKey },
+            { key: VAPID_PRIVATE, value: generated.privateKey },
+          ])
+          .onConflictDoNothing();
+
+        keys = (await storedKeys()) ?? generated;
+        console.log("وُلّد زوج مفاتيح VAPID وحُفظ — الإشعارات جاهزة");
+      }
+    }
+  } catch (error) {
+    console.error("تعذّر تجهيز مفاتيح الإشعارات:", error);
+    return false;
+  }
+
+  try {
+    webpush.setVapidDetails(subject, keys.publicKey, keys.privateKey);
+    publicKey = keys.publicKey;
     configured = true;
+    return true;
   } catch (error) {
     console.error("مفاتيح VAPID غير صالحة — الإشعارات معطّلة:", error);
+    return false;
   }
 }
 
@@ -32,7 +94,7 @@ export function isPushConfigured(): boolean {
 }
 
 export function pushPublicKey(): string | null {
-  return configured ? publicKey! : null;
+  return configured ? publicKey : null;
 }
 
 export interface PushPayload {
@@ -109,6 +171,11 @@ export async function sendToAudience(
         const status = (error as { statusCode?: number }).statusCode;
         if (status === 404 || status === 410) {
           await storage.deletePushSubscription(subscription.endpoint).catch(() => undefined);
+        } else if (status === 403) {
+          // اشتراك عُقد بمفتاح VAPID آخر. لا يُحذف: قد يكون الخلل في إعداد
+          // الخادم لا في الاشتراك، وحذف اشتراكات العائلة كلها لخطأ إعداد
+          // يعني مطالبتهم جميعاً بإعادة التفعيل. الجهاز يصحّح نفسه عند فتحه.
+          console.error("رُفض اشتراك بمفتاح VAPID مختلف — تحقّق من ثبات المفاتيح");
         }
       }
     }),
