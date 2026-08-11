@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   availableInLayer,
+  computeLayerUsage,
+  isWithinYear,
+  layerView,
   buildRepaymentSchedule,
   computeArrears,
   computeCommitmentScore,
@@ -97,6 +100,60 @@ describe("availableInLayer", () => {
   it("يحسب المتاح ولا يسمح بقيمة سالبة عند تجاوز الاستخدام", () => {
     expect(availableInLayer(200, 80)).toBe(120);
     expect(availableInLayer(200, 250)).toBe(0);
+  });
+});
+
+describe("computeLayerUsage", () => {
+  const base = { approvedLoans: 0, loanRepayments: 0, generalExpenses: 0, emergencyExpenses: 0, activeInvestments: 0 };
+
+  it("السلف والمصروف العام يستهلكان الطبقة المرنة", () => {
+    const used = computeLayerUsage({ ...base, approvedLoans: 500, generalExpenses: 120 });
+    expect(used.flexibleUsed).toBe(620);
+  });
+
+  it("السداد يعيد المال إلى الطبقة المرنة", () => {
+    const used = computeLayerUsage({ ...base, approvedLoans: 500, loanRepayments: 200 });
+    expect(used.flexibleUsed).toBe(300);
+  });
+
+  it("سداد يفوق ما أُقرض لا يجعل المستهلَك سالباً", () => {
+    const used = computeLayerUsage({ ...base, approvedLoans: 100, loanRepayments: 400 });
+    expect(used.flexibleUsed).toBe(0);
+  });
+
+  it("مصروف الطوارئ يُخصم من طبقته لا من المرنة", () => {
+    const used = computeLayerUsage({ ...base, emergencyExpenses: 300, generalExpenses: 50 });
+    expect(used.emergencyUsed).toBe(300);
+    expect(used.flexibleUsed).toBe(50);
+  });
+
+  it("الاستثمار القائم يستهلك طبقة النمو وحدها", () => {
+    const used = computeLayerUsage({ ...base, activeInvestments: 900 });
+    expect(used).toEqual({ flexibleUsed: 0, growthUsed: 900, emergencyUsed: 0 });
+  });
+});
+
+describe("layerView", () => {
+  it("يجمع المخصَّص والمستهلَك والمتاح", () => {
+    expect(layerView(1000, 20, 250)).toEqual({ amount: 1000, percent: 20, used: 250, available: 750 });
+  });
+
+  it("لا يعرض متاحاً سالباً عند تجاوز المخصَّص", () => {
+    expect(layerView(1000, 20, 1400).available).toBe(0);
+  });
+});
+
+describe("isWithinYear", () => {
+  it("يقبل أول لحظة في السنة ويرفض أول لحظة في التي تليها", () => {
+    expect(isWithinYear(new Date(2026, 0, 1), 2026)).toBe(true);
+    expect(isWithinYear(new Date(2026, 11, 31), 2026)).toBe(true);
+    expect(isWithinYear(new Date(2027, 0, 1), 2026)).toBe(false);
+    expect(isWithinYear(new Date(2025, 11, 31), 2026)).toBe(false);
+  });
+
+  it("التاريخ الغائب لا ينتمي لأي سنة", () => {
+    expect(isWithinYear(null, 2026)).toBe(false);
+    expect(isWithinYear(undefined, 2026)).toBe(false);
   });
 });
 

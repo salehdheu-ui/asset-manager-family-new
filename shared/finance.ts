@@ -83,6 +83,60 @@ export function availableInLayer(allocated: number, used: number): number {
   return Math.max(0, allocated - used);
 }
 
+export interface LayerUsageInput {
+  /** السلف المعتمدة في هذه السنة */
+  approvedLoans: number;
+  /** ما سُدِّد من تلك السلف داخل السنة نفسها */
+  loanRepayments: number;
+  /** المصروف العام (كل ما ليس طوارئ) */
+  generalExpenses: number;
+  /** مصروف الطوارئ وحده */
+  emergencyExpenses: number;
+  /** الاستثمارات القائمة — تظل مستهلِكة لطبقة النمو حتى تُصفّى */
+  activeInvestments: number;
+}
+
+export interface LayerUsage {
+  flexibleUsed: number;
+  growthUsed: number;
+  emergencyUsed: number;
+}
+
+/**
+ * ما استُهلك من كل طبقة في سنة بعينها.
+ *
+ * كانت هذه المعادلات مكتوبة داخل طبقة قراءة قاعدة البيانات، فلم يكن لها اختبار
+ * واحد رغم أنها تقرر كم يبقى متاحاً للإقراض. هي هنا الآن بلا أي اعتماد على
+ * القاعدة، فتُختبر بالأرقام مباشرة.
+ */
+export function computeLayerUsage(input: LayerUsageInput): LayerUsage {
+  return {
+    // السداد يعيد المال إلى الطبقة المرنة، فيُطرح مما استُهلك منها
+    flexibleUsed: Math.max(0, input.approvedLoans - input.loanRepayments + input.generalExpenses),
+    growthUsed: input.activeInvestments,
+    emergencyUsed: input.emergencyExpenses,
+  };
+}
+
+export interface LayerView {
+  amount: number;
+  percent: number;
+  used: number;
+  available: number;
+}
+
+/** عرض طبقة واحدة: مخصَّصها ونسبتها وما استُهلك وما بقي */
+export function layerView(amount: number, percent: number, used: number): LayerView {
+  return { amount, percent, used, available: availableInLayer(amount, used) };
+}
+
+/** هل يقع التاريخ داخل السنة الميلادية المطلوبة؟ */
+export function isWithinYear(date: Date | string | null | undefined, year: number): boolean {
+  if (!date) return false;
+  const at = new Date(date);
+  return at >= new Date(year, 0, 1) && at < new Date(year + 1, 0, 1);
+}
+
 // السلفة التي تتجاوز هذا المبلغ (ر.ع) تتطلب تصويت العائلة قبل اعتماد الوصي
 export const LOAN_VOTE_THRESHOLD = 2000;
 
