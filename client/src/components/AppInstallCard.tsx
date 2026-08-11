@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "wouter";
 import { CheckCircle2, Download, Plus, Share, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -126,6 +127,13 @@ export default function AppInstallCard() {
             الآيفون.
           </p>
         )}
+
+        <Link
+          href="/install"
+          className="inline-block text-xs text-primary underline-offset-4 hover:underline"
+        >
+          لم ينجح التثبيت؟ افحص جهازك
+        </Link>
       </CardContent>
     </Card>
   );
