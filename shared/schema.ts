@@ -462,3 +462,13 @@ export const insertNotificationSchema = createInsertSchema(notifications)
   });
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 export type Notification = typeof notifications.$inferSelect;
+
+// أسرار يولّدها الخادم لنفسه ويحفظها ليبقى ثابتاً بين عمليات النشر.
+// أول ساكنيه مفتاحا VAPID: بدونهما لا إشعارات، ومع تولّدهما عند كل إقلاع
+// تبطل اشتراكات الأجهزة كلها. الجدول يجعلهما يُولَّدان مرة واحدة إلى الأبد.
+export const appSecrets = pgTable("app_secrets", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+export type AppSecret = typeof appSecrets.$inferSelect;

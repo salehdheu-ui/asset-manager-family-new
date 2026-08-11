@@ -80,7 +80,9 @@ app.get("/api/health", async (_req, res) => {
       status: "ok",
       database: "connected",
       schemaReady,
-      ...(schemaReady ? {} : { hint: "شغّل npm run db:push لإنشاء الجداول الجديدة" }),
+      // المزامنة التلقائية تنشئ الناقص عند الإقلاع؛ بقاء الجداول ناقصة يعني
+      // أنها عُطّلت بـ SCHEMA_SYNC=off أو تعثّرت — والحلّ حينها بيد صاحبها
+      ...(schemaReady ? {} : { hint: "الجداول ناقصة — راجع سجل الإقلاع أو شغّل npm run db:push" }),
     });
   } catch (error) {
     res.status(503).json({ status: "error", database: "unreachable" });
@@ -88,10 +90,20 @@ app.get("/api/health", async (_req, res) => {
 });
 
 (async () => {
+  // إلحاق الجداول الناقصة قبل أي شيء يقرأ منها — إنشاء محض لا يمسّ قائماً،
+  // وفشله لا يمنع الإقلاع (انظر schema-sync.ts)
+  try {
+    const { syncSchema } = await import("./schema-sync");
+    await syncSchema();
+  } catch (error) {
+    console.error("تعذّرت مزامنة المخطط — الخادم يكمل الإقلاع:", error);
+  }
+
   await registerRoutes(httpServer, app);
 
-  // جدولة الإشعارات — تتوقف من تلقائها إن لم تُهيَّأ مفاتيح VAPID
-  const { startNotificationScheduler } = await import("./services/push");
+  // الإشعارات: تُقرأ المفاتيح أو تُولَّد وتُحفظ، ثم تبدأ الجدولة
+  const { initPush, startNotificationScheduler } = await import("./services/push");
+  await initPush();
   startNotificationScheduler();
 
   // التذكيرات التلقائية بالأقساط والمساهمات — تصمت بلا مفاتيح VAPID
