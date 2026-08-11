@@ -894,6 +894,10 @@ export async function sendNotification(data: {
   return send<{ notification: NotificationRow; scheduled: boolean; delivered?: number; failed?: number }>("POST", "/api/notifications", data);
 }
 
+export async function runReminders(): Promise<{ considered: number; sent: number; skipped: number }> {
+  return send("POST", "/api/notifications/run-reminders", {});
+}
+
 export async function cancelNotification(id: string): Promise<void> {
   await apiRequest("DELETE", `/api/notifications/${id}`);
 }

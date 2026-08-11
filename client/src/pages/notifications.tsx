@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bell, Clock, Send, Smartphone, Trash2, TriangleAlert } from "lucide-react";
+import { AlarmClock, Bell, Clock, Send, Smartphone, Trash2, TriangleAlert } from "lucide-react";
 import MobileLayout from "@/components/layout/MobileLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +19,7 @@ import {
   cancelNotification,
   getAdminUsers,
   getNotifications,
+  runReminders,
   sendNotification,
   type NotificationRow,
 } from "@/lib/api";
@@ -114,6 +115,20 @@ export default function NotificationsPage() {
     },
     onError: (error: Error) =>
       toast({ title: "تعذر الإرسال", description: error.message, variant: "destructive" }),
+  });
+
+  // التذكيرات تعمل من تلقائها كل ست ساعات — هذا الزر لتجربتها فوراً
+  const reminders = useMutation({
+    mutationFn: runReminders,
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+      toast({
+        title: result.sent > 0 ? `أُرسل ${result.sent} تذكيراً` : "لا تذكيرات مستحقة الآن",
+        description: result.skipped > 0 ? `${result.skipped} أُرسلت من قبل ولم تتكرر` : undefined,
+      });
+    },
+    onError: (error: Error) =>
+      toast({ title: "تعذر تشغيل التذكيرات", description: error.message, variant: "destructive" }),
   });
 
   const cancel = useMutation({
@@ -262,6 +277,30 @@ export default function NotificationsPage() {
             <Button onClick={() => send.mutate()} disabled={!canSend} className="w-full">
               <Send className="ml-2 h-4 w-4" />
               {send.isPending ? "جارٍ…" : scheduledAt ? "جدولة الإشعار" : "إرسال الآن"}
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <AlarmClock className="h-4 w-4 text-primary" />
+              التذكيرات التلقائية
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              يذكّر النظام كل عضو بقسطه المستحق ومساهمة شهره — لصاحب الالتزام وحده، ومرة واحدة لكل التزام.
+              يعمل تلقائياً كل ست ساعات.
+            </p>
+            <Button
+              onClick={() => reminders.mutate()}
+              disabled={reminders.isPending || !data?.configured}
+              variant="outline"
+              size="sm"
+            >
+              <AlarmClock className="ml-2 h-4 w-4" />
+              {reminders.isPending ? "جارٍ الفحص…" : "شغّل الجولة الآن"}
             </Button>
           </CardContent>
         </Card>

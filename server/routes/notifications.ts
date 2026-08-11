@@ -5,6 +5,7 @@ import { isAuthenticated, isAdmin } from "../auth";
 import { insertNotificationSchema } from "@shared/schema";
 import { zodErrorResponse } from "../validation";
 import { dispatchNotification, isPushConfigured, pushPublicKey } from "../services/push";
+import { runReminderSweep } from "../services/reminders";
 
 const subscribeSchema = z.object({
   subscription: z.object({
@@ -142,6 +143,25 @@ export function registerNotificationRoutes(app: Express) {
       }
       console.error("Send notification error:", error);
       res.status(500).json({ error: "تعذر إرسال الإشعار" });
+    }
+  });
+
+  /**
+   * تشغيل جولة التذكيرات التلقائية يدوياً.
+   *
+   * الجولة تعمل من تلقائها كل ست ساعات؛ هذه النقطة للوصي ليجرّبها فوراً بدل
+   * الانتظار. آمنة للتكرار: ما أُرسل من قبل لا يُرسل ثانية.
+   */
+  app.post("/api/notifications/run-reminders", isAuthenticated, isAdmin, async (_req, res) => {
+    try {
+      if (!isPushConfigured()) {
+        return res.status(503).json({ error: "الإشعارات غير مهيأة على الخادم" });
+      }
+      const result = await runReminderSweep();
+      res.json(result);
+    } catch (error) {
+      console.error("Reminder sweep error:", error);
+      res.status(500).json({ error: "تعذر تشغيل جولة التذكيرات" });
     }
   });
 

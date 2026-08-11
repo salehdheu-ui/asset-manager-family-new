@@ -14,6 +14,7 @@ import {
   rateForMonth,
   overdueInstallments,
   overdueAmount,
+  upcomingInstallments,
   nextMonthOf,
   daysUntilHawl,
   dueMonthsInYear,
@@ -154,6 +155,39 @@ describe("isWithinYear", () => {
   it("التاريخ الغائب لا ينتمي لأي سنة", () => {
     expect(isWithinYear(null, 2026)).toBe(false);
     expect(isWithinYear(undefined, 2026)).toBe(false);
+  });
+});
+
+describe("upcomingInstallments", () => {
+  const now = new Date(2026, 4, 24);   // 24 مايو — قبل مهلة 26 بيومين
+  const inst = (n: number, month: number, status = "scheduled") => ({
+    id: `r${n}`, installmentNumber: n, amount: "50", dueDate: new Date(2026, month, 1), status,
+  });
+
+  it("يذكّر بقسط اقتربت مهلته ولم تمض", () => {
+    const soon = upcomingInstallments([inst(1, 4)], 0, 3, now);
+    expect(soon.map((i) => i.id)).toEqual(["r1"]);
+  });
+
+  it("لا يذكّر بقسط مضت مهلته — ذاك شأن التنبيه المتأخر", () => {
+    expect(upcomingInstallments([inst(1, 3)], 0, 3, now)).toHaveLength(0);
+  });
+
+  it("لا يذكّر بقسط بعيد عن النافذة", () => {
+    expect(upcomingInstallments([inst(1, 7)], 0, 3, now)).toHaveLength(0);
+  });
+
+  it("لا يذكّر بقسط مُعلَّم مدفوعاً", () => {
+    expect(upcomingInstallments([inst(1, 4, "paid")], 0, 3, now)).toHaveLength(0);
+  });
+
+  it("لا يذكّر بقسط غطّاه سداد حر على السلفة", () => {
+    expect(upcomingInstallments([inst(1, 4)], 50, 3, now)).toHaveLength(0);
+  });
+
+  it("يذكّر بالتالي حين يغطي السداد الأول وحده", () => {
+    const soon = upcomingInstallments([inst(1, 3), inst(2, 4)], 50, 3, now);
+    expect(soon.map((i) => i.id)).toEqual(["r2"]);
   });
 });
 

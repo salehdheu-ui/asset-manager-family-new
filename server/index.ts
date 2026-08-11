@@ -94,6 +94,10 @@ app.get("/api/health", async (_req, res) => {
   const { startNotificationScheduler } = await import("./services/push");
   startNotificationScheduler();
 
+  // التذكيرات التلقائية بالأقساط والمساهمات — تصمت بلا مفاتيح VAPID
+  const { startReminderScheduler } = await import("./services/reminders");
+  startReminderScheduler();
+
   app.use((err: any, req: Request, res: Response, next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";

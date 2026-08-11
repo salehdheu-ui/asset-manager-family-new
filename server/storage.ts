@@ -148,6 +148,8 @@ export interface IStorage {
   createNotification(data: InsertNotification & { status: string; createdByName?: string | null }): Promise<Notification>;
   updateNotification(id: string, data: Partial<Notification>): Promise<Notification | undefined>;
   claimScheduledNotification(id: string): Promise<Notification | undefined>;
+  /** يسجّل تذكيراً تلقائياً، ويعيد undefined إن كان قد أُرسل من قبل */
+  createReminderOnce(data: InsertNotification & { status: string; dedupeKey: string }): Promise<Notification | undefined>;
 
   // System Reset
   resetSystemData(): Promise<void>;
@@ -751,6 +753,18 @@ export class DatabaseStorage implements IStorage {
   async updateNotification(id: string, data: Partial<Notification>): Promise<Notification | undefined> {
     const [updated] = await db.update(notifications).set(data).where(eq(notifications.id, id)).returning();
     return updated;
+  }
+
+  // الفهرس الفريد على dedupe_key هو ما يمنع تكرار التذكير: المحاولة الثانية
+  // لا تُدرج صفاً ولا تُرجع شيئاً، فلا يُرسل التنبيه نفسه مرتين مهما تكررت الدورة.
+  async createReminderOnce(
+    data: InsertNotification & { status: string; dedupeKey: string },
+  ): Promise<Notification | undefined> {
+    const [created] = await db.insert(notifications)
+      .values(data as any)
+      .onConflictDoNothing({ target: notifications.dedupeKey })
+      .returning();
+    return created;
   }
 
   // حجز إشعار مجدول قبل إرساله. الشرط على الحالة هو ما يمنع إرساله مرتين
