@@ -43,6 +43,15 @@ let ratesFixture: any[] = [
   { id: "r1", memberId: null, amount: "25", effectiveYear: 2025, effectiveMonth: 1, note: null, createdAt: new Date(2025, 0, 1), createdBy: null },
 ];
 
+
+// المجاميع مشتقة من نفس بيانات الاختبار، فأي اختلاف في النتائج بعد نقل
+// التجميع إلى قاعدة البيانات يظهر كفشل هنا
+function paidTotals(rows: any[]) {
+  const totals = new Map<string, number>();
+  for (const row of rows) totals.set(row.loanId, (totals.get(row.loanId) ?? 0) + Number(row.amount));
+  return totals;
+}
+
 vi.mock("../storage", () => ({
   storage: {
     getMember: vi.fn(async (id: string) => (id === MEMBER.id ? MEMBER : undefined)),
@@ -61,7 +70,9 @@ vi.mock("../storage", () => ({
       { id: "l1", memberId: "m1", amount: "30", status: "approved", approvedAt: new Date(2026, 6, 4), createdAt: new Date(2026, 6, 4) },
       { id: "l2", memberId: "m1", amount: "100", status: "approved", approvedAt: new Date(2026, 7, 1), createdAt: new Date(2026, 7, 1) },
     ]),
-    getAllLoanPayments: vi.fn(async () => paymentsFixture),
+    getPaidTotalsByLoan: vi.fn(async () => paidTotals(paymentsFixture)),
+    getLoanPaymentsForLoans: vi.fn(async (ids: string[]) => paymentsFixture.filter((p: any) => ids.includes(p.loanId))),
+    getRepaidTotalOnApprovedLoans: vi.fn(async () => paymentsFixture.reduce((s: number, p: any) => s + Number(p.amount), 0)),
     // قسط مستحق 1 أغسطس (داخل مهلة 26) وآخر 10 يوليو (مضت مهلته)
     getAllLoanRepayments: vi.fn(async () => [
       { id: "r1", loanId: "l2", installmentNumber: 1, amount: "10", dueDate: new Date(2026, 7, 1), status: "scheduled" },

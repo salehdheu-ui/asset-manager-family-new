@@ -43,7 +43,7 @@ vi.mock("../storage", () => {
         { id: "loan-b", memberId: "m2", amount: "50", status: "approved" },
       ]),
       getLoansByMember: vi.fn(async () => []),
-      getAllLoanPayments: vi.fn(async () => []),
+      getPaidTotalsByLoan: vi.fn(async () => new Map<string, number>()),
       getLoan: vi.fn(async (id: string) => ({
         id,
         memberId: "m2",

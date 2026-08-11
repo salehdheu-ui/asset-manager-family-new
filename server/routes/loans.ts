@@ -49,11 +49,7 @@ export function registerLoanRoutes(app: Express) {
       }
 
       // إثراء كل سلفة بالمسدد والمتبقي وحالة السداد الكامل
-      const allPayments = await storage.getAllLoanPayments();
-      const paidByLoan = new Map<string, number>();
-      for (const payment of allPayments) {
-        paidByLoan.set(payment.loanId, (paidByLoan.get(payment.loanId) ?? 0) + Number(payment.amount));
-      }
+      const paidByLoan = await storage.getPaidTotalsByLoan();
 
       const enriched = loans.map((loan: any) => {
         const totalPaid = paidByLoan.get(loan.id) ?? 0;

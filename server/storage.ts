@@ -61,8 +61,13 @@ export interface IStorage {
   createLoanRepayments(repayments: InsertLoanRepayment[]): Promise<LoanRepayment[]>;
   markRepaymentPaid(id: string): Promise<LoanRepayment | undefined>;
   getLoanPayments(loanId: string): Promise<LoanPayment[]>;
-  getAllLoanPayments(): Promise<LoanPayment[]>;
   createLoanPayment(payment: InsertLoanPayment): Promise<LoanPayment>;
+  /** المسدَّد على كل سلفة، مجمَّعاً في قاعدة البيانات لا في الذاكرة */
+  getPaidTotalsByLoan(): Promise<Map<string, number>>;
+  /** إجمالي ما سُدِّد على السلف المعتمدة وحدها */
+  getRepaidTotalOnApprovedLoans(): Promise<number>;
+  getLoanPaymentsForLoans(loanIds: string[]): Promise<LoanPayment[]>;
+  getLoanRepaymentsForLoans(loanIds: string[]): Promise<LoanRepayment[]>;
 
   // Expenses
   getExpenses(): Promise<Expense[]>;
@@ -334,13 +339,46 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(loanPayments).where(eq(loanPayments.loanId, loanId)).orderBy(desc(loanPayments.paidAt));
   }
 
-  async getAllLoanPayments(): Promise<LoanPayment[]> {
-    return await db.select().from(loanPayments).orderBy(desc(loanPayments.paidAt));
-  }
-
   async createLoanPayment(payment: InsertLoanPayment): Promise<LoanPayment> {
     const [created] = await db.insert(loanPayments).values(payment).returning();
     return created;
+  }
+
+  // كان كل تقرير يحمّل جدول الدفعات كاملاً ثم يمسحه من جديد لكل سلفة —
+  // أي عمل بحجم (عدد السلف × عدد الدفعات). التجميع هنا يقع في قاعدة البيانات
+  // مرة واحدة، ويُقرأ بعدها بمفتاح.
+  async getPaidTotalsByLoan(): Promise<Map<string, number>> {
+    const rows = await db
+      .select({
+        loanId: loanPayments.loanId,
+        total: sql<string>`sum(${loanPayments.amount})`,
+      })
+      .from(loanPayments)
+      .groupBy(loanPayments.loanId);
+    return new Map(rows.map((row) => [row.loanId, Number(row.total)]));
+  }
+
+  async getRepaidTotalOnApprovedLoans(): Promise<number> {
+    const [row] = await db
+      .select({ total: sql<string>`coalesce(sum(${loanPayments.amount}), 0)` })
+      .from(loanPayments)
+      .innerJoin(loans, eq(loanPayments.loanId, loans.id))
+      .where(eq(loans.status, "approved"));
+    return Number(row?.total ?? 0);
+  }
+
+  async getLoanPaymentsForLoans(loanIds: string[]): Promise<LoanPayment[]> {
+    if (loanIds.length === 0) return [];
+    return await db.select().from(loanPayments)
+      .where(inArray(loanPayments.loanId, loanIds))
+      .orderBy(desc(loanPayments.paidAt));
+  }
+
+  async getLoanRepaymentsForLoans(loanIds: string[]): Promise<LoanRepayment[]> {
+    if (loanIds.length === 0) return [];
+    return await db.select().from(loanRepayments)
+      .where(inArray(loanRepayments.loanId, loanIds))
+      .orderBy(loanRepayments.installmentNumber);
   }
 
   // Expenses

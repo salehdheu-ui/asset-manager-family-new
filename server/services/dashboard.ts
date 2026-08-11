@@ -41,11 +41,8 @@ export async function computeDashboardSummary(): Promise<DashboardSummaryResult>
   const totalDeposits = allAdjustments.filter(a => a.type === 'deposit').reduce((sum, a) => sum + Number(a.amount), 0);
   const totalWithdrawals = allAdjustments.filter(a => a.type === 'withdrawal').reduce((sum, a) => sum + Number(a.amount), 0);
 
-  const allRepayments = await storage.getAllLoanPayments();
-  const approvedLoanIds = new Set(approvedLoans.map(l => l.id));
-  const totalRepayments = allRepayments
-    .filter(r => approvedLoanIds.has(r.loanId))
-    .reduce((sum, r) => sum + Number(r.amount), 0);
+  // مجموع السداد على السلف المعتمدة — استعلام واحد بدل تحميل جدول الدفعات كاملاً
+  const totalRepayments = await storage.getRepaidTotalOnApprovedLoans();
 
   const netCapital = totalContributions + totalDeposits - totalWithdrawals - totalLoans + totalRepayments - totalExpenses;
   const capital = Math.max(0, netCapital);

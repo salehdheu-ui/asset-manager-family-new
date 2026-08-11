@@ -101,7 +101,11 @@ vi.mock("../storage", () => ({
       return row;
     }),
     getLoanPayments: vi.fn(async (loanId: string) => state.payments.filter((p) => p.loanId === loanId)),
-    getAllLoanPayments: vi.fn(async () => state.payments),
+    getPaidTotalsByLoan: vi.fn(async () => {
+      const totals = new Map<string, number>();
+      for (const p of state.payments) totals.set(p.loanId, (totals.get(p.loanId) ?? 0) + Number(p.amount));
+      return totals;
+    }),
     createLoanPayment: vi.fn(async (data: any) => {
       const row = { id: `p${state.payments.length + 1}`, paidAt: new Date(), ...data };
       state.payments.push(row);

@@ -6,17 +6,31 @@ import { loadRates } from "../services/rates";
 import { computeCommitmentScore, projectCashflow, dueMonthsInYear, isInstallmentLate, recentDueMonths, MONTHLY_DUE_DAY, computeArrears, computeMemberShares, computeZakat, isHawlComplete, overdueInstallments, overdueAmount } from "@shared/finance";
 import { rebalanceYear } from "../capital-engine";
 
+/** يجمع صفوفاً تحمل loanId في خريطة بمفتاح السلفة — مرور واحد بدل مسح لكل سلفة */
+function groupByLoan<T extends { loanId: string }>(rows: T[]): Map<string, T[]> {
+  const grouped = new Map<string, T[]>();
+  for (const row of rows) {
+    const bucket = grouped.get(row.loanId);
+    if (bucket) bucket.push(row);
+    else grouped.set(row.loanId, [row]);
+  }
+  return grouped;
+}
+
 export function registerReportRoutes(app: Express) {
   // درجة الالتزام لكل عضو — انتظام المساهمات 60٪ + سلوك السداد 40٪
   app.get("/api/reports/commitment-scores", isAuthenticated, isAdmin, async (_req, res) => {
     try {
-      const [members, contributions, loans, payments, repayments] = await Promise.all([
+      const [members, contributions, loans, paidByLoan, repayments] = await Promise.all([
         storage.getMembers(),
         storage.getContributions(),
         storage.getLoans(),
-        storage.getAllLoanPayments(),
+        storage.getPaidTotalsByLoan(),
         storage.getAllLoanRepayments(),
       ]);
+
+      // تجميع الأقساط بسلفتها مرة واحدة بدل مسح القائمة كاملة لكل سلفة
+      const repaymentsByLoan = groupByLoan(repayments);
 
       const now = new Date();
       // النافذة تشمل آخر 12 شهراً مضت مهلتها فقط — الشهر الجاري لا يُحاسَب عليه قبل يوم 26
@@ -33,11 +47,11 @@ export function registerReportRoutes(app: Express) {
         const memberLoans = loans.filter((l) => l.memberId === member.id && l.status === "approved");
         const loanIds = new Set(memberLoans.map((l) => l.id));
         const totalBorrowed = memberLoans.reduce((s, l) => s + Number(l.amount), 0);
-        const totalRepaid = payments.filter((p) => loanIds.has(p.loanId)).reduce((s, p) => s + Number(p.amount), 0);
+        const totalRepaid = memberLoans.reduce((s, l) => s + (paidByLoan.get(l.id) ?? 0), 0);
         // الأقساط تُغطّى بما دُفع على سلفتها — سلفة مسدّدة لا أقساط متأخرة عليها
         const lateCount = memberLoans.reduce((n, loan) => {
-          const paidOnLoan = payments.filter((p) => p.loanId === loan.id).reduce((s, p) => s + Number(p.amount), 0);
-          const own = repayments.filter((r) => r.loanId === loan.id);
+          const paidOnLoan = paidByLoan.get(loan.id) ?? 0;
+          const own = repaymentsByLoan.get(loan.id) ?? [];
           return n + overdueInstallments(own, paidOnLoan, now).length;
         }, 0);
 
@@ -200,12 +214,15 @@ export function registerReportRoutes(app: Express) {
         return res.status(404).json({ error: "العضو غير موجود" });
       }
 
-      const [contributions, memberLoans, allPayments, settings] = await Promise.all([
+      const [contributions, memberLoans, settings] = await Promise.all([
         storage.getContributionsByMember(memberId),
         storage.getLoansByMember(memberId),
-        storage.getAllLoanPayments(),
         storage.getFamilySettings(),
       ]);
+
+      // دفعات سلف هذا العضو وحدها — لا داعي لتحميل دفعات العائلة كلها لكشف فرد
+      const allPayments = await storage.getLoanPaymentsForLoans(memberLoans.map((l) => l.id));
+      const paymentsByLoan = groupByLoan(allPayments);
 
       const approvedLoans = memberLoans.filter((l) => l.status === "approved");
       const loanIds = new Set(approvedLoans.map((l) => l.id));
@@ -256,8 +273,7 @@ export function registerReportRoutes(app: Express) {
 
       // تفاصيل كل سلفة مع دفعات سدادها بتواريخها
       const loansDetail = memberLoans.map((l) => {
-        const loanPays = allPayments
-          .filter((p) => p.loanId === l.id)
+        const loanPays = [...(paymentsByLoan.get(l.id) ?? [])]
           .sort((a, b) => new Date(a.paidAt ?? 0).getTime() - new Date(b.paidAt ?? 0).getTime());
         const totalPaid = loanPays.reduce((s, p) => s + Number(p.amount), 0);
         const remaining = l.status === "approved" ? Math.max(0, Number(l.amount) - totalPaid) : 0;
@@ -352,12 +368,13 @@ export function registerReportRoutes(app: Express) {
       const approvedLoanIds = new Set(loans.filter((l) => l.status === "approved").map((l) => l.id));
 
       // أقساط متأخرة — بعد مرور مهلة يوم 26 من شهر الاستحقاق
-      const loanPayments = await storage.getAllLoanPayments();
+      const paidByLoan = await storage.getPaidTotalsByLoan();
+      const repaymentsByLoan = groupByLoan(repayments);
       const overdue: Array<{ loanId: string }> = [];
       let overdueTotal = 0;
       for (const loan of loans.filter((l) => approvedLoanIds.has(l.id))) {
-        const paidOnLoan = loanPayments.filter((p) => p.loanId === loan.id).reduce((s, p) => s + Number(p.amount), 0);
-        const own = repayments.filter((r) => r.loanId === loan.id);
+        const paidOnLoan = paidByLoan.get(loan.id) ?? 0;
+        const own = repaymentsByLoan.get(loan.id) ?? [];
         const late = overdueInstallments(own, paidOnLoan, now);
         overdue.push(...late.map(() => ({ loanId: loan.id })));
         overdueTotal += overdueAmount(own, paidOnLoan, now);
@@ -665,10 +682,10 @@ export function registerReportRoutes(app: Express) {
     try {
       const year = Number(req.query.year) || new Date().getFullYear();
       
-      const [allYearLoans, members, payments] = await Promise.all([
+      const [allYearLoans, members, paidByLoan] = await Promise.all([
         storage.getLoansByYear(year),
         storage.getMembers(),
-        storage.getAllLoanPayments()
+        storage.getPaidTotalsByLoan()
       ]);
       
       const yearLoans = allYearLoans.filter(l => l.status === 'approved');
@@ -698,8 +715,7 @@ export function registerReportRoutes(app: Express) {
       let totalAmount = 0;
       
       for (const loan of yearLoans) {
-        const loanPayments = payments.filter(p => p.loanId === loan.id);
-        totalPaid += loanPayments.reduce((sum, p) => sum + Number(p.amount), 0);
+        totalPaid += paidByLoan.get(loan.id) ?? 0;
         totalAmount += Number(loan.amount);
       }
       
@@ -734,12 +750,15 @@ export function registerReportRoutes(app: Express) {
       const memberId = req.params.id as string;
       const year = Number(req.query.year) || new Date().getFullYear();
 
-      const [member, allContributions, memberLoans, allPayments] = await Promise.all([
+      const [member, allContributions, memberLoans] = await Promise.all([
         storage.getMember(memberId),
         storage.getContributionsByMember(memberId),
         storage.getLoansByMember(memberId),
-        storage.getAllLoanPayments()
       ]);
+
+      const paymentsByLoan = groupByLoan(
+        await storage.getLoanPaymentsForLoans(memberLoans.map((l) => l.id)),
+      );
 
       if (!member) {
         return res.status(404).json({ error: "Member not found" });
@@ -772,7 +791,7 @@ export function registerReportRoutes(app: Express) {
 
       // Loans with payment details
       const loansWithPayments = memberLoans.map(loan => {
-        const payments = allPayments.filter(p => p.loanId === loan.id);
+        const payments = paymentsByLoan.get(loan.id) ?? [];
         const totalPaid = payments.reduce((sum, p) => sum + Number(p.amount), 0);
         const remaining = Math.max(0, Number(loan.amount) - totalPaid);
         return {
