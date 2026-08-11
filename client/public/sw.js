@@ -7,7 +7,7 @@
  *
  * ارفع رقم النسخة عند تغيير منطق هذا الملف — يُنظَّف كل ما قبله عند التفعيل.
  */
-const VERSION = "v1";
+const VERSION = "v2";
 const SHELL_CACHE = `shell-${VERSION}`;
 const ASSET_CACHE = `assets-${VERSION}`;
 

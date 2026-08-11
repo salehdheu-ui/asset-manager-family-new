@@ -63,6 +63,70 @@ export function forgetInstallDismissed() {
   }
 }
 
+// ————— حدث التثبيت —————
+
+/**
+ * حدث `beforeinstallprompt` يُطلق مرة واحدة، وغالباً قبل أن يركّب React شيئاً.
+ * لذا يُلتقط هنا عند تحميل الوحدة ويُحتفظ به، فتجده المكوّنات جاهزاً متى ركّبت
+ * بدل أن تنتظر حدثاً مضى. وهو أيضاً حدث لا يُستهلك إلا مرة، فمكانه الطبيعي
+ * موضع واحد يشترك فيه الجميع لا نسخة في كل مكوّن.
+ */
+let deferredPrompt: InstallPromptEvent | null = null;
+const promptWatchers = new Set<(event: InstallPromptEvent | null) => void>();
+
+function announce() {
+  // forEach لا for…of: هدف الترجمة الحالي لا يكرّر Set إلا بعلم downlevelIteration
+  promptWatchers.forEach((watcher) => watcher(deferredPrompt));
+}
+
+if (typeof window !== "undefined") {
+  window.addEventListener("beforeinstallprompt", (event) => {
+    // المنع يوقف شريط المتصفح التلقائي، فيبقى التوقيت بيدنا
+    event.preventDefault();
+    deferredPrompt = event as InstallPromptEvent;
+    announce();
+  });
+
+  window.addEventListener("appinstalled", () => {
+    deferredPrompt = null;
+    rememberInstallDismissed();
+    announce();
+  });
+}
+
+export function installPrompt(): InstallPromptEvent | null {
+  return deferredPrompt;
+}
+
+/** يشترك في تغيّر توفر التثبيت، ويعيد دالة إلغاء الاشتراك */
+export function watchInstallPrompt(
+  watcher: (event: InstallPromptEvent | null) => void,
+): () => void {
+  promptWatchers.add(watcher);
+  return () => promptWatchers.delete(watcher);
+}
+
+/** هل يستطيع هذا المتصفح تثبيت التطبيق تثبيتاً حقيقياً بضغطة زر؟ */
+export function canInstall(): boolean {
+  return deferredPrompt !== null;
+}
+
+/**
+ * يفتح نافذة التثبيت. الحدث يُستهلك بالاستدعاء الأول فلا يُعاد استعماله —
+ * ننساه بعده حتى لا يظهر زر تثبيت لا يفعل شيئاً.
+ */
+export async function promptInstall(): Promise<"accepted" | "dismissed" | "unavailable"> {
+  const event = deferredPrompt;
+  if (!event) return "unavailable";
+
+  deferredPrompt = null;
+  announce();
+
+  await event.prompt();
+  const { outcome } = await event.userChoice;
+  return outcome;
+}
+
 // ————— عامل الخدمة —————
 
 let waitingWorker: ServiceWorker | null = null;

@@ -3,10 +3,12 @@ import { Download, Share, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   hasDismissedInstall,
+  installPrompt,
   isIosSafari,
   isStandalone,
+  promptInstall,
   rememberInstallDismissed,
-  type InstallPromptEvent,
+  watchInstallPrompt,
 } from "@/lib/pwa";
 
 /**
@@ -19,28 +21,16 @@ import {
  * أما iOS فلا حدث فيه — لا سبيل للتثبيت إلا بخطوات يدوية نشرحها للمستخدم.
  */
 export default function InstallPrompt() {
-  const [promptEvent, setPromptEvent] = useState<InstallPromptEvent | null>(null);
+  const [available, setAvailable] = useState(() => installPrompt() !== null);
   const [showIosSteps, setShowIosSteps] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
     if (isStandalone() || hasDismissedInstall()) return;
 
-    // أندرويد وسطح المكتب: المتصفح يخبرنا حين يصبح التطبيق قابلاً للتثبيت
-    const onBeforeInstall = (event: Event) => {
-      event.preventDefault();
-      setPromptEvent(event as InstallPromptEvent);
-    };
-
-    // بعد التثبيت لا داعي للبطاقة مرة أخرى أبداً
-    const onInstalled = () => {
-      rememberInstallDismissed();
-      setPromptEvent(null);
-      setShowIosSteps(false);
-    };
-
-    window.addEventListener("beforeinstallprompt", onBeforeInstall);
-    window.addEventListener("appinstalled", onInstalled);
+    // أندرويد وسطح المكتب: المتصفح يخبرنا حين يصبح التطبيق قابلاً للتثبيت.
+    // الحدث ملتقط في lib/pwa قبل تركيب React، فنكتفي بمتابعة تغيّره.
+    const unwatch = watchInstallPrompt((event) => setAvailable(event !== null));
 
     // iOS: لا حدث ننتظره، فنعرض الشرح بعد لحظة من الاستقرار على الصفحة
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -49,8 +39,7 @@ export default function InstallPrompt() {
     }
 
     return () => {
-      window.removeEventListener("beforeinstallprompt", onBeforeInstall);
-      window.removeEventListener("appinstalled", onInstalled);
+      unwatch();
       if (timer) clearTimeout(timer);
     };
   }, []);
@@ -61,16 +50,14 @@ export default function InstallPrompt() {
   }
 
   async function install() {
-    if (!promptEvent) return;
-    await promptEvent.prompt();
-    const { outcome } = await promptEvent.userChoice;
+    const outcome = await promptInstall();
     // القبول أو الرفض كلاهما جواب نهائي — لا نسأل ثانية
     rememberInstallDismissed();
-    setPromptEvent(null);
-    if (outcome === "dismissed") setDismissed(true);
+    if (outcome !== "accepted") setDismissed(true);
   }
 
-  if (dismissed || (!promptEvent && !showIosSteps)) return null;
+  if (dismissed || isStandalone() || hasDismissedInstall()) return null;
+  if (!available && !showIosSteps) return null;
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-50 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] lg:right-auto lg:max-w-sm">
@@ -93,10 +80,11 @@ export default function InstallPrompt() {
               ثبّت صندوق العائلة على جهازك
             </h2>
 
-            {promptEvent ? (
+            {available ? (
               <>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  يفتح مباشرة من الشاشة الرئيسية، ويصلك تنبيه بالأقساط والمستجدات.
+                  يُثبَّت تطبيقاً كاملاً في قائمة تطبيقات جهازك، يفتح بلا شريط
+                  متصفح ويصلك تنبيه بالأقساط والمستجدات.
                 </p>
                 <div className="mt-3 flex gap-2">
                   <Button onClick={install} size="sm" className="flex-1">
