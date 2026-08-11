@@ -8,6 +8,7 @@ import AuthGuard from "@/components/AuthGuard";
 import AdminGuard from "@/components/AdminGuard";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import InstallPrompt from "@/components/InstallPrompt";
+import PushInvite from "@/components/PushInvite";
 import UpdateBanner from "@/components/UpdateBanner";
 import { registerServiceWorker } from "@/lib/pwa";
 import Auth from "@/pages/auth";
@@ -32,6 +33,7 @@ const ReportBuilder = lazy(() => import("@/pages/report-builder"));
 const Investments = lazy(() => import("@/pages/investments"));
 const Proposals = lazy(() => import("@/pages/proposals"));
 const Notifications = lazy(() => import("@/pages/notifications"));
+const InstallHelp = lazy(() => import("@/pages/install"));
 
 function PageLoader() {
   return (
@@ -62,6 +64,8 @@ function Router() {
     <Suspense fallback={<PageLoader />}>
       <Switch>
         <Route path="/" component={Auth} />
+        {/* بلا حماية: من يتعثّر في التثبيت قد لا يكون داخلاً أصلاً */}
+        <Route path="/install" component={InstallHelp} />
         <Route path="/dashboard">{() => <ProtectedRoute component={Dashboard} />}</Route>
         <Route path="/loans">{() => <ProtectedRoute component={Loans} />}</Route>
         <Route path="/governance">{() => <ProtectedRoute component={Governance} />}</Route>
@@ -116,6 +120,8 @@ function App() {
             <Router />
           </ErrorBoundary>
           <InstallPrompt />
+          {/* بعد التثبيت تأتي دعوة الإشعارات — بطاقة واحدة في الشاشة لا اثنتان */}
+          <PushInvite />
         </div>
       </TooltipProvider>
     </QueryClientProvider>

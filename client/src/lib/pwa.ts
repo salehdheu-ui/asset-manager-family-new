@@ -11,6 +11,7 @@ export interface InstallPromptEvent extends Event {
 }
 
 const DISMISSED_KEY = "pwa:install-dismissed";
+const PUSH_ASKED_KEY = "pwa:push-asked";
 
 /** التطبيق يعمل مثبَّتاً، لا داخل متصفح */
 export function isStandalone(): boolean {
@@ -60,6 +61,29 @@ export function forgetInstallDismissed() {
     localStorage.removeItem(DISMISSED_KEY);
   } catch {
     /* تجاهل */
+  }
+}
+
+/**
+ * هل عُرض على المستخدم تفعيل الإشعارات من قبل؟
+ *
+ * العرض مرة واحدة لا غير — بعدها مكانه صفحة «حسابي» متى أرادها. الإلحاح
+ * يجعل المستخدم يرفض بلا قراءة، والرفض في المتصفح قرار لا رجعة فيه من داخل
+ * الصفحة.
+ */
+export function hasAskedForPush(): boolean {
+  try {
+    return localStorage.getItem(PUSH_ASKED_KEY) !== null;
+  } catch {
+    return true;
+  }
+}
+
+export function rememberPushAsked() {
+  try {
+    localStorage.setItem(PUSH_ASKED_KEY, new Date().toISOString());
+  } catch {
+    /* لا شيء نفعله */
   }
 }
 
