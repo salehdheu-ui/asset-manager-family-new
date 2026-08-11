@@ -16,7 +16,8 @@ async function getErrorMessage(res: Response) {
   return text;
 }
 
-async function throwIfResNotOk(res: Response) {
+/** مسار وحيد لأخطاء الطلبات — الرسالة من الخادم إن وُجدت، وإلا فحالة الرد */
+export async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const message = await getErrorMessage(res);
     throw new Error(message || `Request failed with status ${res.status}`);
