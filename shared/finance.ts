@@ -472,6 +472,49 @@ export function overdueInstallments<T extends InstallmentLike>(
   return late;
 }
 
+/** آخر لحظة سماح لقسط: مهلة شهر استحقاقه، أو تاريخه إن كان بعدها */
+export function installmentDeadline(dueDate: Date | string): Date {
+  const due = new Date(dueDate);
+  const grace = monthDeadline(due.getFullYear(), due.getMonth() + 1);
+  return due.getTime() > grace.getTime() ? due : grace;
+}
+
+/**
+ * الأقساط التي اقتربت مهلتها ولم تمض بعد.
+ *
+ * تتبع منطق overdueInstallments نفسه في تغطية الأقساط بما دُفع على السلفة،
+ * فلا يُذكَّر العضو بقسط سدّده ضمن دفعة حرة. التذكير قبل المهلة لا بعدها —
+ * الغرض أن يتذكر لا أن يُلام.
+ */
+export function upcomingInstallments<T extends InstallmentLike>(
+  installments: T[],
+  totalPaidOnLoan: number,
+  withinDays: number,
+  now: Date = new Date(),
+): T[] {
+  const ordered = [...installments].sort((a, b) => a.installmentNumber - b.installmentNumber);
+  let remainingPaid = Math.max(0, totalPaidOnLoan);
+  const soon: T[] = [];
+  const horizon = now.getTime() + withinDays * 24 * 60 * 60 * 1000;
+
+  for (const inst of ordered) {
+    if (inst.status === "paid") continue;
+    const amount = Number(inst.amount) || 0;
+    if (remainingPaid >= amount) {
+      remainingPaid -= amount;
+      continue;
+    }
+    remainingPaid = 0;
+    if (!inst.dueDate) continue;
+
+    const deadline = installmentDeadline(inst.dueDate).getTime();
+    // لم تمض المهلة بعد، وهي داخل النافذة
+    if (deadline > now.getTime() && deadline <= horizon) soon.push(inst);
+  }
+
+  return soon;
+}
+
 // المبلغ المتأخر فعلاً من قسط مغطى جزئياً يساوي ما لم يُدفع منه
 export function overdueAmount<T extends InstallmentLike>(
   installments: T[],

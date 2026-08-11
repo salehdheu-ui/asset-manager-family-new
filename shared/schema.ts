@@ -430,7 +430,12 @@ export const notifications = pgTable("notifications", {
   createdBy: varchar("created_by"),
   createdByName: text("created_by_name"),
   createdAt: timestamp("created_at").defaultNow(),
-});
+  // مفتاح فريد للتذكيرات التلقائية يمنع تكرار التنبيه نفسه كل يوم.
+  // فارغ لكل إشعار يكتبه الوصي بيده، والفهرس الفريد يتجاهل الفارغ.
+  dedupeKey: text("dedupe_key"),
+}, (table) => ({
+  dedupeKeyUnique: uniqueIndex("notifications_dedupe_key_unique").on(table.dedupeKey),
+}));
 
 export const insertNotificationSchema = createInsertSchema(notifications)
   .omit({
@@ -441,6 +446,7 @@ export const insertNotificationSchema = createInsertSchema(notifications)
     failedCount: true,
     error: true,
     status: true,
+    dedupeKey: true,
   })
   .extend({
     title: z.string().trim().min(1, "العنوان مطلوب").max(120),
