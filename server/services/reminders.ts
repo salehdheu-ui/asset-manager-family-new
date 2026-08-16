@@ -134,6 +134,7 @@ export interface ReminderRunResult {
   considered: number;
   sent: number;
   skipped: number;
+  failed: number;
 }
 
 /**
@@ -144,11 +145,12 @@ export interface ReminderRunResult {
  * بين الكتابة والإرسال.
  */
 export async function runReminderSweep(now = new Date()): Promise<ReminderRunResult> {
-  if (!isPushConfigured()) return { considered: 0, sent: 0, skipped: 0 };
+  if (!isPushConfigured()) return { considered: 0, sent: 0, skipped: 0, failed: 0 };
 
   const due = await collectDueReminders(now);
   let sent = 0;
   let skipped = 0;
+  let failed = 0;
 
   for (const reminder of due) {
     const record = await storage.createReminderOnce({
@@ -169,13 +171,16 @@ export async function runReminderSweep(now = new Date()): Promise<ReminderRunRes
       continue;
     }
 
-    await dispatchNotification(record).catch((error) =>
-      console.error("تعذر إرسال تذكير تلقائي:", error),
-    );
-    sent += 1;
+    try {
+      await dispatchNotification(record);
+      sent += 1;
+    } catch (error) {
+      failed += 1;
+      console.error("تعذر إرسال تذكير تلقائي:", error);
+    }
   }
 
-  return { considered: due.length, sent, skipped };
+  return { considered: due.length, sent, skipped, failed };
 }
 
 let timer: ReturnType<typeof setInterval> | undefined;
