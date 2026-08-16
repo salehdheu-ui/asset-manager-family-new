@@ -1,12 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import MobileLayout from "@/components/layout/MobileLayout";
 import CapitalLayerCard from "@/components/dashboard/CapitalLayerCard";
-import { getDashboardSummary } from "@/lib/api";
+import { getDashboardSummary, getMembers } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
 import { AlertTriangle, TrendingUp, ShieldCheck, Wallet, ArrowUpRight, HandCoins, Users, CreditCard, History, FileText } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link } from "wouter";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
 
 const layerMeta: Record<string, { arabicName: string; color: string }> = {
   protected: { arabicName: "رأس المال المحمي", color: "bg-primary" },
@@ -22,6 +23,13 @@ export default function Dashboard() {
     queryKey: ["dashboard-summary"],
     queryFn: getDashboardSummary,
   });
+  const { data: members = [], isSuccess: membersLoaded } = useQuery({
+    queryKey: ["members"],
+    queryFn: getMembers,
+    enabled: isAdmin,
+  });
+  const [onboardingDismissed, setOnboardingDismissed] = useState(() => localStorage.getItem("family_onboarding_dismissed") === "1");
+  const showOnboarding = isAdmin && membersLoaded && members.length === 0 && !onboardingDismissed;
 
   const quickActions = [
     { label: "المساهمات", icon: CreditCard, href: "/payments", color: "bg-fund-in" },
@@ -80,6 +88,27 @@ export default function Dashboard() {
             </div>
           </div>
         </motion.div>
+
+        {showOnboarding && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/[0.08] via-card to-amber-50/60 p-5 shadow-sm"
+          >
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary/12 text-primary"><Users className="h-5 w-5" /></div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-black uppercase tracking-[0.16em] text-primary/65">خطوة البداية</p>
+                <h3 className="mt-1 font-heading text-lg font-black text-primary">أكمل إعداد صندوق العائلة</h3>
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">أدخل اسم الصندوق، قواعد التوزيع، وأسماء الأعضاء في أربع خطوات قصيرة.</p>
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                  <Link href="/onboarding" className="inline-flex items-center gap-2 rounded-xl bg-primary px-3 py-2 text-xs font-black text-primary-foreground shadow-sm transition hover:bg-primary/90">بدء الإعداد<ArrowUpRight className="h-4 w-4" /></Link>
+                  <button onClick={() => { localStorage.setItem("family_onboarding_dismissed", "1"); setOnboardingDismissed(true); }} className="rounded-xl px-3 py-2 text-xs font-bold text-muted-foreground transition hover:bg-muted">لاحقًا</button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
 
         {/* Quick Actions Grid */}
         <div className={cn("grid gap-4", quickActions.length <= 3 ? "grid-cols-3" : "grid-cols-4")}>

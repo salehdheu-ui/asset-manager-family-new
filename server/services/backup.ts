@@ -58,7 +58,7 @@ export async function createBackupSnapshot(createdBy?: string | null, backupLeve
   await ensureBackupDirectory();
 
   const backupDate = new Date();
-  const [settingsRows, memberRows, contributionRows, loanRows, repaymentRows, paymentRows, expenseRows, adjustmentRows, allocationRows, userRows, auditLogRows, zakatRows, investmentRows, valuationRows, proposalRows, proposalVoteRows, attachmentRows, rateRows] = await Promise.all([
+  const [settingsRows, memberRows, contributionRows, loanRows, repaymentRows, paymentRows, expenseRows, adjustmentRows, allocationRows, userRows, auditLogRows, zakatRows, investmentRows, valuationRows, proposalRows, proposalVoteRows, attachmentRowsRaw, rateRows] = await Promise.all([
     db.select().from(familySettings).limit(1),
     db.select().from(members).orderBy(asc(members.createdAt)),
     db.select().from(contributions).orderBy(asc(contributions.createdAt)),
@@ -79,6 +79,9 @@ export async function createBackupSnapshot(createdBy?: string | null, backupLeve
     db.select().from(attachments).orderBy(asc(attachments.createdAt)),
     db.select().from(contributionRates).orderBy(asc(contributionRates.effectiveYear)),
   ]);
+
+  // لا نكرر bytes المرفق الخارجي داخل نسخة قاعدة البيانات؛ legacy content يبقى فقط للصفوف القديمة.
+  const attachmentRows = attachmentRowsRaw.map((row) => row.storageKey ? { ...row, content: null } : row);
 
   const payload = {
     metadata: {

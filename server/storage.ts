@@ -37,6 +37,7 @@ export interface IStorage {
   // Contributions
   getContributions(): Promise<Contribution[]>;
   getContributionsByMember(memberId: string): Promise<Contribution[]>;
+  getContribution(id: string): Promise<Contribution | undefined>;
   getContributionsByYear(year: number): Promise<Contribution[]>;
   getApprovedContributionsByYear(year: number): Promise<Contribution[]>;
   getContributionsByYearAndMonth(year: number, month: number): Promise<Contribution[]>;
@@ -61,6 +62,7 @@ export interface IStorage {
   createLoanRepayments(repayments: InsertLoanRepayment[]): Promise<LoanRepayment[]>;
   markRepaymentPaid(id: string): Promise<LoanRepayment | undefined>;
   getLoanPayments(loanId: string): Promise<LoanPayment[]>;
+  getLoanPayment(id: string): Promise<LoanPayment | undefined>;
   createLoanPayment(payment: InsertLoanPayment): Promise<LoanPayment>;
   /** المسدَّد على كل سلفة، مجمَّعاً في قاعدة البيانات لا في الذاكرة */
   getPaidTotalsByLoan(): Promise<Map<string, number>>;
@@ -71,6 +73,7 @@ export interface IStorage {
 
   // Expenses
   getExpenses(): Promise<Expense[]>;
+  getExpense(id: string): Promise<Expense | undefined>;
   getExpensesByYear(year: number): Promise<Expense[]>;
   createExpense(expense: InsertExpense): Promise<Expense>;
   deleteExpense(id: string): Promise<void>;
@@ -125,7 +128,7 @@ export interface IStorage {
   castProposalVote(data: { proposalId: string; userId: string; voterName: string; vote: string }): Promise<ProposalVote>;
 
   // Attachments (إيصالات وفواتير)
-  getAttachments(entityType: string, entityId: string): Promise<Omit<Attachment, "content">[]>;
+  getAttachments(entityType: string, entityId: string): Promise<Omit<Attachment, "content" | "storageKey" | "storageUrl">[]>;
   getAttachment(id: string): Promise<Attachment | undefined>;
   createAttachment(data: Omit<Attachment, "id" | "createdAt">): Promise<Omit<Attachment, "content">>;
   deleteAttachment(id: string): Promise<void>;
@@ -196,6 +199,11 @@ export class DatabaseStorage implements IStorage {
 
   async getContributionsByMember(memberId: string): Promise<Contribution[]> {
     return await db.select().from(contributions).where(eq(contributions.memberId, memberId));
+  }
+
+  async getContribution(id: string): Promise<Contribution | undefined> {
+    const [contribution] = await db.select().from(contributions).where(eq(contributions.id, id));
+    return contribution;
   }
 
   async getContributionsByYear(year: number): Promise<Contribution[]> {
@@ -341,6 +349,11 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(loanPayments).where(eq(loanPayments.loanId, loanId)).orderBy(desc(loanPayments.paidAt));
   }
 
+  async getLoanPayment(id: string): Promise<LoanPayment | undefined> {
+    const [payment] = await db.select().from(loanPayments).where(eq(loanPayments.id, id));
+    return payment;
+  }
+
   async createLoanPayment(payment: InsertLoanPayment): Promise<LoanPayment> {
     const [created] = await db.insert(loanPayments).values(payment).returning();
     return created;
@@ -386,6 +399,11 @@ export class DatabaseStorage implements IStorage {
   // Expenses
   async getExpenses(): Promise<Expense[]> {
     return await db.select().from(expenses).orderBy(desc(expenses.createdAt));
+  }
+
+  async getExpense(id: string): Promise<Expense | undefined> {
+    const [expense] = await db.select().from(expenses).where(eq(expenses.id, id));
+    return expense;
   }
 
   async getExpensesByYear(year: number): Promise<Expense[]> {
@@ -591,7 +609,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Attachments — المحتوى ثقيل، فلا يُجلب إلا عند التنزيل
-  async getAttachments(entityType: string, entityId: string): Promise<Omit<Attachment, "content">[]> {
+  async getAttachments(entityType: string, entityId: string): Promise<Omit<Attachment, "content" | "storageKey" | "storageUrl">[]> {
     return await db.select({
       id: attachments.id,
       entityType: attachments.entityType,
@@ -619,6 +637,8 @@ export class DatabaseStorage implements IStorage {
       fileName: attachments.fileName,
       mimeType: attachments.mimeType,
       sizeBytes: attachments.sizeBytes,
+      storageKey: attachments.storageKey,
+      storageUrl: attachments.storageUrl,
       createdAt: attachments.createdAt,
       createdBy: attachments.createdBy,
     });

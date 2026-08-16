@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { lazy, Suspense, useState, useMemo } from "react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import MobileLayout from "@/components/layout/MobileLayout";
@@ -47,15 +47,18 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn, formatCurrency } from "@/lib/utils";
 import { downloadExcel } from "@/lib/excel";
 import { buildAnalyticsSheets } from "@/lib/analytics-export";
-import {
-  CapitalDistributionChart,
-  ContributionsTrendChart,
-  MemberComparisonChart,
-  CashflowForecastChart,
-} from "@/components/charts";
 import { getCashflowForecast } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
+
+const CapitalDistributionChart = lazy(() => import("@/components/charts/CapitalDistributionChart").then((module) => ({ default: module.CapitalDistributionChart })));
+const ContributionsTrendChart = lazy(() => import("@/components/charts/ContributionsTrendChart").then((module) => ({ default: module.ContributionsTrendChart })));
+const MemberComparisonChart = lazy(() => import("@/components/charts/MemberComparisonChart").then((module) => ({ default: module.MemberComparisonChart })));
+const CashflowForecastChart = lazy(() => import("@/components/charts/CashflowForecastChart").then((module) => ({ default: module.CashflowForecastChart })));
+
+function ChartFallback() {
+  return <div className="flex min-h-40 items-center justify-center rounded-xl border border-border/70 bg-card/60 text-sm font-bold text-muted-foreground">جاري تحميل الرسم البياني...</div>;
+}
 
 type TransactionType = "contribution" | "loan" | "expense";
 type TransactionItem = {
@@ -516,12 +519,14 @@ export default function Analytics() {
               ))}
             </div>
           </div>
-          <div className="space-y-4">
-            <CapitalDistributionChart data={capitalDistributionData} loading={summaryLoading || capitalChartLoading} delay={0} />
-            <ContributionsTrendChart data={contributionsChartData?.data || []} loading={contributionsChartLoading} delay={1} />
-            <CashflowForecastChart data={cashflowForecast} loading={forecastLoading} delay={2} />
-          </div>
-          <MemberComparisonChart data={membersChartData?.data || []} loading={membersChartLoading} delay={3} limit={5} />
+          <Suspense fallback={<ChartFallback />}>
+            <div className="space-y-4">
+              <CapitalDistributionChart data={capitalDistributionData} loading={summaryLoading || capitalChartLoading} delay={0} />
+              <ContributionsTrendChart data={contributionsChartData?.data || []} loading={contributionsChartLoading} delay={1} />
+              <CashflowForecastChart data={cashflowForecast} loading={forecastLoading} delay={2} />
+            </div>
+            <MemberComparisonChart data={membersChartData?.data || []} loading={membersChartLoading} delay={3} limit={5} />
+          </Suspense>
         </div>
 
         {/* ── Yearly report ── */}

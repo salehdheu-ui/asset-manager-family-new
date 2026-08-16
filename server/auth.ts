@@ -9,6 +9,19 @@ import { randomInt } from "crypto";
 import { users, type PublicUser } from "@shared/schema";
 import { storage } from "./storage";
 import { eq } from "drizzle-orm";
+import { zodErrorResponse } from "./validation";
+import {
+  createUserSchema,
+  forgotPasswordSchema,
+  loginSchema,
+  resetPasswordSchema,
+  updatePasswordSchema,
+  updateUserSchema,
+} from "./auth-schemas";
+
+function invalidBody(res: any, error: import("zod").ZodError) {
+  return res.status(400).json(zodErrorResponse(error));
+}
 
 declare module "express-session" {
   interface SessionData {
@@ -82,11 +95,9 @@ export async function setupAuth(app: Express) {
   // Login endpoint
   app.post("/api/auth/login", loginLimiter, async (req, res) => {
     try {
-      const { username, password } = req.body;
-
-      if (!username || !password) {
-        return res.status(400).json({ message: "اسم المستخدم وكلمة المرور مطلوبان" });
-      }
+      const parsed = loginSchema.safeParse(req.body);
+      if (!parsed.success) return invalidBody(res, parsed.error);
+      const { username, password } = parsed.data;
 
       const [user] = await db.select().from(users).where(eq(users.username, username));
 
@@ -156,11 +167,10 @@ export async function setupAuth(app: Express) {
   // طلب استعادة — رسالة موحّدة دائماً حتى لا يُكشف وجود اسم المستخدم
   app.post("/api/auth/forgot-password", resetRequestLimiter, async (req, res) => {
     try {
-      const username = String(req.body?.username ?? "").trim();
+      const parsed = forgotPasswordSchema.safeParse(req.body);
+      if (!parsed.success) return invalidBody(res, parsed.error);
+      const { username } = parsed.data;
       const genericMessage = "إن كان اسم المستخدم صحيحاً، فسيصلك الوصي بكود الاستعادة قريباً.";
-      if (!username) {
-        return res.status(400).json({ message: "اسم المستخدم مطلوب" });
-      }
 
       const [user] = await db.select().from(users).where(eq(users.username, username));
       if (user) {
@@ -182,16 +192,9 @@ export async function setupAuth(app: Express) {
   // إتمام الاستعادة بالكود الذي أصدره الوصي + كلمة مرور جديدة يعيّنها العضو بنفسه
   app.post("/api/auth/reset-password", resetRequestLimiter, async (req, res) => {
     try {
-      const username = String(req.body?.username ?? "").trim();
-      const code = String(req.body?.code ?? "").trim();
-      const newPassword = String(req.body?.newPassword ?? "");
-
-      if (!username || !code || !newPassword) {
-        return res.status(400).json({ message: "اسم المستخدم والكود وكلمة المرور الجديدة مطلوبة" });
-      }
-      if (newPassword.length < 8) {
-        return res.status(400).json({ message: "كلمة المرور الجديدة يجب أن تكون 8 أحرف على الأقل" });
-      }
+      const parsed = resetPasswordSchema.safeParse(req.body);
+      if (!parsed.success) return invalidBody(res, parsed.error);
+      const { username, code, newPassword } = parsed.data;
 
       const request = await storage.getActiveResetRequestByUsername(username);
       if (!request || !request.codeHash || !request.codeExpiresAt) {
@@ -360,11 +363,9 @@ export async function setupAuth(app: Express) {
   // Admin: Create user
   app.post("/api/admin/users", adminWriteLimiter, isAdmin, async (req, res) => {
     try {
-      const { username, password, firstName, lastName, email, role, memberId } = req.body;
-
-      if (!username || !password) {
-        return res.status(400).json({ message: "اسم المستخدم وكلمة المرور مطلوبان" });
-      }
+      const parsed = createUserSchema.safeParse(req.body);
+      if (!parsed.success) return invalidBody(res, parsed.error);
+      const { username, password, firstName, lastName, email, role, memberId } = parsed.data;
 
       const existingUser = await db.select().from(users).where(eq(users.username, username));
       if (existingUser.length > 0) {
@@ -402,13 +403,10 @@ export async function setupAuth(app: Express) {
   app.put("/api/admin/users/:id/password", adminWriteLimiter, isAdmin, async (req, res) => {
     try {
       const { id } = req.params;
-      const { password } = req.body;
+      const parsed = updatePasswordSchema.safeParse(req.body);
+      if (!parsed.success) return invalidBody(res, parsed.error);
 
-      if (!password) {
-        return res.status(400).json({ message: "كلمة المرور مطلوبة" });
-      }
-
-      const hashedPassword = await bcrypt.hash(password, 10);
+      const hashedPassword = await bcrypt.hash(parsed.data.password, 10);
 
       await db.update(users).set({ password: hashedPassword, updatedAt: new Date() }).where(eq(users.id, id as string));
 
@@ -423,7 +421,9 @@ export async function setupAuth(app: Express) {
   app.put("/api/admin/users/:id", isAdmin, async (req, res) => {
     try {
       const { id } = req.params;
-      const { username, firstName, lastName, email, role, memberId } = req.body;
+      const parsed = updateUserSchema.safeParse(req.body);
+      if (!parsed.success) return invalidBody(res, parsed.error);
+      const { username, firstName, lastName, email, role, memberId } = parsed.data;
 
       const updateData: any = { updatedAt: new Date() };
       if (username) updateData.username = username;
