@@ -61,6 +61,28 @@ export function registerContributionRoutes(app: Express) {
         if (created.status === "approved") {
           await rebalanceYear(created.year);
         }
+
+        // المساهمة التي ينشئها الوصي معتمدةً تدخل الصندوق فوراً بلا خطوة اعتماد
+        // تُوثَّق — فالتوثيق هنا لا عند الاعتماد وحده
+        const member = await storage.getMember(created.memberId);
+        await storage.createAuditLog({
+          action: "contribution_created",
+          entityType: "contribution",
+          entityId: created.id,
+          actorUserId: req.user?.id ?? null,
+          actorName: req.user?.username ?? req.user?.firstName ?? "عضو",
+          description:
+            `تسجيل مساهمة ${member?.name ?? "عضو غير معروف"} لشهر ${created.month}/${created.year} ` +
+            `بمبلغ ${Number(created.amount).toLocaleString()} ر.ع (${created.status === "approved" ? "معتمدة مباشرة" : "بانتظار الاعتماد"})`,
+          metadata: {
+            memberId: created.memberId,
+            amount: created.amount,
+            year: created.year,
+            month: created.month,
+            status: created.status,
+          },
+        });
+
         return created;
       });
 

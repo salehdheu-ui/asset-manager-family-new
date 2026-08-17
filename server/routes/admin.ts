@@ -129,9 +129,24 @@ export function registerAdminRoutes(app: Express) {
         return res.status(400).json({ message: "نوع العملية غير صالح" });
       }
       const currentYear = new Date().getFullYear();
-      // القيد المباشر وإعادة التوازن وحدة واحدة
+      // القيد المباشر وأثره في السجل وإعادة التوازن وحدة واحدة. القيد المباشر
+      // أخطر ما في النظام: يزيد رصيد الصندوق أو ينقصه بلا مساهمة ولا سلفة،
+      // فبقاؤه بلا أثر في السجل يعني مالاً يتحرك ولا أحد يعرف من حرّكه.
       const adjustment = await withTransaction(async () => {
         const created = await storage.createFundAdjustment(data);
+
+        await storage.createAuditLog({
+          action: data.type === "deposit" ? "fund_deposit" : "fund_withdrawal",
+          entityType: "fund_adjustment",
+          entityId: created.id,
+          actorUserId: req.user?.id ?? null,
+          actorName: req.user?.username ?? req.user?.firstName ?? "مشرف",
+          description:
+            `${data.type === "deposit" ? "إيداع مباشر" : "سحب مباشر"} بمبلغ ` +
+            `${Number(created.amount).toLocaleString()} ر.ع — ${created.description ?? "بلا وصف"}`,
+          metadata: { type: created.type, amount: created.amount, description: created.description ?? null },
+        });
+
         await rebalanceYear(currentYear);
         return created;
       });

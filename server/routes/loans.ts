@@ -94,6 +94,26 @@ export function registerLoanRoutes(app: Express) {
         if (created.status === "approved") {
           await createScheduleAndRebalance(created);
         }
+
+        const member = await storage.getMember(created.memberId);
+        await storage.createAuditLog({
+          action: "loan_created",
+          entityType: "loan",
+          entityId: created.id,
+          actorUserId: req.user?.id ?? null,
+          actorName: req.user?.username ?? req.user?.firstName ?? "مشرف",
+          description:
+            `طلب سلفة «${created.title}» لـ${member?.name ?? "عضو غير معروف"} بمبلغ ` +
+            `${Number(created.amount).toLocaleString()} ر.ع — الحالة عند الإنشاء: ${created.status}`,
+          metadata: {
+            memberId: created.memberId,
+            amount: created.amount,
+            type: created.type,
+            status: created.status,
+            repaymentMonths: created.repaymentMonths,
+          },
+        });
+
         return created;
       });
 
@@ -145,6 +165,11 @@ export function registerLoanRoutes(app: Express) {
         }
       }
 
+      const before = await storage.getLoan(loanId);
+      const paidSoFar = before
+        ? (await storage.getLoanPayments(loanId)).reduce((sum, payment) => sum + Number(payment.amount), 0)
+        : 0;
+
       // تغيير الحالة وإنشاء الأقساط وإعادة التوازن وحدة واحدة
       const loan = await withTransaction(async () => {
         const updated = await storage.updateLoanStatus(loanId, status);
@@ -155,6 +180,34 @@ export function registerLoanRoutes(app: Express) {
         if (status === 'approved') {
           await createScheduleAndRebalance(updated);
         }
+
+        // تغيير الحالة يحرّك رصيد الصندوق: الاعتماد يُخرج المبلغ، وسحب الاعتماد
+        // يعيده — ويُسقط معه سداداً مسجَّلاً من الحساب. أكبر فرق يظهر في صندوق
+        // بلا سبب ظاهر مصدره هنا، فلا يمر بلا توثيق.
+        if (before && before.status !== status) {
+          const member = await storage.getMember(updated.memberId);
+          await storage.createAuditLog({
+            action: "loan_status_changed",
+            entityType: "loan",
+            entityId: loanId,
+            actorUserId: req.user?.id ?? null,
+            actorName: req.user?.username ?? req.user?.firstName ?? "مشرف",
+            description:
+              `تغيّرت حالة سلفة ${member?.name ?? "عضو غير معروف"} («${updated.title}» بمبلغ ` +
+              `${Number(updated.amount).toLocaleString()} ر.ع) من «${before.status}» إلى «${status}»` +
+              (paidSoFar > 0 && status !== "approved"
+                ? ` — تنبيه: عليها سداد مسجَّل بقيمة ${paidSoFar.toLocaleString()} ر.ع لن يُحتسب في الرصيد بعد الآن`
+                : ""),
+            metadata: {
+              memberId: updated.memberId,
+              from: before.status,
+              to: status,
+              amount: updated.amount,
+              paidSoFar: paidSoFar.toFixed(3),
+            },
+          });
+        }
+
         return updated;
       });
 
@@ -368,12 +421,51 @@ export function registerLoanRoutes(app: Express) {
         if (!marked) {
           throw new RequestError(409, "القسط غير موجود أو مسدد مسبقاً");
         }
-        await storage.createLoanPayment({
-          loanId: marked.loanId,
-          amount: String(marked.amount),
-          note: `سداد القسط رقم ${marked.installmentNumber}`,
-          createdBy: (req as any).user?.id
+
+        const loan = await storage.getLoan(marked.loanId);
+        const payments = await storage.getLoanPayments(marked.loanId);
+        const paidTotal = payments.reduce((sum, payment) => sum + Number(payment.amount), 0);
+
+        // القسط قد يكون مغطّى سلفاً بدفعة حرة سابقة. تسجيل قيمته كاملة حينئذ
+        // يحسب المال مرتين ويرفع رصيد الصندوق بلا مقابل — فلا يُسجَّل إلا ما
+        // لم يُسدَّد بعد من أصل السلفة.
+        const uncovered = loan
+          ? Math.min(Number(marked.amount), Number(loan.amount) - paidTotal)
+          : Number(marked.amount);
+
+        const recorded =
+          uncovered > 0.0005
+            ? await storage.createLoanPayment({
+                loanId: marked.loanId,
+                amount: uncovered.toFixed(3),
+                note: `سداد القسط رقم ${marked.installmentNumber}`,
+                createdBy: req.user?.id,
+              })
+            : null;
+
+        const member = loan ? await storage.getMember(loan.memberId) : undefined;
+        // الأثر يُنسب لصف السداد متى وُجد: هو ما يحرّك الرصيد، وبه يكتمل
+        // تتبّع كل ريال في دفتر السداد إلى أمر من أمر به
+        await storage.createAuditLog({
+          action: "installment_marked_paid",
+          entityType: recorded ? "loan_payment" : "loan_repayment",
+          entityId: recorded ? recorded.id : marked.id,
+          actorUserId: req.user?.id ?? null,
+          actorName: req.user?.username ?? req.user?.firstName ?? "مشرف",
+          description:
+            `تعليم القسط رقم ${marked.installmentNumber} من سلفة ${member?.name ?? "عضو غير معروف"} ` +
+            `(«${loan?.title ?? "سلفة محذوفة"}») مدفوعاً بمبلغ ${Number(marked.amount).toLocaleString()} ر.ع` +
+            (recorded ? "" : " — كان مغطّى بدفعة سابقة فلم يُسجَّل سداد جديد"),
+          metadata: {
+            loanId: marked.loanId,
+            repaymentId: marked.id,
+            installmentNumber: marked.installmentNumber,
+            installmentAmount: marked.amount,
+            recordedAsPayment: recorded ? recorded.amount : "0.000",
+            paidBefore: paidTotal.toFixed(3),
+          },
         });
+
         const paidYear = marked.paidAt ? marked.paidAt.getFullYear() : new Date().getFullYear();
         await rebalanceYear(paidYear);
         return marked;
@@ -439,6 +531,26 @@ export function registerLoanRoutes(app: Express) {
           throw new RequestError(400, "مبلغ السداد أكبر من المتبقي على السلفة");
         }
         const created = await storage.createLoanPayment(paymentData);
+
+        const member = await storage.getMember(loan.memberId);
+        await storage.createAuditLog({
+          action: "loan_payment_recorded",
+          entityType: "loan_payment",
+          entityId: created.id,
+          actorUserId: req.user?.id ?? null,
+          actorName: req.user?.username ?? req.user?.firstName ?? "مشرف",
+          description:
+            `سداد ${amount.toLocaleString()} ر.ع على سلفة ${member?.name ?? "عضو غير معروف"} ` +
+            `(«${loan.title}») — المتبقي ${(Number(loan.amount) - paidTotal - amount).toLocaleString()} ر.ع`,
+          metadata: {
+            loanId,
+            memberId: loan.memberId,
+            amount: created.amount,
+            note: created.note ?? null,
+            remainingAfter: (Number(loan.amount) - paidTotal - amount).toFixed(3),
+          },
+        });
+
         const paidYear = created.paidAt ? created.paidAt.getFullYear() : new Date().getFullYear();
         await rebalanceYear(paidYear);
         return created;

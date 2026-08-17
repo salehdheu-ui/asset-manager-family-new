@@ -13,3 +13,4 @@ export { registerProposalRoutes } from "./proposals";
 export { registerAttachmentRoutes } from "./attachments";
 export { registerRateRoutes } from "./rates";
 export { registerNotificationRoutes } from "./notifications";
+export { registerReconcileRoutes } from "./reconcile";

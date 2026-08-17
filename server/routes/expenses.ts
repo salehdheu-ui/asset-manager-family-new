@@ -22,9 +22,26 @@ export function registerExpenseRoutes(app: Express) {
       const data = insertExpenseSchema.parse(req.body);
       const currentYear = new Date().getFullYear();
 
-      // المصروف وإعادة التوازن وحدة واحدة — لا يُسجَّل مصروف بلا تحديث للتخصيص
+      // المصروف وأثره في السجل وإعادة التوازن وحدة واحدة — لا يخرج من الصندوق
+      // ريال بلا سطر في سجل التدقيق يقول متى خرج وبأمر من
       const expense = await withTransaction(async () => {
         const created = await storage.createExpense(data);
+
+        await storage.createAuditLog({
+          action: "expense_created",
+          entityType: "expense",
+          entityId: created.id,
+          actorUserId: req.user?.id ?? null,
+          actorName: req.user?.username ?? req.user?.firstName ?? "مشرف",
+          description: `تم تسجيل مصروف «${created.title}» بمبلغ ${Number(created.amount).toLocaleString()} ر.ع (${created.category})`,
+          metadata: {
+            amount: created.amount,
+            category: created.category,
+            title: created.title,
+            description: created.description ?? null,
+          },
+        });
+
         await rebalanceYear(currentYear);
         return created;
       });
