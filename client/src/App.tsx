@@ -36,6 +36,7 @@ const Investments = lazy(() => import("@/pages/investments"));
 const Proposals = lazy(() => import("@/pages/proposals"));
 const Notifications = lazy(() => import("@/pages/notifications"));
 const InstallHelp = lazy(() => import("@/pages/install"));
+const Reconcile = lazy(() => import("@/pages/reconcile"));
 
 function PageLoader() {
   return (
@@ -90,6 +91,7 @@ function Router() {
         <Route path="/investments">{() => <AdminRoute component={Investments} />}</Route>
         <Route path="/proposals">{() => <ProtectedRoute component={Proposals} />}</Route>
         <Route path="/notifications">{() => <AdminRoute component={Notifications} />}</Route>
+        <Route path="/reconcile">{() => <AdminRoute component={Reconcile} />}</Route>
         <Route component={NotFound} />
       </Switch>
     </Suspense>

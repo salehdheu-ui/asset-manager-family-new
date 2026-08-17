@@ -68,6 +68,7 @@ export const SECTIONS: Section[] = [
       { href: "/annual-report", label: "التقرير السنوي", adminOnly: true },
       { href: "/platform-review", label: "خارطة التطوير", adminOnly: true },
       { href: "/audit-log", label: "سجل التدقيق" },
+      { href: "/reconcile", label: "تدقيق الحسابات", adminOnly: true },
     ],
   },
   {

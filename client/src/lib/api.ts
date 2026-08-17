@@ -901,3 +901,54 @@ export async function runReminders(): Promise<{ considered: number; sent: number
 export async function cancelNotification(id: string): Promise<void> {
   await apiRequest("DELETE", `/api/notifications/${id}`);
 }
+
+// ————— التدقيق المالي —————
+
+export interface ReconcileFinding {
+  id: string;
+  severity: "critical" | "warning" | "info";
+  title: string;
+  detail: string;
+  amount?: number;
+  samples?: string[];
+}
+
+export interface ReconcileReport {
+  generatedAt: string;
+  rebuilt: {
+    contributionsApproved: number;
+    contributionsPending: number;
+    deposits: number;
+    withdrawals: number;
+    loansApproved: number;
+    loansPending: number;
+    repayments: number;
+    expenses: number;
+    netAssets: number;
+    activeInvestments: number;
+  };
+  displayed: {
+    allocationYear: number | null;
+    allocationNetAssets: number | null;
+    allocationLockedAt: string | null;
+  };
+  differences: { allocationVsRebuilt: number | null };
+  findings: ReconcileFinding[];
+  coverage: { table: string; label: string; rows: number; audited: number }[];
+}
+
+export interface AmountMatch {
+  source: string;
+  id: string;
+  amount: number;
+  description: string;
+  createdAt: string | null;
+}
+
+export async function getReconcileReport(): Promise<ReconcileReport> {
+  return get<ReconcileReport>("/api/audit/reconcile");
+}
+
+export async function findAmount(value: number): Promise<AmountMatch[]> {
+  return get<AmountMatch[]>("/api/audit/find-amount", { value });
+}
