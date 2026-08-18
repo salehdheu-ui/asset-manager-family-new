@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import MobileLayout from "@/components/layout/MobileLayout";
 import AttachmentBox from "@/components/AttachmentBox";
 import { getExpenses, createExpense, deleteExpense, getDashboardSummary } from "@/lib/api";
+import { overdraftToast } from "@/lib/overdraft";
 import { useAuth } from "@/hooks/use-auth";
 import { Wallet, Heart, Scale, ArrowUpRight, TrendingDown, History, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
@@ -53,11 +54,13 @@ export default function Expenses() {
 
   const createMutation = useMutation({
     mutationFn: createExpense,
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["expenses"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] });
       setOpenDialog(null);
       toast({ title: "تم توثيق العملية بنجاح" });
+      // تجاوز حدّ الطبقة لا يمنع العملية، لكنه لا يمرّ بلا أن يُقال
+      if (result?.overdraft) toast(overdraftToast(result.overdraft));
     },
     onError: (error) => {
       toast({

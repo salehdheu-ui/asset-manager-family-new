@@ -68,6 +68,13 @@ vi.mock("../capital-engine", () => ({
     state.rebalanced.push(year);
     return {};
   }),
+  // سعة واسعة افتراضاً: هذه الاختبارات تخص السلف لا حدود الطبقات
+  currentLayerCapacity: vi.fn(async () => ({
+    protected: { amount: 0, used: 0 },
+    emergency: { amount: 1_000_000, used: 0 },
+    flexible: { amount: 1_000_000, used: 0 },
+    growth: { amount: 1_000_000, used: 0 },
+  })),
 }));
 
 vi.mock("../storage", () => ({

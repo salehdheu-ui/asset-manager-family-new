@@ -183,6 +183,31 @@ export async function rebalanceYear(year: number): Promise<AllocationResult> {
   );
 }
 
+/**
+ * سعة الطبقات محسوبةً على صافي الأصول **الحالي** لا على الصف المقفل.
+ *
+ * الصف المقفل يثبّت المبالغ عند لحظة قفله، وهو مقصود للعرض والحوكمة. لكن أول
+ * عملية في السنة تقفله تلقائياً على رصيد تلك اللحظة — وقد يكون الصندوق حينها
+ * شبه فارغ. فلو قِيس التجاوز عليه لصار كل قرض عادي «تجاوزاً»، ولضاع التحذير
+ * في ضجيجه. المقارنة هنا على ما يملكه الصندوق اليوم.
+ */
+export async function currentLayerCapacity(year: number): Promise<Record<string, { amount: number; used: number }>> {
+  const [percents, netAssets, used] = await Promise.all([
+    getPercentages(),
+    computeTotalNetAssets(),
+    computeUsedAmounts(year),
+  ]);
+  const split = splitAllocation(netAssets, percents);
+
+  // المستهلَك يُعاد خاماً بلا تصفير: من يقيس تجاوزاً يحتاج مقداره لا حدّه
+  return {
+    protected: { amount: split.protected, used: 0 },
+    emergency: { amount: split.emergency, used: used.emergencyUsed },
+    flexible: { amount: split.flexible, used: used.flexibleUsed },
+    growth: { amount: split.growth, used: used.growthUsed },
+  };
+}
+
 export async function checkLoanTransaction(amount: number, year: number): Promise<TransactionCheck> {
   const allocation = await rebalanceYear(year);
   const available = allocation.flexible.available;

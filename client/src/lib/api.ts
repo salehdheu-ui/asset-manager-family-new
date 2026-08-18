@@ -83,12 +83,29 @@ export async function updateLoan(
   return send<Loan>("PATCH", `/api/loans/${id}`, data);
 }
 
-export async function createLoan(data: { memberId: string; type: string; title: string; amount: string; description?: string; repaymentType?: string; repaymentMonths?: number | null; status?: string }): Promise<Loan> {
-  return send<Loan>("POST", "/api/loans", data);
+/**
+ * تجاوز حدّ طبقة رأس المال — يُرافق ردّ الخادم حين يقع.
+ *
+ * الحد إرشاد لا سدّ: العملية تُنفَّذ ويُوثَّق التجاوز، وتُعرض هذه البيانات
+ * للوصي فور وقوعه بدل أن يكتشف العجز بعد شهر.
+ */
+export interface LayerOverdraft {
+  layer: string;
+  layerName: string;
+  available: number;
+  requested: number;
+  excess: number;
 }
 
-export async function updateLoanStatus(id: string, status: string): Promise<Loan> {
-  return send<Loan>("PATCH", `/api/loans/${id}/status`, { status });
+/** الرد قد يحمل معه بيان تجاوز */
+export type WithOverdraft<T> = T & { overdraft?: LayerOverdraft | null };
+
+export async function createLoan(data: { memberId: string; type: string; title: string; amount: string; description?: string; repaymentType?: string; repaymentMonths?: number | null; status?: string }): Promise<WithOverdraft<Loan>> {
+  return send<WithOverdraft<Loan>>("POST", "/api/loans", data);
+}
+
+export async function updateLoanStatus(id: string, status: string): Promise<WithOverdraft<Loan>> {
+  return send<WithOverdraft<Loan>>("PATCH", `/api/loans/${id}/status`, { status });
 }
 
 export async function deleteLoan(id: string): Promise<void> {
@@ -116,8 +133,8 @@ export async function getExpenses(): Promise<Expense[]> {
   return get<Expense[]>("/api/expenses");
 }
 
-export async function createExpense(data: { title: string; amount: string; category: string; description?: string }): Promise<Expense> {
-  return send<Expense>("POST", "/api/expenses", data);
+export async function createExpense(data: { title: string; amount: string; category: string; description?: string }): Promise<WithOverdraft<Expense>> {
+  return send<WithOverdraft<Expense>>("POST", "/api/expenses", data);
 }
 
 export async function deleteExpense(id: string): Promise<void> {
