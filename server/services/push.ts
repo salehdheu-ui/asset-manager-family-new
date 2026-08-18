@@ -19,6 +19,8 @@ const VAPID_PUBLIC = "vapid_public_key";
 const VAPID_PRIVATE = "vapid_private_key";
 
 const subject = process.env.VAPID_SUBJECT?.trim() || "mailto:admin@example.com";
+const RETRYABLE_PUSH_STATUS = new Set([408, 425, 429, 500, 502, 503, 504]);
+const PUSH_RETRY_DELAYS_MS = [250, 1_000];
 
 let publicKey: string | null = null;
 let configured = false;
@@ -110,6 +112,32 @@ export interface DeliveryResult {
 }
 
 /** أصحاب الأجهزة المقصودون بهذا الإشعار */
+const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+async function sendPushWithRetry(
+  subscription: { endpoint: string; p256dh: string; auth: string },
+  payload: string,
+): Promise<void> {
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      await webpush.sendNotification(
+        {
+          endpoint: subscription.endpoint,
+          keys: { p256dh: subscription.p256dh, auth: subscription.auth },
+        },
+        payload,
+      );
+      return;
+    } catch (error) {
+      const status = (error as { statusCode?: number }).statusCode;
+      const retryable = status === undefined || RETRYABLE_PUSH_STATUS.has(status);
+      const delay = PUSH_RETRY_DELAYS_MS[attempt];
+      if (!retryable || delay === undefined) throw error;
+      await wait(delay);
+    }
+  }
+}
+
 async function resolveAudience(notification: Pick<Notification, "audience" | "targetUserId">): Promise<string[] | undefined> {
   switch (notification.audience) {
     case "all":
@@ -157,13 +185,7 @@ export async function sendToAudience(
   await Promise.all(
     subscriptions.map(async (subscription) => {
       try {
-        await webpush.sendNotification(
-          {
-            endpoint: subscription.endpoint,
-            keys: { p256dh: subscription.p256dh, auth: subscription.auth },
-          },
-          payload,
-        );
+        await sendPushWithRetry(subscription, payload);
         delivered += 1;
         await storage.touchPushSubscription(subscription.endpoint);
       } catch (error) {
@@ -205,6 +227,35 @@ export async function dispatchNotification(notification: Notification): Promise<
 }
 
 let timer: ReturnType<typeof setInterval> | undefined;
+let schedulerRunning = false;
+
+/**
+ * ينفّذ جولة واحدة من الإشعارات المجدولة. القفل محلي لتقليل التداخل داخل
+ * النسخة نفسها، والحجز الذري في قاعدة البيانات يحمي أيضاً عند تشغيل نسختين.
+ */
+export async function runScheduledNotificationSweep(now = new Date()): Promise<number> {
+  if (!configured || schedulerRunning) return 0;
+
+  schedulerRunning = true;
+  let processed = 0;
+  try {
+    const due = await storage.getDueNotifications(now);
+    for (const notification of due) {
+      // الحجز مشروط بأن الإشعار ما زال مجدولاً — أول دورة تحجزه، وما بعدها يتخطاه
+      const claimed = await storage.claimScheduledNotification(notification.id);
+      if (!claimed) continue;
+      processed += 1;
+      try {
+        await dispatchNotification(claimed);
+      } catch (error) {
+        console.error("تعذر إرسال إشعار مجدول:", error);
+      }
+    }
+    return processed;
+  } finally {
+    schedulerRunning = false;
+  }
+}
 
 /**
  * يفحص الإشعارات المجدولة كل دقيقة ويرسل ما حان وقته.
@@ -214,20 +265,10 @@ let timer: ReturnType<typeof setInterval> | undefined;
 export function startNotificationScheduler() {
   if (!configured || timer) return;
 
-  timer = setInterval(async () => {
-    try {
-      const due = await storage.getDueNotifications(new Date());
-      for (const notification of due) {
-        // الحجز مشروط بأن الإشعار ما زال مجدولاً — أول دورة تحجزه، وما بعدها يتخطاه
-        const claimed = await storage.claimScheduledNotification(notification.id);
-        if (!claimed) continue;
-        await dispatchNotification(claimed).catch((error) =>
-          console.error("تعذر إرسال إشعار مجدول:", error),
-        );
-      }
-    } catch (error) {
-      console.error("خطأ في جدولة الإشعارات:", error);
-    }
+  timer = setInterval(() => {
+    void runScheduledNotificationSweep().catch((error) =>
+      console.error("خطأ في جدولة الإشعارات:", error),
+    );
   }, 60_000);
 
   timer.unref?.();

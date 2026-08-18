@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addColumnStatement, expectedColumns } from "./schema-plan";
+import { addColumnStatement, dropNotNullStatement, expectedColumns, isOptional } from "./schema-plan";
 import { SCHEMA_SQL } from "./schema-sql";
 
 /**
@@ -81,5 +81,26 @@ describe("إضافة عمود لجدول قائم", () => {
   it("لا تنقل مفتاحاً أساسياً إلى جدول قائم", () => {
     const statement = addColumnStatement("app_secrets", "key", "text PRIMARY KEY NOT NULL");
     expect(statement).toBeNull(); // إلزامي بلا قيمة افتراضية بعد نزع المفتاح
+  });
+});
+
+describe("تخفيف الإلزام عن عمود صار اختيارياً", () => {
+  it("يميّز الاختياري من الإلزامي", () => {
+    expect(isOptional("text")).toBe(true);
+    expect(isOptional("integer DEFAULT 0 NOT NULL")).toBe(false);
+    expect(isOptional("text PRIMARY KEY NOT NULL")).toBe(false);
+  });
+
+  it("يبني عبارة توسيع لا تضييق", () => {
+    const statement = dropNotNullStatement("attachments", "content");
+    expect(statement).toBe('ALTER TABLE "attachments" ALTER COLUMN "content" DROP NOT NULL');
+    // التضييق (SET NOT NULL) يُسقط الصفوف الفارغة — لا مكان له في مزامنة تلقائية
+    expect(statement).not.toMatch(/SET NOT NULL/i);
+  });
+
+  it("يقرأ المخطط الحالي: محتوى المرفق صار اختيارياً", () => {
+    const attachments = expectedColumns(SCHEMA_SQL).find((entry) => entry.table === "attachments");
+    const content = attachments!.columns.find((column) => column.name === "content");
+    expect(isOptional(content!.definition)).toBe(true);
   });
 });

@@ -23,6 +23,23 @@ const state = { files: [] as any[], audits: [] as any[] };
 
 vi.mock("../storage", () => ({
   storage: {
+    getContribution: vi.fn(async (id: string) => {
+      if (id === "c1") return { id, memberId: "m1" };
+      if (id === "c2") return { id, memberId: "m2" };
+      return undefined;
+    }),
+    getLoanPayment: vi.fn(async (id: string) => {
+      if (id === "p1") return { id, loanId: "l1" };
+      if (id === "p2") return { id, loanId: "l2" };
+      return undefined;
+    }),
+    getLoan: vi.fn(async (id: string) => {
+      if (id === "l1") return { id, memberId: "m1" };
+      if (id === "l2") return { id, memberId: "m2" };
+      return undefined;
+    }),
+    getExpense: vi.fn(async (id: string) => id === "e1" ? { id } : undefined),
+    getInvestment: vi.fn(async (id: string) => id === "i1" ? { id } : undefined),
     getAttachments: vi.fn(async (entityType: string, entityId: string) =>
       state.files.filter((f) => f.entityType === entityType && f.entityId === entityId)
         .map(({ content, ...rest }) => rest)),
@@ -48,7 +65,8 @@ import { registerAttachmentRoutes, MAX_ATTACHMENT_BYTES } from "./attachments";
 let server: Server;
 let baseUrl: string;
 const admin = JSON.stringify({ id: "u1", role: "admin", username: "admin" });
-const member = JSON.stringify({ id: "u2", role: "user", username: "member" });
+const member = JSON.stringify({ id: "u2", role: "user", username: "member", memberId: "m1" });
+const otherMember = JSON.stringify({ id: "u3", role: "user", username: "other", memberId: "m2" });
 
 function request(path: string, init: RequestInit = {}, user?: string) {
   return fetch(baseUrl + path, {
@@ -57,7 +75,9 @@ function request(path: string, init: RequestInit = {}, user?: string) {
   });
 }
 
-const smallPng = Buffer.from("صورة تحويل صغيرة").toString("base64");
+const smallPngBytes = Buffer.concat([Buffer.from("89504e470d0a1a0a", "hex"), Buffer.from("صورة تحويل صغيرة")]);
+const smallPng = smallPngBytes.toString("base64");
+const smallPdf = Buffer.from("%PDF-1.7\nفاتورة اختبار").toString("base64");
 
 beforeAll(async () => {
   const app = express();
@@ -82,14 +102,55 @@ describe("مرفقات الإيصالات", () => {
     }, member);
     expect(res.status).toBe(201);
     const body = await res.json();
-    expect(body).not.toHaveProperty("content"); // المحتوى لا يُعاد في الرد
+    expect(body).not.toHaveProperty("content");
+    expect(state.files[0]).toMatchObject({ storageKey: null, content: smallPng });
     expect(state.audits.map((a) => a.action)).toContain("attachment_uploaded");
+  });
+
+  it("يرفض العضو الوصول إلى مساهمة عضو آخر", async () => {
+    const list = await request("/api/attachments?entityType=contribution&entityId=c2", {}, member);
+    expect(list.status).toBe(403);
+
+    const upload = await request("/api/attachments", {
+      method: "POST",
+      body: JSON.stringify({ entityType: "contribution", entityId: "c2", fileName: "غير مسموح.png", mimeType: "image/png", content: smallPng }),
+    }, member);
+    expect(upload.status).toBe(403);
+    expect(state.files).toHaveLength(0);
+  });
+
+  it("يرفض العضو مرفقات المصروفات والاستثمارات الإدارية", async () => {
+    const expense = await request("/api/attachments", {
+      method: "POST",
+      body: JSON.stringify({ entityType: "expense", entityId: "e1", fileName: "فاتورة.png", mimeType: "image/png", content: smallPng }),
+    }, member);
+    const investment = await request("/api/attachments?entityType=investment&entityId=i1", {}, member);
+    expect(expense.status).toBe(403);
+    expect(investment.status).toBe(403);
+  });
+
+  it("يرفض المحتوى الفارغ", async () => {
+    const res = await request("/api/attachments", {
+      method: "POST",
+      body: JSON.stringify({ entityType: "contribution", entityId: "c1", fileName: "فارغ.png", mimeType: "image/png", content: "" }),
+    }, member);
+    expect(res.status).toBe(400);
+    expect(state.files).toHaveLength(0);
+  });
+
+  it("يرفض محتوى لا يطابق نوع MIME المعلن", async () => {
+    const res = await request("/api/attachments", {
+      method: "POST",
+      body: JSON.stringify({ entityType: "contribution", entityId: "c1", fileName: "صورة.pdf", mimeType: "application/pdf", content: smallPng }),
+    }, member);
+    expect(res.status).toBe(400);
+    expect(state.files).toHaveLength(0);
   });
 
   it("يرفض نوع ملف غير مدعوم", async () => {
     const res = await request("/api/attachments", {
       method: "POST",
-      body: JSON.stringify({ entityType: "expense", entityId: "e1", fileName: "خبيث.exe", mimeType: "application/x-msdownload", content: smallPng }),
+      body: JSON.stringify({ entityType: "contribution", entityId: "c1", fileName: "خبيث.exe", mimeType: "application/x-msdownload", content: smallPng }),
     }, member);
     expect(res.status).toBe(400);
     expect(state.files).toHaveLength(0);
@@ -100,7 +161,7 @@ describe("مرفقات الإيصالات", () => {
     const res = await request("/api/attachments", {
       method: "POST",
       body: JSON.stringify({ entityType: "expense", entityId: "e1", fileName: "كبير.pdf", mimeType: "application/pdf", content: big }),
-    }, member);
+    }, admin);
     expect(res.status).toBe(400);
     expect((await res.json()).error).toContain("1 ميغابايت");
     expect(state.files).toHaveLength(0);
@@ -108,7 +169,7 @@ describe("مرفقات الإيصالات", () => {
 
   it("القائمة تُرجع مرفقات الكيان المطلوب فقط وبلا محتوى", async () => {
     await request("/api/attachments", { method: "POST", body: JSON.stringify({ entityType: "contribution", entityId: "c1", fileName: "أ.png", mimeType: "image/png", content: smallPng }) }, member);
-    await request("/api/attachments", { method: "POST", body: JSON.stringify({ entityType: "expense", entityId: "e1", fileName: "ب.png", mimeType: "image/png", content: smallPng }) }, member);
+    await request("/api/attachments", { method: "POST", body: JSON.stringify({ entityType: "expense", entityId: "e1", fileName: "ب.png", mimeType: "image/png", content: smallPng }) }, admin);
 
     const rows = await (await request("/api/attachments?entityType=contribution&entityId=c1", {}, member)).json();
     expect(rows).toHaveLength(1);
@@ -116,16 +177,25 @@ describe("مرفقات الإيصالات", () => {
     expect(rows[0]).not.toHaveProperty("content");
   });
 
-  it("مسار التنزيل يعيد الملف نفسه لا قائمة", async () => {
-    await request("/api/attachments", { method: "POST", body: JSON.stringify({ entityType: "expense", entityId: "e1", fileName: "فاتورة.pdf", mimeType: "application/pdf", content: smallPng }) }, member);
-    const res = await request("/api/attachments/a1/download", {}, member);
+  it("العضو يقرأ مرفق سداد سلفته فقط", async () => {
+    await request("/api/attachments", { method: "POST", body: JSON.stringify({ entityType: "loan_payment", entityId: "p1", fileName: "سداد.png", mimeType: "image/png", content: smallPng }) }, member);
+
+    const own = await request("/api/attachments/a1/download", {}, member);
+    const other = await request("/api/attachments/a1/download", {}, otherMember);
+    expect(own.status).toBe(200);
+    expect(other.status).toBe(403);
+    expect(Buffer.from(await own.arrayBuffer()).equals(smallPngBytes)).toBe(true);
+  });
+
+  it("المشرف يستطيع قراءة مرفقات المصروفات", async () => {
+    await request("/api/attachments", { method: "POST", body: JSON.stringify({ entityType: "expense", entityId: "e1", fileName: "فاتورة.pdf", mimeType: "application/pdf", content: smallPdf }) }, admin);
+    const res = await request("/api/attachments/a1/download", {}, admin);
     expect(res.status).toBe(200);
     expect(res.headers.get("content-type")).toContain("application/pdf");
-    expect(Buffer.from(await res.arrayBuffer()).toString("utf8")).toBe("صورة تحويل صغيرة");
   });
 
   it("الحذف للوصي وحده", async () => {
-    await request("/api/attachments", { method: "POST", body: JSON.stringify({ entityType: "expense", entityId: "e1", fileName: "ف.pdf", mimeType: "application/pdf", content: smallPng }) }, member);
+    await request("/api/attachments", { method: "POST", body: JSON.stringify({ entityType: "expense", entityId: "e1", fileName: "ف.pdf", mimeType: "application/pdf", content: smallPdf }) }, admin);
     expect((await request("/api/attachments/a1", { method: "DELETE" }, member)).status).toBe(403);
     expect((await request("/api/attachments/a1", { method: "DELETE" }, admin)).status).toBe(200);
     expect(state.files).toHaveLength(0);

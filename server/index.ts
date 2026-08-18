@@ -76,8 +76,8 @@ app.get("/api/health", async (_req, res) => {
       "select to_regclass('public.contribution_rates') is not null as ready",
     );
     const schemaReady = Boolean(rows[0]?.ready);
-    res.status(200).json({
-      status: "ok",
+    res.status(schemaReady ? 200 : 503).json({
+      status: schemaReady ? "ok" : "degraded",
       database: "connected",
       schemaReady,
       // المزامنة التلقائية تنشئ الناقص عند الإقلاع؛ بقاء الجداول ناقصة يعني

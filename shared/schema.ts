@@ -347,7 +347,7 @@ export const proposalVotes = pgTable("proposal_votes", {
 
 export type ProposalVote = typeof proposalVotes.$inferSelect;
 
-// مرفقات الإيصالات — تُحفظ في قاعدة البيانات لا على القرص (قرص النشر مؤقت وتضيع الملفات)
+// مرفقات الإيصالات — تُحفظ bytes في Object Storage، مع content legacy nullable للترحيل التدريجي.
 export const attachments = pgTable("attachments", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   entityType: text("entity_type").notNull(),   // 'contribution' | 'expense' | 'loan_payment' | 'investment'
@@ -355,7 +355,9 @@ export const attachments = pgTable("attachments", {
   fileName: text("file_name").notNull(),
   mimeType: text("mime_type").notNull(),
   sizeBytes: integer("size_bytes").notNull(),
-  content: text("content").notNull(),          // base64
+  storageKey: text("storage_key"),             // مفتاح Object Storage — المسار المعتمد للملفات الجديدة
+  storageUrl: text("storage_url"),             // رابط العرض الموقّع/الممرّر إن وفره مزود التخزين
+  content: text("content"),                    // base64 legacy — يُقرأ فقط عند غياب storageKey
   createdAt: timestamp("created_at").defaultNow(),
   createdBy: varchar("created_by"),
 });

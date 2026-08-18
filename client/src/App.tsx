@@ -30,6 +30,8 @@ const MemberDetail = lazy(() => import("@/pages/member-detail"));
 const AuditLog = lazy(() => import("@/pages/audit-log"));
 const AnnualReport = lazy(() => import("@/pages/annual-report"));
 const ReportBuilder = lazy(() => import("@/pages/report-builder"));
+const PlatformReview = lazy(() => import("@/pages/platform-review"));
+const Onboarding = lazy(() => import("@/pages/onboarding"));
 const Investments = lazy(() => import("@/pages/investments"));
 const Proposals = lazy(() => import("@/pages/proposals"));
 const Notifications = lazy(() => import("@/pages/notifications"));
@@ -84,6 +86,8 @@ function Router() {
         <Route path="/audit-log">{() => <ProtectedRoute component={AuditLog} />}</Route>
         <Route path="/annual-report">{() => <AdminRoute component={AnnualReport} />}</Route>
         <Route path="/report-builder">{() => <AdminRoute component={ReportBuilder} />}</Route>
+        <Route path="/platform-review">{() => <AdminRoute component={PlatformReview} />}</Route>
+        <Route path="/onboarding">{() => <AdminRoute component={Onboarding} />}</Route>
         <Route path="/investments">{() => <AdminRoute component={Investments} />}</Route>
         <Route path="/proposals">{() => <ProtectedRoute component={Proposals} />}</Route>
         <Route path="/notifications">{() => <AdminRoute component={Notifications} />}</Route>

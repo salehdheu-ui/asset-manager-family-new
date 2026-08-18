@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="مراجعة شاملة وخارطة تطوير لمنصة صندوق العائلة Family Platform" />
+  <title>مراجعة وخارطة تطوير منصة family</title>
+  <style>
+    :root{--green:#0c5b3b;--green-2:#117a4c;--gold:#d49a42;--ink:#12261d;--muted:#617269;--line:#dfe8e1;--soft:#f3f8f4;--red:#b42318;--red-bg:#fff4f2;--amber:#9a6700;--amber-bg:#fff9e9;--blue:#175cd3;--blue-bg:#eff8ff;--shadow:0 18px 55px rgba(14,61,41,.10)}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#f6faf7;color:var(--ink);font-family:"Tahoma","Arial",sans-serif;line-height:1.75}a{color:var(--green-2)}.wrap{width:min(1120px,calc(100% - 32px));margin:auto}.topbar{position:sticky;top:0;z-index:10;background:rgba(246,250,247,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--line)}.topbar .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 0}.brand{font-weight:900;color:var(--green);letter-spacing:-.02em}.topbar nav{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;font-weight:700}.topbar nav a{text-decoration:none}.button{border:0;background:var(--green);color:#fff;padding:9px 14px;border-radius:10px;font-weight:800;cursor:pointer}.hero{margin:34px auto 22px;border-radius:26px;overflow:hidden;padding:46px;position:relative;background:linear-gradient(135deg,var(--green),var(--green-2) 55%,var(--gold));color:#fff;box-shadow:0 24px 70px rgba(12,91,59,.24)}.hero:before,.hero:after{content:"";position:absolute;border-radius:50%;background:rgba(255,255,255,.10);filter:blur(5px)}.hero:before{width:300px;height:300px;left:-90px;top:-130px}.hero:after{width:340px;height:340px;right:-110px;bottom:-190px;background:rgba(0,0,0,.10)}.hero>*{position:relative;z-index:1}.eyebrow{font-size:12px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;opacity:.75}.hero h1{font-size:clamp(30px,5vw,56px);line-height:1.25;max-width:820px;margin:15px 0}.hero p{max-width:780px;color:rgba(255,255,255,.86);font-size:17px}.pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}.pill{display:inline-block;border:1px solid var(--line);background:#fff;color:var(--green);border-radius:999px;padding:4px 10px;font-size:12px;font-weight:900}.hero .pill{border-color:rgba(255,255,255,.25);background:rgba(255,255,255,.12);color:#fff}.grid{display:grid;gap:14px}.stats{grid-template-columns:repeat(4,1fr)}.cards-2{grid-template-columns:repeat(2,1fr)}.cards-3{grid-template-columns:repeat(3,1fr)}.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:0 5px 18px rgba(15,54,35,.05)}.card h3{margin:0 0 7px;color:var(--green);line-height:1.4}.card p{margin:0;color:var(--muted);font-size:14px}.stat strong{display:block;color:var(--green);font-size:22px;line-height:1.3;margin:6px 0}.stat small{color:var(--muted);font-size:12px}.section{padding:40px 0 0;scroll-margin-top:82px}.section h2{font-size:clamp(25px,4vw,38px);line-height:1.25;color:var(--green);margin:4px 0 8px}.section-intro{color:var(--muted);max-width:820px;margin:0 0 18px}.callout{border:1px solid #b7dec6;background:#eefaf2;border-radius:18px;padding:20px}.callout.warn{border-color:#f0d79a;background:var(--amber-bg)}.callout h3{margin:0 0 8px}.callout p{margin:0;color:#4d6356;font-size:14px}.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:18px;background:#fff;box-shadow:0 5px 18px rgba(15,54,35,.05)}table{border-collapse:collapse;width:100%;min-width:720px;font-size:14px}th,td{text-align:right;padding:14px 16px;border-bottom:1px solid var(--line);vertical-align:top}th{background:var(--soft);color:var(--green);font-size:12px}tr:last-child td{border-bottom:0}.risk{border-radius:16px;padding:16px 18px;margin:10px 0;border:1px solid}.risk h3{margin:0 0 5px;font-size:16px}.risk p{margin:0;color:#4e5c54;font-size:14px}.risk.red{background:var(--red-bg);border-color:#f4c7c2}.risk.red h3{color:var(--red)}.risk.amber{background:var(--amber-bg);border-color:#f0d79a}.risk.amber h3{color:var(--amber)}.risk.blue{background:var(--blue-bg);border-color:#b2ddff}.risk.blue h3{color:var(--blue)}.roadmap{position:relative}.roadmap:before{content:"";position:absolute;right:20px;top:20px;bottom:20px;width:2px;background:var(--line)}.road{position:relative;display:grid;grid-template-columns:42px 1fr;gap:16px;margin:14px 0}.node{width:42px;height:42px;display:grid;place-items:center;border-radius:14px;color:#fff;font-weight:900;z-index:1;box-shadow:0 5px 14px rgba(0,0,0,.14)}.node.red{background:#ef4444}.node.amber{background:#f59e0b}.node.blue{background:#3b82f6}.node.green{background:#10b981}.road-body{background:#fff;border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:0 5px 18px rgba(15,54,35,.05)}.road-body h3{margin:0;color:var(--green)}.road-body p{margin:4px 0 12px;color:var(--muted);font-size:13px}.road-body ul{margin:0;padding-right:19px;color:#4e5c54;font-size:14px}.road-body li{margin:5px 0}.footer{padding:42px 0 60px;color:var(--muted);font-size:13px}.muted{color:var(--muted)}code{background:#edf3ee;border-radius:5px;padding:2px 5px;font-size:12px}@media(max-width:850px){.stats{grid-template-columns:repeat(2,1fr)}.cards-3{grid-template-columns:1fr}.hero{padding:30px 24px}.hero p{font-size:15px}.topbar nav{display:none}}@media(max-width:600px){.wrap{width:min(100% - 22px,1120px)}.cards-2{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}.card{padding:16px}.hero{margin-top:18px}.hero h1{font-size:31px}.section{padding-top:30px}}@media print{body{background:#fff}.topbar{position:static;background:#fff}.topbar nav,.topbar .button{display:none}.hero{box-shadow:none;margin-top:0}.card,.table-wrap,.road-body{box-shadow:none;break-inside:avoid}.section{break-inside:avoid}.footer{padding-bottom:0}}
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap">
+      <div class="brand">صندوق العائلة · مراجعة المنصة</div>
+      <nav aria-label="التنقل داخل التقرير"><a href="#summary">الخلاصة</a><a href="#product">المنتج</a><a href="#technology">التقنية</a><a href="#security">الأمان</a><a href="#roadmap">الخارطة</a><a href="#kpis">القياس</a></nav>
+      <button class="button" onclick="window.print()">طباعة / PDF</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="hero">
+      <div class="eyebrow">Family Platform Review · Commit 2c527d0</div>
+      <h1>كيف تتحول منصة family من نظام جيد إلى بنية موثوقة لنمو الثروة العائلية؟</h1>
+      <p>مراجعة عملية للمستودع الحالي، توازن بين قوة المنتج ومخاطره، وتحوّل الملاحظات إلى خارطة تنفيذ مرتبة حسب الأثر والجهد.</p>
+      <div class="pills"><span class="pill">RTL + Mobile-first</span><span class="pill">Financial workflows</span><span class="pill">Audit & backup</span><span class="pill">PWA + notifications</span></div>
+    </section>
+
+    <section class="grid stats">
+      <div class="card stat"><span class="muted">نطاق المنتج</span><strong>واسع</strong><small>مساهمات، سلف، تقارير، استثمار، زكاة، حوكمة</small></div>
+      <div class="card stat"><span class="muted">الاختبارات الحالية</span><strong>تعمل</strong><small>Vitest + فحص TypeScript + بناء إنتاج</small></div>
+      <div class="card stat"><span class="muted">أعلى أولوية</span><strong>صلاحيات المرفقات</strong><small>منع قراءة ملف لا يحق للمستخدم رؤيته</small></div>
+      <div class="card stat"><span class="muted">أكبر فرصة</span><strong>Onboarding</strong><small>اختصار الطريق من أول دخول إلى أول سجل مالي</small></div>
+    </section>
+
+    <section id="summary" class="section">
+      <div class="eyebrow">01 / الحكم التنفيذي</div>
+      <h2>المنصة قوية وظيفيًا، وتحتاج الآن إلى ضبط الحدود قبل زيادة المزايا</h2>
+      <p class="section-intro">القاعدة الحالية ممتازة كنظام داخلي لعائلة واحدة: عربية، غنية بالعمليات المالية، وتحتوي على حوكمة ونسخ احتياطية وتحليلات. أفضل قرار استراتيجي هو تخصيص دورة قصيرة لتثبيت الصلاحيات والتحقق والأداء، ثم الاستثمار في onboarding والتنبؤ المالي.</p>
+      <div class="grid cards-2">
+        <div class="callout"><h3>ما يجب الحفاظ عليه</h3><p>نموذج العمليات المالية، سجل التدقيق، المعاملات، النسخ والاستعادة، التذكيرات، والتصميم العربي هي أصول تميّز المنصة عن لوحة CRUD عادية.</p><div class="pills"><span class="pill">المعاملات المالية</span><span class="pill">RBAC</span><span class="pill">تقارير العضو</span><span class="pill">PWA</span></div></div>
+        <div class="callout warn"><h3>ما يجب ألا يؤجل</h3><p>التحقق من ملكية المرفق، توحيد المدخلات، إدارة المهام عند التوسع، ونقل الملفات من قاعدة البيانات هي حدود سلامة وموثوقية تسبق التسويق أو إضافة عائلات متعددة.</p><div class="pills"><span class="pill">صلاحيات الملفات</span><span class="pill">Validation</span><span class="pill">Workers</span><span class="pill">Object Storage</span></div></div>
+      </div>
+    </section>
+
+    <section id="product" class="section">
+      <div class="eyebrow">02 / المنتج وتجربة الاستخدام</div>
+      <h2>التطوير الأكبر ليس شاشة جديدة؛ بل وضوح القرار في كل شاشة</h2>
+      <p class="section-intro">كل عملية مالية يجب أن تجيب العضو أو المشرف عن أربعة أسئلة: ماذا حدث؟ لمن؟ في أي فترة؟ وما الخطوة التالية؟</p>
+      <div class="table-wrap"><table><thead><tr><th>المجال</th><th>الملاحظة</th><th>التطوير المقترح</th><th>الأثر</th></tr></thead><tbody>
+        <tr><td><b>الإعداد الأول</b></td><td>المنتج غني، لكن المستخدم الجديد يحتاج معرفة أين يبدأ.</td><td>Onboarding مرحلي مع بيانات تجريبية اختيارية ومؤشر اكتمال.</td><td><span class="pill">تنشيط أسرع</span></td></tr>
+        <tr><td><b>لوحة التحكم</b></td><td>تظهر أرقامًا أساسية وتوزيع الطبقات، لكن السياق الزمني والتنبيهات يمكن أن يكون أوضح.</td><td>أضف آخر تحديث، مقارنة بالفترة السابقة، المتأخرات، الموافقات، وصحة النسخة الاحتياطية.</td><td><span class="pill">قرار أسرع</span></td></tr>
+        <tr><td><b>الشفافية</b></td><td>التقارير موجودة، لكن العضو يحتاج قصة مبسطة لا جدولًا فقط.</td><td>حوّل كشف الحساب إلى timeline مفهوم مع شرح سبب تغير الرصيد والحصة.</td><td><span class="pill">ثقة أعلى</span></td></tr>
+        <tr><td><b>الهوية</b></td><td>الهوية العربية والعمانية مميزة، لكن بعض النصوص الإنجليزية التقنية ما زالت ظاهرة.</td><td>قاموس ترجمة موحد، تنسيق تواريخ وأرقام مركزي، واختبار RTL بصري لكل مسار.</td><td><span class="pill">احترافية</span></td></tr>
+        <tr><td><b>الوصولية</b></td><td>توجد أزرار وأيقونات تفاعلية، لكن يلزم تدقيق labels وfocus وaria.</td><td>اختبار لوحة المفاتيح، قارئ الشاشة، تباين الألوان، وحجم أهداف اللمس.</td><td><span class="pill">شمولية</span></td></tr>
+      </tbody></table></div>
+      <div class="grid cards-3" style="margin-top:14px"><div class="card"><h3>الأدوار</h3><p>افصل بين صلاحية رؤية المال، تسجيله، اعتماده، وتغيير الإعدادات بدل أن تكون كل الصلاحيات تقريبًا نتيجة role واحد.</p></div><div class="card"><h3>الخطوة التالية</h3><p>في كل شاشة، اجعل CTA واحدًا واضحًا: اعتماد، سداد، إرفاق إيصال، أو مراجعة المتأخرات.</p></div><div class="card"><h3>حالة البيانات</h3><p>اعرض دائمًا وقت آخر مزامنة، مصدر الرقم، ونطاق الفترة حتى لا تُفهم الأرقام خارج سياقها.</p></div></div>
+    </section>
+
+    <section id="technology" class="section">
+      <div class="eyebrow">03 / البنية التقنية</div>
+      <h2>البنية الحالية مناسبة لنسخة واحدة؛ وهذه حدودها عند النمو</h2>
+      <p class="section-intro">الهدف ليس تعقيد النظام، بل نقل التعقيد إلى المكان الصحيح قبل أن يصبح عطلًا إنتاجيًا.</p>
+      <div class="table-wrap"><table><thead><tr><th>الطبقة</th><th>الوضع الحالي</th><th>التقييم</th><th>الخطوة التالية</th></tr></thead><tbody>
+        <tr><td><b>الواجهة</b></td><td>React + Vite + Tailwind + RTL + PWA</td><td><span class="pill">قوية ومناسبة للجوال</span></td><td>قسّم الحزم، حسّن الوصولية، ووحّد الحالات البصرية.</td></tr>
+        <tr><td><b>API</b></td><td>Express + TypeScript + مسارات domain</td><td><span class="pill">واضحة ومباشرة</span></td><td>أضف schemas مشتركة، pagination، وطبقة صلاحيات للموارد.</td></tr>
+        <tr><td><b>البيانات</b></td><td>PostgreSQL + Drizzle + جداول مالية متعددة</td><td><span class="pill">غنية وقابلة للتدقيق</span></td><td>أضف migrations مرقمة، مفاتيح خارجية للهوية، وفهارس للتقارير.</td></tr>
+        <tr><td><b>المهام</b></td><td>نسخ احتياطي وتذكيرات داخل عملية الخادم</td><td><span class="pill">مناسبة لنسخة واحدة</span></td><td>Worker أو قفل موزع عند التوسع الأفقي.</td></tr>
+        <tr><td><b>الملفات</b></td><td>Base64 داخل قاعدة البيانات</td><td><span class="pill">بسيطة للبداية</span></td><td>Object Storage مشفر وروابط تنزيل مؤقتة.</td></tr>
+      </tbody></table></div>
+      <div class="grid cards-3" style="margin-top:14px"><div class="card"><h3>قاعدة البيانات</h3><p>أضف فهارس على memberId والتواريخ والحالات، واجعل تقارير السنوات الكبيرة تعتمد على استعلامات محددة لا تجميعات غير محدودة.</p></div><div class="card"><h3>تعدد العائلات</h3><p>إذا كان الهدف SaaS، فالمخطط الحالي يبدو مهيأ لعائلة واحدة. أضف familyId وعزلًا إلزاميًا لكل query قبل فتح التسجيل العام.</p></div><div class="card"><h3>المراقبة</h3><p>health endpoint وrequest logging بداية جيدة. أضف structured logs وcorrelation id وقياسات زمن الاستعلام وفشل المهام.</p></div></div>
+    </section>
+
+    <section id="security" class="section">
+      <div class="eyebrow">04 / الأمان والموثوقية</div>
+      <h2>الأولوية: صلاحية المورد لا مجرد صلاحية المستخدم</h2>
+      <p class="section-intro">وجود isAuthenticated أو isAdmin لا يضمن أن المستخدم يحق له الوصول إلى كل سجل. طبّق authorization على مستوى المورد نفسه، خصوصًا المرفقات والسلف وكشوف الأعضاء.</p>
+      <div class="risk red"><h3>P0 · إغلاق ثغرة صلاحية المرفقات</h3><p>مسار تنزيل المرفق يتحقق من تسجيل الدخول فقط. يجب أن يتحقق الخادم أيضًا من حق المستخدم في رؤية الكيان المرتبط بالمرفق، وأن يمنع ربط entityId بكيان لا يملكه المستخدم.</p></div>
+      <div class="risk red"><h3>P0 · توحيد التحقق من المدخلات</h3><p>إنشاء المستخدم وتغيير كلمة المرور وبعض العمليات الإدارية تعتمد على فحص وجود القيمة فقط. استخدم مخططات Zod مشتركة للطول والتنسيق والقيم المسموحة، مع رسائل خطأ موحدة.</p></div>
+      <div class="risk amber"><h3>P1 · نقل المرفقات خارج قاعدة البيانات</h3><p>المرفقات محفوظة Base64 داخل PostgreSQL. هذا يضخم النسخ الاحتياطية ويرفع تكلفة القراءة. الأفضل تخزينها في Object Storage مشفر، وحفظ metadata وobject key فقط.</p></div>
+      <div class="risk amber"><h3>P1 · فصل المهام المجدولة عن عملية الويب</h3><p>النسخ الاحتياطي والتذكيرات تبدأ من عملية الخادم نفسها. عند تشغيل أكثر من نسخة قد تتكرر المهمة. أضف قفلًا موزعًا أو Queue/Worker أو جدولة خارجية.</p></div>
+      <div class="risk amber"><h3>P1 · تقسيم الحزم الكبيرة</h3><p>كشف البناء أظهر حزمًا تتجاوز 500KB، منها analytics بنحو 514KB وExcelJS بنحو 937KB. حمّل أدوات التصدير عند الطلب واستخرج charting وExcel في chunks منفصلة.</p></div>
+      <div class="risk blue"><h3>P2 · تحويل مزامنة المخطط إلى migrations مُرقّمة</h3><p>المزامنة الإضافية عند الإقلاع مفيدة، لكنها لا تكفي لإدارة تغييرات الإنتاج المعقدة. اعتمد migrations versioned في CI، مع إبقاء مزامنة الإنشاء كشبكة أمان محدودة.</p></div>
+      <div class="callout" style="margin-top:14px"><h3>سياسة مقترحة للعمليات الحساسة</h3><p>قبل أي اعتماد أو سداد أو تصفية استثمار أو استعادة نسخة: تحقق من الدور، ملكية المورد، صحة المبلغ، عدم تكرار العملية، ثم سجّل actor وسبب العملية والنتيجة في audit log. الاختبار يجب أن يغطي النجاح والفشل وإعادة الإرسال.</p></div>
+    </section>
+
+    <section id="roadmap" class="section">
+      <div class="eyebrow">05 / خارطة الطريق</div>
+      <h2>نفّذ على أربع موجات بدل فتح عشرات المسارات معًا</h2>
+      <p class="section-intro">الترتيب أدناه يوازن بين حماية البيانات، زيادة الاستخدام، وخفض تكلفة التشغيل. لا تبدأ بالذكاء الاصطناعي قبل أن تصبح البيانات والصلاحيات قابلة للثقة.</p>
+      <div class="roadmap">
+        <div class="road"><div class="node red">0</div><div class="road-body"><h3>تثبيت الأساس خلال 7–14 يومًا</h3><p>منع المخاطر قبل إضافة مزايا جديدة.</p><ul><li>إصلاح تفويض المرفقات على مستوى الكيان والمستخدم.</li><li>توحيد Zod للتحقق من المستخدمين وكلمات المرور والنسب والمبالغ.</li><li>إضافة security headers وCSRF defense-in-depth وحدود طلبات للعمليات الحساسة.</li><li>إضافة اختبارات سلبية للصلاحيات.</li></ul></div></div>
+        <div class="road"><div class="node amber">1</div><div class="road-body"><h3>رفع قيمة المنتج خلال 2–4 أسابيع</h3><p>جعل أول تجربة للعائلة واضحة وسريعة.</p><ul><li>معالج إعداد أولي من أربع خطوات مع مؤشر اكتمال.</li><li>لوحة رئيسية تعرض آخر تحديث، الرصيد المتاح، المتأخرات، والموافقات المعلقة.</li><li>مركز إشعارات موحد مع تفضيلات لكل عضو وسجل قراءة.</li><li>قاموس حالات عربي موحد مع loading/empty/error states.</li></ul></div></div>
+        <div class="road"><div class="node blue">2</div><div class="road-body"><h3>التوسع التشغيلي خلال 1–2 شهر</h3><p>تقليل تكلفة التشغيل وتحسين السرعة والاعتمادية.</p><ul><li>Object Storage للمرفقات والنسخ الاحتياطية مع تشفير وروابط مؤقتة.</li><li>Worker مستقل للتذكيرات والنسخ الاحتياطي مع idempotency.</li><li>فهرسة واستعلامات مخصصة للتقارير الثقيلة وpagination.</li><li>تقسيم الحزم وإتاحة التصدير عند الطلب.</li></ul></div></div>
+        <div class="road"><div class="node green">3</div><div class="road-body"><h3>منصة ناضجة خلال 2–3 أشهر</h3><p>تحويل صندوق العائلة إلى منتج قابل للتوسع بثقة.</p><ul><li>مصفوفة صلاحيات قابلة للإدارة بدل admin/user فقط.</li><li>سجل تغييرات قابل للتصفية والتصدير مع سبب التعديل.</li><li>سيناريوهات مالية للتدفق والمتأخرات والاستثمار.</li><li>اختبارات استعادة دورية، مؤشرات تشغيل، وبيئة staging ببيانات وهمية.</li></ul></div></div>
+      </div>
+    </section>
+
+    <section id="kpis" class="section">
+      <div class="eyebrow">06 / قياس النجاح</div>
+      <h2>ما لا يُقاس سيعود إلى خانة الانطباع</h2>
+      <p class="section-intro">استخدم هذه المؤشرات في لوحة داخلية شهرية، مع مالك واضح لكل مؤشر وهدف زمني قابل للمقارنة.</p>
+      <div class="grid cards-3"><div class="card"><h3>زمن الإعداد الأول</h3><p><b>أقل من 10 دقائق</b><br />يقيس سهولة البدء لعائلة جديدة.</p></div><div class="card"><h3>زمن فتح لوحة الجوال</h3><p><b>p75 أقل من 2.5 ثانية</b><br />يقيس أثر تقسيم الحزم والاستعلامات.</p></div><div class="card"><h3>تغطية الاختبارات الحساسة</h3><p><b>100% لمسارات الصلاحيات</b><br />خصوصًا المرفقات والمال والنسخ.</p></div><div class="card"><h3>نجاح النسخ والاستعادة</h3><p><b>استعادة تجريبية شهرية</b><br />لا يكفي نجاح إنشاء النسخة فقط.</p></div><div class="card"><h3>المتأخرات غير المفسرة</h3><p><b>صفر حالات</b><br />كل مبلغ يرتبط بعضو وفترة وحالة.</p></div><div class="card"><h3>الأعطال الحرجة</h3><p><b>صفر مفتوح</b><br />مع تنبيه واضح للمشرف.</p></div></div>
+    </section>
+
+    <section class="section">
+      <div class="callout"><h3>أول Sprint مقترح</h3><p><b>الأسبوع الأول:</b> صلاحية المرفقات، مخططات Zod المشتركة، واختبارات member-vs-member. <b>الأسبوع الثاني:</b> onboarding أولي، بطاقات dashboard للتنبيهات وآخر تحديث، وتقسيم Excel/analytics مع قياس before/after.</p></div>
+    </section>
+
+    <footer class="footer">
+      <p><b>مصادر المراجعة داخل المستودع:</b> بُني هذا التقييم على قراءة الملفات الفعلية في commit <code>2c527d0</code>، مع تشغيل الاختبارات وفحص الأنواع وبناء الإنتاج. أهم نقاط القراءة: <code>README.md</code>، <code>shared/schema.ts</code>، <code>server/auth.ts</code>، <code>server/routes/attachments.ts</code>، <code>client/src/lib/api.ts</code>، وملفات dashboard/report/layout.</p>
+      <p>ملاحظة: صفحة التقرير مخصصة للمراجعة الداخلية، ولا ينبغي عرضها للأعضاء إلا بعد قرار إداري مناسب.</p>
+    </footer>
+  </main>
+</body>
+</html>

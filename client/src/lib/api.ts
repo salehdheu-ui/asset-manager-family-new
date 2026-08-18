@@ -792,7 +792,7 @@ export async function getAttachments(entityType: string, entityId: string): Prom
   return get<AttachmentMeta[]>("/api/attachments", { entityType, entityId });
 }
 
-// يقرأ الملف في المتصفح ويرسله base64 — التخزين في قاعدة البيانات لا على القرص
+// يقرأ الملف في المتصفح ويرسله base64 إلى الخادم — الخادم يختار Object Storage أو legacy fallback
 export async function uploadAttachment(entityType: string, entityId: string, file: File): Promise<AttachmentMeta> {
   const content = await new Promise<string>((resolve, reject) => {
     const reader = new FileReader();

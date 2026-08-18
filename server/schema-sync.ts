@@ -1,6 +1,6 @@
 import { pool } from "./db";
 import { SCHEMA_SQL } from "./schema-sql";
-import { addColumnStatement, expectedColumns } from "./schema-plan";
+import { addColumnStatement, dropNotNullStatement, expectedColumns, isOptional } from "./schema-plan";
 
 /**
  * يلحق بقاعدة البيانات ما ينقصها عند إقلاع الخادم.
@@ -26,17 +26,27 @@ export interface SchemaSyncResult {
   tablesBefore: number;
   tablesAfter: number;
   columnsAdded: string[];
+  /** أعمدة خُفِّف عنها الإلزام لتطابق المخطط */
+  relaxed: string[];
   skipped: string[];
+  /** تعديلات تعثّرت — لا تمنع بقية المزامنة */
+  failed: string[];
 }
 
 export async function syncSchema(): Promise<SchemaSyncResult> {
-  const empty: SchemaSyncResult = { ran: false, tablesBefore: 0, tablesAfter: 0, columnsAdded: [], skipped: [] };
+  const empty: SchemaSyncResult = { ran: false, tablesBefore: 0, tablesAfter: 0, columnsAdded: [], relaxed: [], skipped: [], failed: [] };
   if (DISABLED) return empty;
 
   const sql = SCHEMA_SQL;
+  // pg_catalog لا information_schema: الأخير لا يُظهر إلا ما يملك المستخدم
+  // صلاحية عليه، فجدول أنشأه مستخدم آخر يبقى خفياً — بينما CREATE TABLE IF NOT
+  // EXISTS يراه ويتخطاه. فتختلف نظرة الخطوتين ويُترك الجدول بلا أعمدته الجديدة.
   const countTables = async () => {
     const { rows } = await pool.query(
-      "select count(*)::int as total from information_schema.tables where table_schema = 'public'",
+      `select count(*)::int as total
+       from pg_catalog.pg_class c
+       join pg_catalog.pg_namespace n on n.oid = c.relnamespace
+       where n.nspname = 'public' and c.relkind = 'r'`,
     );
     return Number(rows[0]?.total ?? 0);
   };
@@ -48,26 +58,62 @@ export async function syncSchema(): Promise<SchemaSyncResult> {
   await pool.query(sql);
 
   // ————— الأعمدة المستجدّة على جداول قائمة —————
-  const { rows: existing } = await pool.query<{ table_name: string; column_name: string }>(
-    "select table_name, column_name from information_schema.columns where table_schema = 'public'",
+  const { rows: existing } = await pool.query<{
+    table_name: string;
+    column_name: string;
+    not_null: boolean;
+  }>(
+    `select c.relname as table_name, a.attname as column_name, a.attnotnull as not_null
+     from pg_catalog.pg_attribute a
+     join pg_catalog.pg_class c on c.oid = a.attrelid
+     join pg_catalog.pg_namespace n on n.oid = c.relnamespace
+     where n.nspname = 'public' and c.relkind = 'r' and a.attnum > 0 and not a.attisdropped`,
   );
 
   const present = new Map<string, Set<string>>();
+  const required = new Set<string>();
   for (const row of existing) {
     const columns = present.get(row.table_name) ?? new Set<string>();
     columns.add(row.column_name);
     present.set(row.table_name, columns);
+    if (row.not_null) required.add(`${row.table_name}.${row.column_name}`);
   }
 
   const columnsAdded: string[] = [];
+  const relaxed: string[] = [];
   const skipped: string[] = [];
+  const failed: string[] = [];
+
+  /**
+   * ينفّذ تعديل عمود واحد ويمضي إن تعثّر.
+   *
+   * جدولٌ لا يملكه مستخدم التطبيق يرفض التعديل — ولا يصح أن يمنع ذلك بقية
+   * الجداول من اللحاق بالمخطط. يُسجَّل الاسم والسبب ويكمل الدور.
+   */
+  const run = async (statement: string, label: string): Promise<boolean> => {
+    try {
+      await pool.query(statement);
+      return true;
+    } catch (error) {
+      failed.push(`${label}: ${error instanceof Error ? error.message : "خطأ غير معروف"}`);
+      return false;
+    }
+  };
 
   for (const expected of expectedColumns(sql)) {
     const have = present.get(expected.table);
     if (!have) continue; // جدول أُنشئ للتو بأعمدته كاملة
 
     for (const column of expected.columns) {
-      if (have.has(column.name)) continue;
+      if (have.has(column.name)) {
+        // عمود صار اختيارياً في المخطط وما زال إلزامياً في القاعدة: بلا تخفيفه
+        // يرفض بوستجرس كل صف جديد يتركه فارغاً
+        const key = `${expected.table}.${column.name}`;
+        if (isOptional(column.definition) && required.has(key)) {
+          if (await run(dropNotNullStatement(expected.table, column.name), key)) relaxed.push(key);
+        }
+        continue;
+      }
 
       const statement = addColumnStatement(expected.table, column.name, column.definition);
       if (!statement) {
@@ -75,8 +121,9 @@ export async function syncSchema(): Promise<SchemaSyncResult> {
         continue;
       }
 
-      await pool.query(statement);
-      columnsAdded.push(`${expected.table}.${column.name}`);
+      if (await run(statement, `${expected.table}.${column.name}`)) {
+        columnsAdded.push(`${expected.table}.${column.name}`);
+      }
     }
   }
 
@@ -84,6 +131,9 @@ export async function syncSchema(): Promise<SchemaSyncResult> {
 
   if (tablesAfter > tablesBefore) {
     console.log(`مزامنة المخطط: أُنشئ ${tablesAfter - tablesBefore} جدولاً جديداً`);
+  }
+  if (relaxed.length > 0) {
+    console.log(`مزامنة المخطط: خُفِّف الإلزام عن ${relaxed.join("، ")}`);
   }
   if (columnsAdded.length > 0) {
     console.log(`مزامنة المخطط: أُضيف ${columnsAdded.length} عموداً — ${columnsAdded.join("، ")}`);
@@ -94,5 +144,9 @@ export async function syncSchema(): Promise<SchemaSyncResult> {
     );
   }
 
-  return { ran: true, tablesBefore, tablesAfter, columnsAdded, skipped };
+  if (failed.length > 0) {
+    console.error(`مزامنة المخطط: تعثّرت تعديلات — ${failed.join(" | ")}`);
+  }
+
+  return { ran: true, tablesBefore, tablesAfter, columnsAdded, relaxed, skipped, failed };
 }
