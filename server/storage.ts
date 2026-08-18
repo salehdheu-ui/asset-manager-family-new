@@ -24,7 +24,7 @@ import {
 } from "@shared/schema";
 import { users } from "@shared/models/auth";
 import { db } from "./db";
-import { eq, and, desc, gte, lte, ne, inArray, sql } from "drizzle-orm";
+import { eq, and, desc, gte, lte, lt, ne, or, isNull, inArray, sql } from "drizzle-orm";
 
 export interface IStorage {
   // Members
@@ -68,6 +68,10 @@ export interface IStorage {
   getPaidTotalsByLoan(): Promise<Map<string, number>>;
   /** إجمالي ما سُدِّد على السلف المعتمدة وحدها */
   getRepaidTotalOnApprovedLoans(): Promise<number>;
+  /** السداد الواقع في سنة بعينها — للتقارير السنوية */
+  getRepaymentsInYear(year: number): Promise<LoanPayment[]>;
+  /** السداد الواقع في شهر بعينه */
+  getRepaymentsInMonth(year: number, month: number): Promise<LoanPayment[]>;
   getLoanPaymentsForLoans(loanIds: string[]): Promise<LoanPayment[]>;
   getLoanRepaymentsForLoans(loanIds: string[]): Promise<LoanRepayment[]>;
 
@@ -266,17 +270,28 @@ export class DatabaseStorage implements IStorage {
     return updated;
   }
 
+  /**
+   * سلف السنة بتاريخها الفعّال: تاريخ الاعتماد إن اعتُمدت، وإلا تاريخ الطلب.
+   *
+   * كان الاستعلام يجلب ما أُنشئ في السنة ثم يصفّيه بالتاريخ الفعّال — فسلفة
+   * طُلبت في ديسمبر واعتُمدت في يناير تسقط من تقارير السنتين معاً: تُجلب
+   * للأولى ثم تُصفّى، ولا تُجلب للثانية أصلاً. الشرط الآن على التاريخ الفعّال
+   * نفسه، فلا تضيع سلفة عبرت حدّ السنة.
+   */
   async getLoansByYear(year: number): Promise<Loan[]> {
     const startDate = new Date(year, 0, 1);
     const endDate = new Date(year + 1, 0, 1);
-    const yearLoans = await db.select().from(loans).where(
-      and(gte(loans.createdAt, startDate), lte(loans.createdAt, endDate))
-    );
 
-    return yearLoans.filter((loan: Loan) => {
-      const effectiveDate = loan.approvedAt || loan.createdAt;
-      return effectiveDate ? effectiveDate >= startDate && effectiveDate < endDate : false;
-    });
+    return await db.select().from(loans).where(
+      or(
+        and(gte(loans.approvedAt, startDate), lt(loans.approvedAt, endDate)),
+        and(
+          isNull(loans.approvedAt),
+          gte(loans.createdAt, startDate),
+          lt(loans.createdAt, endDate),
+        ),
+      ),
+    );
   }
 
   async createLoan(loan: InsertLoan): Promise<Loan> {
@@ -382,6 +397,30 @@ export class DatabaseStorage implements IStorage {
     return Number(row?.total ?? 0);
   }
 
+  async getRepaymentsInYear(year: number): Promise<LoanPayment[]> {
+    return await this.repaymentsBetween(new Date(year, 0, 1), new Date(year + 1, 0, 1));
+  }
+
+  async getRepaymentsInMonth(year: number, month: number): Promise<LoanPayment[]> {
+    return await this.repaymentsBetween(new Date(year, month - 1, 1), new Date(year, month, 1));
+  }
+
+  /** السداد على السلف المعتمدة وحدها — نفس ما يعدّه الرصيد، فلا يختلف تقرير عن رصيد */
+  private async repaymentsBetween(from: Date, to: Date): Promise<LoanPayment[]> {
+    const rows = await db
+      .select({ payment: loanPayments })
+      .from(loanPayments)
+      .innerJoin(loans, eq(loanPayments.loanId, loans.id))
+      .where(
+        and(
+          eq(loans.status, "approved"),
+          gte(loanPayments.paidAt, from),
+          lt(loanPayments.paidAt, to),
+        ),
+      );
+    return rows.map((row) => row.payment);
+  }
+
   async getLoanPaymentsForLoans(loanIds: string[]): Promise<LoanPayment[]> {
     if (loanIds.length === 0) return [];
     return await db.select().from(loanPayments)
@@ -409,8 +448,10 @@ export class DatabaseStorage implements IStorage {
   async getExpensesByYear(year: number): Promise<Expense[]> {
     const startDate = new Date(year, 0, 1);
     const endDate = new Date(year + 1, 0, 1);
+    // نهاية المدى مفتوحة: lte تجعل مصروفاً وقع في أول لحظة من السنة التالية
+    // يُحسب في السنتين معاً
     return await db.select().from(expenses).where(
-      and(gte(expenses.createdAt, startDate), lte(expenses.createdAt, endDate))
+      and(gte(expenses.createdAt, startDate), lt(expenses.createdAt, endDate))
     );
   }
 

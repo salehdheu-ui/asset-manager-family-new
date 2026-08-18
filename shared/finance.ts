@@ -17,6 +17,22 @@ export interface RepaymentInstallment {
   status: "scheduled";
 }
 
+/**
+ * إضافة أشهر مع تثبيت اليوم داخل الشهر المقصود.
+ *
+ * setMonth وحدها تفيض: سلفة اعتُمدت في ٣١ يناير يصير قسطها الأول في ٣ مارس
+ * لأن فبراير لا يبلغ ٣١ يوماً — فيُفقد شهر من الجدول كله وتنزاح المواعيد بعده.
+ */
+function addMonths(date: Date, months: number): Date {
+  const result = new Date(date);
+  const day = result.getDate();
+  result.setDate(1);
+  result.setMonth(result.getMonth() + months);
+  const lastDayOfMonth = new Date(result.getFullYear(), result.getMonth() + 1, 0).getDate();
+  result.setDate(Math.min(day, lastDayOfMonth));
+  return result;
+}
+
 // يبني جدول الأقساط بحيث يمتص القسط الأخير فرق التقريب ليطابق المجموع مبلغ السلفة تماماً
 export function buildRepaymentSchedule(loan: RepaymentScheduleLoan): RepaymentInstallment[] {
   if (loan.repaymentType !== "scheduled" || !loan.repaymentMonths || loan.repaymentMonths <= 0) {
@@ -30,8 +46,7 @@ export function buildRepaymentSchedule(loan: RepaymentScheduleLoan): RepaymentIn
   const approvalDate = loan.approvedAt || loan.createdAt || new Date();
 
   return Array.from({ length: months }, (_, i) => {
-    const dueDate = new Date(approvalDate);
-    dueDate.setMonth(dueDate.getMonth() + i + 1);
+    const dueDate = addMonths(approvalDate, i + 1);
     return {
       loanId: loan.id,
       installmentNumber: i + 1,
@@ -250,11 +265,12 @@ export function computeArrears(input: ArrearsInput): ArrearsResult {
 
     const expected = rates && rates.length > 0 ? rateForMonth(rates, m.year, m.month) : flat;
     const paid = input.paidByMonth[`${m.year}-${m.month}`] ?? 0;
-    paidTotal += paid;
 
-    // شهر لم يكن له سعر ساري لا يُحاسَب عليه — لا يدخل المتوقع ولا المتأخر
+    // شهر لم يكن له سعر ساري لا يُحاسَب عليه — لا يدخل المتوقع ولا المدفوع ولا
+    // المتأخر. جمع مدفوعه وحده كان يُظهر «المدفوع أكبر من المتوقع» بلا سبب ظاهر.
     if (expected <= 0) continue;
 
+    paidTotal += paid;
     chargedMonths += 1;
     expectedTotal += expected;
     const shortfall = Math.max(0, expected - paid);

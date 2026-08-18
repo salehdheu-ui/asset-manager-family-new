@@ -511,10 +511,11 @@ export function registerReportRoutes(app: Express) {
       const year = Number(req.query.year) || new Date().getFullYear();
       const month = Number(req.query.month) || new Date().getMonth() + 1;
       
-      const [contributions, yearLoans, yearExpenses] = await Promise.all([
+      const [contributions, yearLoans, yearExpenses, monthRepayments] = await Promise.all([
         storage.getContributionsByYearAndMonth(year, month),
         storage.getLoansByYear(year),
-        storage.getExpensesByYear(year)
+        storage.getExpensesByYear(year),
+        storage.getRepaymentsInMonth(year, month),
       ]);
       
       const monthlyContributions = contributions.filter(c => c.status === 'approved');
@@ -530,6 +531,9 @@ export function registerReportRoutes(app: Express) {
       const totalContributions = monthlyContributions.reduce((sum, c) => sum + Number(c.amount), 0);
       const totalLoans = monthlyLoans.reduce((sum, l) => sum + Number(l.amount), 0);
       const totalExpenses = monthlyExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
+      // السداد مالٌ يدخل الصندوق في شهره — كان غائباً عن التقرير كله، فيظهر
+      // شهرٌ سُدِّدت فيه السلف وكأنه شهر خسارة
+      const totalRepayments = monthRepayments.reduce((sum, p) => sum + Number(p.amount), 0);
       const activeMembers = new Set(monthlyContributions.map(c => c.memberId)).size;
       
       res.json({
@@ -538,8 +542,9 @@ export function registerReportRoutes(app: Express) {
         totalContributions,
         totalLoans,
         totalExpenses,
+        totalRepayments,
         activeMembers,
-        netFlow: totalContributions - totalLoans - totalExpenses,
+        netFlow: totalContributions + totalRepayments - totalLoans - totalExpenses,
         contributionCount: monthlyContributions.length,
         loanCount: monthlyLoans.length,
         expenseCount: monthlyExpenses.length
@@ -554,10 +559,11 @@ export function registerReportRoutes(app: Express) {
     try {
       const year = Number(req.query.year) || new Date().getFullYear();
       
-      const [yearContributions, allYearLoans, yearExpenses] = await Promise.all([
+      const [yearContributions, allYearLoans, yearExpenses, yearRepayments] = await Promise.all([
         storage.getApprovedContributionsByYear(year),
         storage.getLoansByYear(year),
-        storage.getExpensesByYear(year)
+        storage.getExpensesByYear(year),
+        storage.getRepaymentsInYear(year),
       ]);
       
       const yearLoans = allYearLoans.filter(l => l.status === 'approved');
@@ -574,6 +580,10 @@ export function registerReportRoutes(app: Express) {
           const d = e.createdAt;
           return d && d.getMonth() + 1 === m;
         });
+        const monthRepayments = yearRepayments.filter(p => {
+          const d = p.paidAt;
+          return d && d.getMonth() + 1 === m;
+        });
         
         monthlyData.push({
           month: m,
@@ -581,6 +591,7 @@ export function registerReportRoutes(app: Express) {
           contributions: monthContributions.reduce((sum, c) => sum + Number(c.amount), 0),
           loans: monthLoans.reduce((sum, l) => sum + Number(l.amount), 0),
           expenses: monthExpenses.reduce((sum, e) => sum + Number(e.amount), 0),
+          repayments: monthRepayments.reduce((sum, p) => sum + Number(p.amount), 0),
           contributionCount: monthContributions.length,
           loanCount: monthLoans.length,
           expenseCount: monthExpenses.length
@@ -593,6 +604,7 @@ export function registerReportRoutes(app: Express) {
           totalContributions: yearContributions.reduce((sum, c) => sum + Number(c.amount), 0),
           totalLoans: yearLoans.reduce((sum, l) => sum + Number(l.amount), 0),
           totalExpenses: yearExpenses.reduce((sum, e) => sum + Number(e.amount), 0),
+          totalRepayments: yearRepayments.reduce((sum, p) => sum + Number(p.amount), 0),
           contributionCount: yearContributions.length,
           loanCount: yearLoans.length,
           expenseCount: yearExpenses.length

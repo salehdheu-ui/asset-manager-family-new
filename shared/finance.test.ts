@@ -517,3 +517,54 @@ describe("الانضمام يحدّ من المتأخرات", () => {
     expect(computeArrears({ rates, dueMonths, paidByMonth: {} }).chargedMonths).toBe(4);
   });
 });
+
+describe("جدول الأقساط عند نهايات الأشهر", () => {
+  it("لا يقفز شهراً حين تُعتمد السلفة في يوم لا تبلغه الأشهر القصيرة", () => {
+    // ٣١ يناير: setMonth وحدها كانت تعطي ٣ مارس للقسط الأول فيضيع فبراير
+    const schedule = buildRepaymentSchedule({
+      id: "loan-1",
+      amount: "300.000",
+      repaymentType: "scheduled",
+      repaymentMonths: 3,
+      approvedAt: new Date(2026, 0, 31),
+      createdAt: null,
+    });
+
+    const months = schedule.map((installment) => installment.dueDate.getMonth());
+    expect(months).toEqual([1, 2, 3]); // فبراير، مارس، أبريل
+    expect(schedule[0].dueDate.getDate()).toBe(28); // آخر يوم في فبراير ٢٠٢٦
+  });
+
+  it("يبقي المجموع مطابقاً لمبلغ السلفة تماماً", () => {
+    const schedule = buildRepaymentSchedule({
+      id: "loan-2",
+      amount: "1000.000",
+      repaymentType: "scheduled",
+      repaymentMonths: 7,
+      approvedAt: new Date(2026, 0, 31),
+      createdAt: null,
+    });
+
+    const total = schedule.reduce((sum, installment) => sum + Number(installment.amount), 0);
+    expect(Number(total.toFixed(3))).toBe(1000);
+    expect(new Set(schedule.map((i) => `${i.dueDate.getFullYear()}-${i.dueDate.getMonth()}`)).size).toBe(7);
+  });
+});
+
+describe("المتأخرات وأشهر بلا سعر ساري", () => {
+  it("لا تحسب مدفوع شهر لم يكن له سعر", () => {
+    const result = computeArrears({
+      rates: [{ amount: 100, year: 2026, month: 3 }],
+      dueMonths: [
+        { year: 2026, month: 1 }, // قبل أول سعر — لا يُحاسَب عليه
+        { year: 2026, month: 3 },
+      ],
+      paidByMonth: { "2026-1": 50, "2026-3": 100 },
+    });
+
+    expect(result.chargedMonths).toBe(1);
+    expect(result.expectedTotal).toBe(100);
+    expect(result.paidTotal).toBe(100); // لا ٥٠ الزائدة عن شهر غير محاسَب عليه
+    expect(result.arrears).toBe(0);
+  });
+});
