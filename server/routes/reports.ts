@@ -762,10 +762,11 @@ export function registerReportRoutes(app: Express) {
       const memberId = req.params.id as string;
       const year = Number(req.query.year) || new Date().getFullYear();
 
-      const [member, allContributions, memberLoans] = await Promise.all([
+      const [member, allContributions, memberLoans, rateBook] = await Promise.all([
         storage.getMember(memberId),
         storage.getContributionsByMember(memberId),
         storage.getLoansByMember(memberId),
+        loadRates(),
       ]);
 
       const paymentsByLoan = groupByLoan(
@@ -831,13 +832,30 @@ export function registerReportRoutes(app: Express) {
       const totalLoanPaid = approvedLoansPayments.reduce((sum, l) => sum + l.totalPaid, 0);
       const totalLoanRemaining = approvedLoansPayments.reduce((sum, l) => sum + l.remaining, 0);
 
-      // Performance for selected year
+      // أداء السنة — بنفس محرك المتأخرات الذي تستعمله بقية الصفحات.
+      //
+      // كان يُحسب هنا بعدّ الأشهر وحده: من دفع عشرة ريالات من مئة يُعد شهره
+      // مكتملاً، ومن انضم في أغسطس يُحاسَب على يناير. صار الحساب بالريال ومن
+      // تاريخ انضمامه، فلا يقول كشف العضو غير ما تقوله صفحة المتأخرات عنه.
       const yearPaidContributions = allContributions.filter(c => c.year === year && c.status === 'approved');
-      const paidMonths = yearPaidContributions.length;
-      const expectedMonths = maxMonth;
-      // لا شهر مستحق بعد في هذه السنة ⇒ لا تأخير على أحد (100٪)
-      const commitmentRate = expectedMonths > 0
-        ? Math.min(100, Math.round((paidMonths / expectedMonths) * 100))
+      const paidByMonth: Record<string, number> = {};
+      for (const c of yearPaidContributions) {
+        const key = `${c.year}-${c.month}`;
+        paidByMonth[key] = (paidByMonth[key] ?? 0) + Number(c.amount);
+      }
+
+      const arrears = computeArrears({
+        rates: rateBook.ratesFor(memberId),
+        joinedAt: member.createdAt,
+        dueMonths: Array.from({ length: maxMonth }, (_, i) => ({ year, month: i + 1 })),
+        paidByMonth,
+      });
+
+      const expectedMonths = arrears.chargedMonths;
+      const paidMonths = Math.max(0, expectedMonths - arrears.missedMonths);
+      // لا شهر مستحق بعد على هذا العضو ⇒ لا تأخير عليه (100٪)
+      const commitmentRate = arrears.expectedTotal > 0
+        ? Math.min(100, Math.round((arrears.paidTotal / arrears.expectedTotal) * 100))
         : 100;
       let rating = 'متأخر';
       if (commitmentRate >= 90) rating = 'ممتاز';
@@ -859,7 +877,11 @@ export function registerReportRoutes(app: Express) {
           paidMonths,
           expectedMonths,
           commitmentRate,
-          rating
+          rating,
+          expectedTotal: arrears.expectedTotal,
+          paidTotal: arrears.paidTotal,
+          arrears: arrears.arrears,
+          partialMonths: arrears.partialMonths,
         },
         contributionsGrid,
         loans: loansWithPayments
