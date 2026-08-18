@@ -4,6 +4,7 @@ import { insertExpenseSchema } from "@shared/schema";
 import { z } from "zod";
 import { isAuthenticated, isAdmin } from "../auth";
 import { rebalanceYear } from "../capital-engine";
+import { guardExpense, type LayerOverdraft } from "../services/layer-guard";
 import { zodErrorResponse } from "../validation";
 import { withTransaction } from "../db";
 
@@ -24,8 +25,18 @@ export function registerExpenseRoutes(app: Express) {
 
       // المصروف وأثره في السجل وإعادة التوازن وحدة واحدة — لا يخرج من الصندوق
       // ريال بلا سطر في سجل التدقيق يقول متى خرج وبأمر من
+      let overdraft: LayerOverdraft | null = null;
+
       const expense = await withTransaction(async () => {
         const created = await storage.createExpense(data);
+
+        overdraft = await guardExpense(Number(created.amount), created.category, currentYear, {
+          entityType: "expense",
+          entityId: created.id,
+          actorUserId: req.user?.id ?? null,
+          actorName: req.user?.username ?? req.user?.firstName ?? "مشرف",
+          subject: `مصروف «${created.title}»`,
+        });
 
         await storage.createAuditLog({
           action: "expense_created",
@@ -46,7 +57,7 @@ export function registerExpenseRoutes(app: Express) {
         return created;
       });
 
-      res.status(201).json(expense);
+      res.status(201).json({ ...expense, overdraft });
     } catch (error) {
       if (error instanceof z.ZodError) {
         res.status(400).json(zodErrorResponse(error));

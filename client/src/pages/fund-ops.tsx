@@ -9,6 +9,7 @@ import {
   createExpense,
   getDashboardSummary,
 } from "@/lib/api";
+import { overdraftToast } from "@/lib/overdraft";
 import {
   Wallet,
   HandCoins,
@@ -73,10 +74,11 @@ export default function FundOps() {
 
   const createAdminLoanMutation = useMutation({
     mutationFn: createLoan,
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["loans"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] });
       toast({ title: "تمت إضافة السلفة واعتمادها بنجاح" });
+      if (result?.overdraft) toast(overdraftToast(result.overdraft));
       setAdminLoanMemberId(""); setAdminLoanType("standard"); setAdminLoanAmount("");
       setAdminLoanDescription(""); setAdminLoanRepaymentType("scheduled"); setAdminLoanMonths("12");
       setLoanDialogOpen(false);
@@ -88,10 +90,11 @@ export default function FundOps() {
 
   const createAdminExpenseMutation = useMutation({
     mutationFn: createExpense,
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["expenses"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] });
       toast({ title: "تم تسجيل المصروف بنجاح" });
+      if (result?.overdraft) toast(overdraftToast(result.overdraft));
       setExpenseAmount(""); setExpenseDescription(""); setExpenseCategory("general");
       setExpenseTitle("مصروف إداري"); setExpenseDialogOpen(false);
     },

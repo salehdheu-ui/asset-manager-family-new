@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import MobileLayout from "@/components/layout/MobileLayout";
 import { getLoans, getMembers, createLoan, updateLoan, updateLoanStatus, deleteLoan, getLoanRepayments, markRepaymentPaid, getDashboardSummary, getLoanPayments, createLoanPayment, getCommitmentScores } from "@/lib/api";
+import { overdraftToast } from "@/lib/overdraft";
 import { LOAN_VOTE_THRESHOLD } from "@shared/finance";
 import { extractErrorMessage } from "@/lib/errors";
 import LoanVoteBox from "@/components/loans/LoanVoteBox";
@@ -81,7 +82,7 @@ export default function Loans() {
 
   const createMutation = useMutation({
     mutationFn: createLoan,
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["loans"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] });
       setLoanAmounts({});
@@ -94,6 +95,7 @@ export default function Loans() {
         title: "تم تقديم طلب السلفة",
         description: "بانتظار مراجعة واعتماد الوصي."
       });
+      if (result?.overdraft) toast(overdraftToast(result.overdraft));
     },
     onError: (error) => {
       toast({
@@ -106,10 +108,12 @@ export default function Loans() {
 
   const statusMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: string }) => updateLoanStatus(id, status),
-    onSuccess: (_, { status }) => {
+    onSuccess: (result, { status }) => {
       queryClient.invalidateQueries({ queryKey: ["loans"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] });
       toast({ title: status === "approved" ? "تم اعتماد السلفة بنجاح" : "تم رفض الطلب" });
+      // الاعتماد الذي يتجاوز المتاح يُنفَّذ، ويُقال للوصي فوراً كم تجاوز
+      if (result?.overdraft) toast(overdraftToast(result.overdraft));
     },
     onError: (error) => {
       toast({

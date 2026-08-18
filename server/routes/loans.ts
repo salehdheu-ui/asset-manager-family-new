@@ -5,6 +5,7 @@ import { z } from "zod";
 import { isAuthenticated, isAdmin } from "../auth";
 import { blockMembersDuringEmergency } from "../emergency";
 import { rebalanceYear } from "../capital-engine";
+import { guardLoan, type LayerOverdraft } from "../services/layer-guard";
 import { buildRepaymentSchedule, LOAN_VOTE_THRESHOLD } from "@shared/finance";
 import { zodErrorResponse, RequestError } from "../validation";
 import { withTransaction } from "../db";
@@ -88,10 +89,24 @@ export function registerLoanRoutes(app: Express) {
         });
       }
 
+      // الفحص قبل الكتابة: الحد إرشاد لا سدّ، لكن تجاوزه يُوثَّق ويُعاد للواجهة
+      let overdraft: LayerOverdraft | null = null;
+
       // السلفة وأقساطها وإعادة التوازن وحدة واحدة — لا تُكتب سلفة معتمدة بلا أقساط
       const loan = await withTransaction(async () => {
         const created = await storage.createLoan(data);
         if (created.status === "approved") {
+          overdraft = await guardLoan(
+            Number(created.amount),
+            (created.approvedAt || created.createdAt || new Date()).getFullYear(),
+            {
+              entityType: "loan",
+              entityId: created.id,
+              actorUserId: req.user?.id ?? null,
+              actorName: req.user?.username ?? req.user?.firstName ?? "مشرف",
+              subject: `سلفة «${created.title}»`,
+            },
+          );
           await createScheduleAndRebalance(created);
         }
 
@@ -117,7 +132,7 @@ export function registerLoanRoutes(app: Express) {
         return created;
       });
 
-      res.status(201).json(loan);
+      res.status(201).json({ ...loan, overdraft });
     } catch (error) {
       if (error instanceof z.ZodError) {
         res.status(400).json(zodErrorResponse(error));
@@ -170,6 +185,8 @@ export function registerLoanRoutes(app: Express) {
         ? (await storage.getLoanPayments(loanId)).reduce((sum, payment) => sum + Number(payment.amount), 0)
         : 0;
 
+      let overdraft: LayerOverdraft | null = null;
+
       // تغيير الحالة وإنشاء الأقساط وإعادة التوازن وحدة واحدة
       const loan = await withTransaction(async () => {
         const updated = await storage.updateLoanStatus(loanId, status);
@@ -178,6 +195,17 @@ export function registerLoanRoutes(app: Express) {
         }
         // إنشاء الأقساط وتحديث التخصيص المالي عند الاعتماد فقط
         if (status === 'approved') {
+          overdraft = await guardLoan(
+            Number(updated.amount),
+            (updated.approvedAt || updated.createdAt || new Date()).getFullYear(),
+            {
+              entityType: "loan",
+              entityId: updated.id,
+              actorUserId: req.user?.id ?? null,
+              actorName: req.user?.username ?? req.user?.firstName ?? "مشرف",
+              subject: `اعتماد سلفة «${updated.title}»`,
+            },
+          );
           await createScheduleAndRebalance(updated);
         }
 
@@ -211,7 +239,7 @@ export function registerLoanRoutes(app: Express) {
         return updated;
       });
 
-      res.json(loan);
+      res.json({ ...loan, overdraft });
     } catch (error) {
       if (error instanceof RequestError) {
         return res.status(error.status).json({ error: error.message });
