@@ -110,6 +110,18 @@ app.get("/api/health", async (_req, res) => {
   const { startReminderScheduler } = await import("./services/reminders");
   startReminderScheduler();
 
+  /**
+   * مسار `/api` لم يطابق شيئاً ⇒ ٤٠٤ بصيغة JSON.
+   *
+   * بلا هذا يبتلعه احتياطي الواجهة أدناه فيردّ `index.html` برمز ٢٠٠: العميل
+   * يظن الطلب نجح ثم ينهار وهو يفكّ صفحة HTML على أنها JSON، والرسالة التي
+   * تصل المستخدم لا تدل على شيء. وطلبٌ إلى مسار محذوف يبدو حياً في المراقبة.
+   */
+  app.use("/api/{*path}", (req: Request, res: Response) => {
+    // originalUrl لا path: داخل app.use يُقتطع مسار التركيب فيصير «/» وحده
+    res.status(404).json({ message: `لا يوجد مسار ${req.method} ${req.originalUrl}` });
+  });
+
   app.use((err: any, req: Request, res: Response, next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";

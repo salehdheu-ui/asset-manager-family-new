@@ -119,6 +119,15 @@ export async function previewExpenseLimit(amount: number, category: string): Pro
   return result.overdraft;
 }
 
+export async function previewInvestmentLimit(amount: number): Promise<LayerOverdraft | null> {
+  const result = await send<{ allowed: boolean; overdraft: LayerOverdraft | null }>(
+    "POST",
+    "/api/allocation/check-investment",
+    { amount },
+  );
+  return result.overdraft;
+}
+
 export async function createLoan(data: { memberId: string; type: string; title: string; amount: string; description?: string; repaymentType?: string; repaymentMonths?: number | null; status?: string }): Promise<WithOverdraft<Loan>> {
   return send<WithOverdraft<Loan>>("POST", "/api/loans", data);
 }
@@ -505,9 +514,6 @@ export async function lockYearAllocation(year: number): Promise<any> {
   return send<any>("POST", `/api/allocation/${year}/lock`);
 }
 
-export async function resetYearAllocation(year: number): Promise<any> {
-  return send<any>("POST", `/api/allocation/${year}/reset`);
-}
 
 // System Reset
 export async function resetSystem(): Promise<void> {
@@ -757,8 +763,8 @@ export async function createInvestment(data: {
   amount: string;
   startedAt: string;
   note?: string | null;
-}): Promise<InvestmentRow> {
-  return send<InvestmentRow>("POST", "/api/investments", data);
+}): Promise<WithOverdraft<InvestmentRow>> {
+  return send<WithOverdraft<InvestmentRow>>("POST", "/api/investments", data);
 }
 
 export async function addInvestmentValuation(id: string, data: { value: string; valuedAt: string; note?: string | null }): Promise<InvestmentValuation> {

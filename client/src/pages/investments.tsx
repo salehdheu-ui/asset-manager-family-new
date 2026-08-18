@@ -7,6 +7,7 @@ import {
   addInvestmentValuation,
   exitInvestment,
   deleteInvestment,
+  previewInvestmentLimit,
   getZakatStatus,
   startZakatCycle,
   payZakat,
@@ -18,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { extractErrorMessage } from "@/lib/errors";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { useOverdraftGate } from "@/hooks/use-overdraft-gate";
 
 const TYPE_LABELS: Record<string, string> = {
   property: "عقار",
@@ -40,6 +42,7 @@ const today = () => new Date().toISOString().slice(0, 10);
 export default function Investments() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const gate = useOverdraftGate();
 
   const [addOpen, setAddOpen] = useState(false);
   const [title, setTitle] = useState("");
@@ -352,7 +355,7 @@ export default function Investments() {
         <DialogContent dir="rtl" className="max-w-sm rounded-xl">
           <DialogHeader>
             <DialogTitle>استثمار جديد</DialogTitle>
-            <DialogDescription>يُخصم من طبقة النمو ولا يتجاوز المتاح فيها</DialogDescription>
+            <DialogDescription>يُخصم من طبقة النمو — وتجاوز المتاح فيها يُستأذن ويُوثَّق</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="عنوان الاستثمار"
@@ -367,7 +370,11 @@ export default function Investments() {
             <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="ملاحظة (اختياري)"
               className="w-full p-3 border rounded-xl bg-background text-sm" />
             <button
-              onClick={() => addMutation.mutate()}
+              onClick={async () => {
+                // تجاوز طبقة النمو يُستأذن فيه قبل التنفيذ لا يُبلَّغ به بعده
+                if (!(await gate.confirm(() => previewInvestmentLimit(Number(amount))))) return;
+                addMutation.mutate();
+              }}
               disabled={!title.trim() || !amount.trim() || addMutation.isPending}
               className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold text-sm disabled:opacity-50"
               data-testid="button-save-investment"
@@ -449,6 +456,8 @@ export default function Investments() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {gate.dialog}
     </MobileLayout>
   );
 }

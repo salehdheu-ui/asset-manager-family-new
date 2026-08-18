@@ -66,25 +66,38 @@ async function record(
 
 const layerOf = (category: string) => (category === "emergency" ? "emergency" : "flexible");
 
+interface Shape {
+  /** هل كُتب الصف قبل الفحص؟ عندئذٍ مبلغه داخل المستهلَك فيُطرح منه */
+  written: boolean;
+  /**
+   * هل تُنقص العملية صافي الأصول؟
+   *
+   * السلفة والمصروف يخرجان من الصندوق فينقص صافيه. أما الاستثمار فالمال ينتقل
+   * من نقد إلى أصل مستثمَر ولا يغادر الصندوق — صافي الأصول لا يتحرك. والخلط
+   * بينهما يجعل النافذة تقول رقماً والسجل غيره.
+   */
+  reducesNetAssets: boolean;
+}
+
 /**
  * المتاح في طبقة قبل عملية بعينها.
  *
- * `alreadyWritten` تميّز الحالتين: الفحص المسبق (الصف لم يُكتب بعد فالمستهلَك
- * لا يعرفه) والفحص بعد الكتابة (مبلغه داخل المستهلَك فيُطرح منه). الحسبة
- * واحدة في الحالتين حتى لا تقول نافذة التأكيد شيئاً ويقول السجل غيره.
+ * `written` تميّز الحالتين: الفحص المسبق (الصف لم يُكتب بعد فالمستهلَك لا
+ * يعرفه) والفحص بعد الكتابة. الحسبة واحدة في الحالتين حتى لا تقول نافذة
+ * التأكيد شيئاً ويقول السجل غيره.
  */
-async function headroom(amount: number, layer: string, year: number, alreadyWritten: boolean) {
-  // السلفة والمصروف ينقصان صافي الأصول بمبلغهما، والطبقة نسبة منه. فلو قِيس
-  // بعد الكتابة على الصافي الجديد لصغرت الطبقة وكبر التجاوز — ولقالت نافذة
-  // التأكيد رقماً ويقول السجل غيره. الدلتا تعيد الصافي إلى ما كان.
-  const capacity = await currentLayerCapacity(year, alreadyWritten ? amount : 0);
+async function headroom(amount: number, layer: string, year: number, shape: Shape) {
+  // ما ينقص صافي الأصول تصغر معه الطبقة — وهي نسبة منه. فلو قِيس بعد الكتابة
+  // على الصافي الجديد لكبر التجاوز بلا سبب. الدلتا تعيد الصافي إلى ما كان.
+  const delta = shape.written && shape.reducesNetAssets ? amount : 0;
+  const capacity = await currentLayerCapacity(year, delta);
   const entry = capacity[layer] ?? { amount: 0, used: 0 };
-  const usedBefore = alreadyWritten ? entry.used - amount : entry.used;
+  const usedBefore = shape.written ? entry.used - amount : entry.used;
   return entry.amount - usedBefore;
 }
 
-async function check(amount: number, layer: string, year: number, alreadyWritten: boolean) {
-  const availableBefore = await headroom(amount, layer, year, alreadyWritten);
+async function check(amount: number, layer: string, year: number, shape: Shape) {
+  const availableBefore = await headroom(amount, layer, year, shape);
   return {
     allowed: amount <= availableBefore + 0.0005,
     layer,
@@ -92,6 +105,9 @@ async function check(amount: number, layer: string, year: number, alreadyWritten
     requested: amount,
   };
 }
+
+const PAYOUT = { reducesNetAssets: true } as const;
+const TRANSFER = { reducesNetAssets: false } as const;
 
 /** يبني بيان التجاوز بلا كتابة شيء — لنافذة التأكيد قبل التنفيذ */
 function describe(check: { allowed: boolean; layer: string; available: number; requested: number }): LayerOverdraft | null {
@@ -107,7 +123,7 @@ function describe(check: { allowed: boolean; layer: string; available: number; r
 
 /** فحص مسبق لسلفة — قبل كتابتها، بلا أثر في السجل */
 export async function previewLoan(amount: number, year: number): Promise<LayerOverdraft | null> {
-  return describe(await check(amount, "flexible", year, false));
+  return describe(await check(amount, "flexible", year, { written: false, ...PAYOUT }));
 }
 
 /** فحص مسبق لمصروف — قبل كتابته، بلا أثر في السجل */
@@ -116,7 +132,12 @@ export async function previewExpense(
   category: string,
   year: number,
 ): Promise<LayerOverdraft | null> {
-  return describe(await check(amount, layerOf(category), year, false));
+  return describe(await check(amount, layerOf(category), year, { written: false, ...PAYOUT }));
+}
+
+/** فحص مسبق لاستثمار — قبل كتابته، بلا أثر في السجل */
+export async function previewInvestment(amount: number, year: number): Promise<LayerOverdraft | null> {
+  return describe(await check(amount, "growth", year, { written: false, ...TRANSFER }));
 }
 
 /** يفحص سلفة على الطبقة المرنة ويوثّق تجاوزها إن وقع */
@@ -125,7 +146,7 @@ export async function guardLoan(
   year: number,
   context: OverrideContext,
 ): Promise<LayerOverdraft | null> {
-  return record(await check(amount, "flexible", year, true), context);
+  return record(await check(amount, "flexible", year, { written: true, ...PAYOUT }), context);
 }
 
 /** يفحص مصروفاً على طبقته (الطوارئ لمصروف الطوارئ، والمرن لما عداه) */
@@ -135,5 +156,20 @@ export async function guardExpense(
   year: number,
   context: OverrideContext,
 ): Promise<LayerOverdraft | null> {
-  return record(await check(amount, layerOf(category), year, true), context);
+  return record(await check(amount, layerOf(category), year, { written: true, ...PAYOUT }), context);
+}
+
+/**
+ * يفحص استثماراً على طبقة النمو ويوثّق تجاوزها إن وقع.
+ *
+ * كان الاستثمار وحده يُردّ بخطأ ٤٠٠ قاطع، ويقيس على الصف المقفل لا على صافي
+ * اليوم — فصندوق فيه عشرون ألفاً يمنع استثمار ألف لأن التخصيص قُفل في يناير
+ * على خمسمئة. صار كالسلفة والمصروف: يحذّر، ويمضي إن أمر الوصي، ويُكتب.
+ */
+export async function guardInvestment(
+  amount: number,
+  year: number,
+  context: OverrideContext,
+): Promise<LayerOverdraft | null> {
+  return record(await check(amount, "growth", year, { written: true, ...TRANSFER }), context);
 }

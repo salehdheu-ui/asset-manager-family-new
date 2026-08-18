@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import MobileLayout from "@/components/layout/MobileLayout";
-import { getAdminUsers, getMembers, updateUserRole, linkUserToMember, deleteUser, createUser, updateUserPassword, updateUser, resetSystem, lockYearAllocation, resetYearAllocation, getResetRequests, issueResetCode, rejectResetRequest, getAlerts, type ResetRequest, type SystemAlert } from "@/lib/api";
+import { getAdminUsers, getMembers, updateUserRole, linkUserToMember, deleteUser, createUser, updateUserPassword, updateUser, resetSystem, lockYearAllocation, getResetRequests, issueResetCode, rejectResetRequest, getAlerts, type ResetRequest, type SystemAlert } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
 import { Shield, Users, Trash2, UserCheck, Link, Crown, User as UserIcon, Plus, Key, Eye, EyeOff, RotateCcw, AlertTriangle, Lock, Landmark, ChevronLeft, KeyRound, Copy, Check, X, FileText, TrendingUp } from "lucide-react";
 import { motion } from "framer-motion";
@@ -161,17 +161,6 @@ export default function AdminDashboard() {
     },
     onError: () => {
       toast({ title: "فشل في قفل التخصيص", variant: "destructive" });
-    },
-  });
-
-  const resetAllocationMutation = useMutation({
-    mutationFn: () => resetYearAllocation(currentYear),
-    onSuccess: () => {
-      queryClient.invalidateQueries();
-      toast({ title: `تم إعادة ضبط تخصيص رأس المال لسنة ${currentYear} بنجاح` });
-    },
-    onError: () => {
-      toast({ title: "فشل في إعادة ضبط التخصيص", variant: "destructive" });
     },
   });
 
@@ -717,38 +706,24 @@ export default function AdminDashboard() {
           <div className="absolute right-[-20px] top-[-20px] w-40 h-40 bg-white/10 rounded-full blur-3xl" />
         </div>
 
-        <div className="flex gap-3">
-          <button
-            onClick={() => lockAllocationMutation.mutate()}
-            disabled={lockAllocationMutation.isPending}
-            className="flex-1 bg-fund-in text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-fund-in/20 disabled:opacity-50"
-            data-testid="button-lock-allocation"
-          >
-            {lockAllocationMutation.isPending ? (
-              <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full" />
-            ) : (
-              <>
-                <Lock className="w-5 h-5" />
-                إعادة قفل التخصيص {currentYear}
-              </>
-            )}
-          </button>
-          <button
-            onClick={() => resetAllocationMutation.mutate()}
-            disabled={resetAllocationMutation.isPending}
-            className="flex-1 bg-fund-out text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-fund-out/20 disabled:opacity-50"
-            data-testid="button-reset-allocation"
-          >
-            {resetAllocationMutation.isPending ? (
-              <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full" />
-            ) : (
-              <>
-                <RotateCcw className="w-5 h-5" />
-                إعادة ضبط التخصيص {currentYear}
-              </>
-            )}
-          </button>
-        </div>
+        {/* كان بجانب هذا الزر زرّ «إعادة ضبط التخصيص» يفعل الشيء نفسه حرفياً ثم
+            يقول «تم بنجاح» — فحُذف. المستهلَك من كل طبقة مشتقّ من الصفوف لا
+            عدّاد يُصفَّر، فلا معنى لتصفيره. */}
+        <button
+          onClick={() => lockAllocationMutation.mutate()}
+          disabled={lockAllocationMutation.isPending}
+          className="w-full bg-fund-in text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-fund-in/20 disabled:opacity-50"
+          data-testid="button-lock-allocation"
+        >
+          {lockAllocationMutation.isPending ? (
+            <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full" />
+          ) : (
+            <>
+              <Lock className="w-5 h-5" />
+              إعادة قفل التخصيص {currentYear}
+            </>
+          )}
+        </button>
 
         {/* System Reset Section */}
         <div className="border-t border-border/70 my-2" />

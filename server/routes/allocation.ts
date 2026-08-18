@@ -2,8 +2,8 @@ import type { Express } from "express";
 import { z } from "zod";
 import { isAuthenticated, isAdmin } from "../auth";
 import { storage } from "../storage";
-import { rebalanceYear, lockYearAllocation, resetYearAllocation, getAllocationForYear } from "../capital-engine";
-import { previewExpense, previewLoan } from "../services/layer-guard";
+import { lockYearAllocation, getAllocationForYear } from "../capital-engine";
+import { previewExpense, previewInvestment, previewLoan } from "../services/layer-guard";
 import { zodErrorResponse } from "../validation";
 
 // كان هذا الملف وحده بلا تحقق من المدخلات: `Number(req.params.year)` تمرر NaN
@@ -62,30 +62,6 @@ export function registerAllocationRoutes(app: Express) {
     }
   });
 
-  app.post("/api/allocation/:year/reset", isAuthenticated, isAdmin, async (req, res) => {
-    try {
-      const year = yearSchema.parse(req.params.year);
-      if (!req.user) {
-        return res.status(401).json({ error: "غير مصرح" });
-      }
-      const allocation = await resetYearAllocation(year, req.user.id);
-
-      await storage.createAuditLog({
-        action: "allocation_reset",
-        entityType: "capital_allocation",
-        entityId: String(year),
-        actorUserId: req.user.id,
-        actorName: req.user.username ?? req.user.firstName ?? "مشرف",
-        description: `أُعيد تعيين تخصيص سنة ${year} — صافي الأصول الجديد ${allocation.netAssets.toLocaleString()} ر.ع`,
-        metadata: { year, netAssets: allocation.netAssets },
-      });
-
-      res.json(allocation);
-    } catch (error) {
-      badRequest(res, error, "Failed to reset allocation");
-    }
-  });
-
   // الفحص المسبق: تسأله الواجهة قبل التنفيذ لتعرض نافذة التأكيد. يمرّ على
   // الحساب نفسه الذي يكتب التجاوز في السجل، فلا تقول النافذة شيئاً ويقول
   // السجل غيره.
@@ -106,6 +82,16 @@ export function registerAllocationRoutes(app: Express) {
       res.json({ allowed: overdraft === null, overdraft });
     } catch (error) {
       badRequest(res, error, "Failed to check expense");
+    }
+  });
+
+  app.post("/api/allocation/check-investment", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const amount = amountSchema.parse(req.body?.amount);
+      const overdraft = await previewInvestment(amount, new Date().getFullYear());
+      res.json({ allowed: overdraft === null, overdraft });
+    } catch (error) {
+      badRequest(res, error, "Failed to check investment");
     }
   });
 }
