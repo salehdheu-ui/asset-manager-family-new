@@ -3,7 +3,7 @@ import { randomUUID } from "crypto";
 import bcrypt from "bcryptjs";
 import path from "path";
 import { db } from "../db";
-import { attachments, auditLogs, contributionRates, capitalAllocations, contributions, expenses, familySettings, fundAdjustments, investmentValuations, investments, loanPayments, loanRepayments, loans, members, proposalVotes, proposals, systemBackups, zakatCycles } from "@shared/schema";
+import { attachments, auditLogs, contributionRates, capitalAllocations, contributions, expenses, familySettings, fundAdjustments, investmentValuations, investments, loanPayments, loanRepayments, loanVotes, loans, members, proposalVotes, proposals, systemBackups, zakatCycles } from "@shared/schema";
 import { users } from "@shared/models/auth";
 import { asc, desc, eq } from "drizzle-orm";
 
@@ -58,7 +58,7 @@ export async function createBackupSnapshot(createdBy?: string | null, backupLeve
   await ensureBackupDirectory();
 
   const backupDate = new Date();
-  const [settingsRows, memberRows, contributionRows, loanRows, repaymentRows, paymentRows, expenseRows, adjustmentRows, allocationRows, userRows, auditLogRows, zakatRows, investmentRows, valuationRows, proposalRows, proposalVoteRows, attachmentRowsRaw, rateRows] = await Promise.all([
+  const [settingsRows, memberRows, contributionRows, loanRows, repaymentRows, paymentRows, expenseRows, adjustmentRows, allocationRows, userRows, auditLogRows, zakatRows, investmentRows, valuationRows, proposalRows, proposalVoteRows, attachmentRowsRaw, rateRows, loanVoteRows] = await Promise.all([
     db.select().from(familySettings).limit(1),
     db.select().from(members).orderBy(asc(members.createdAt)),
     db.select().from(contributions).orderBy(asc(contributions.createdAt)),
@@ -78,6 +78,9 @@ export async function createBackupSnapshot(createdBy?: string | null, backupLeve
     db.select().from(proposalVotes).orderBy(asc(proposalVotes.createdAt)),
     db.select().from(attachments).orderBy(asc(attachments.createdAt)),
     db.select().from(contributionRates).orderBy(asc(contributionRates.effectiveYear)),
+    // أصوات العائلة على السلف الكبيرة: بغيابها كانت الاستعادة تسقط كلها، لأن
+    // حذف السلف يصطدم بأصوات تشير إليها — ويضيع سجل التصويت معها
+    db.select().from(loanVotes).orderBy(asc(loanVotes.createdAt)),
   ]);
 
   // لا نكرر bytes المرفق الخارجي داخل نسخة قاعدة البيانات؛ legacy content يبقى فقط للصفوف القديمة.
@@ -107,6 +110,7 @@ export async function createBackupSnapshot(createdBy?: string | null, backupLeve
       proposalVotes: proposalVoteRows,
       attachments: attachmentRows,
       contributionRates: rateRows,
+      loanVotes: loanVoteRows,
     },
   };
 
@@ -206,6 +210,7 @@ type BackupPayload = {
     proposalVotes?: Record<string, unknown>[];
     attachments?: Record<string, unknown>[];
     contributionRates?: Record<string, unknown>[];
+    loanVotes?: Record<string, unknown>[];
   };
 };
 
@@ -240,6 +245,7 @@ export function summarizeBackupPayload(payload: unknown): BackupSummary {
       proposals: countOf(data.proposals),
       attachments: countOf(data.attachments),
       contributionRates: countOf(data.contributionRates),
+      loanVotes: countOf(data.loanVotes),
     },
   };
 }
@@ -248,7 +254,7 @@ const ARRAY_KEYS = [
   "members", "users", "contributions", "loans", "loanRepayments",
   "loanPayments", "expenses", "fundAdjustments", "capitalAllocations", "auditLogs",
   "zakatCycles", "investments", "investmentValuations",
-  "proposals", "proposalVotes", "attachments", "contributionRates",
+  "proposals", "proposalVotes", "attachments", "contributionRates", "loanVotes",
 ] as const;
 
 // فحص سلامة ملف النسخة قبل قبول استعادته — يرفض الملفات التالفة أو الغريبة
@@ -323,6 +329,7 @@ async function restoreFromPayload(payload: BackupPayload): Promise<{ lockedAccou
 
   await db.transaction(async (tx: any) => {
     // Clear dependent tables first to avoid FK violations (if any)
+    await tx.delete(loanVotes);
     await tx.delete(loanPayments);
     await tx.delete(loanRepayments);
     await tx.delete(loans);
@@ -357,6 +364,7 @@ async function restoreFromPayload(payload: BackupPayload): Promise<{ lockedAccou
     if (data.loans?.length) await tx.insert(loans).values(reviveRows(data.loans) as never);
     if (data.loanRepayments?.length) await tx.insert(loanRepayments).values(reviveRows(data.loanRepayments) as never);
     if (data.loanPayments?.length) await tx.insert(loanPayments).values(reviveRows(data.loanPayments) as never);
+    if (data.loanVotes?.length) await tx.insert(loanVotes).values(reviveRows(data.loanVotes) as never);
     if (data.expenses?.length) await tx.insert(expenses).values(reviveRows(data.expenses) as never);
     if (data.fundAdjustments?.length) await tx.insert(fundAdjustments).values(reviveRows(data.fundAdjustments) as never);
     if (data.auditLogs?.length) await tx.insert(auditLogs).values(reviveRows(data.auditLogs) as never);

@@ -599,6 +599,10 @@ export interface MemberReport {
     expectedMonths: number;
     commitmentRate: number;
     rating: string;
+    expectedTotal: number;
+    paidTotal: number;
+    arrears: number;
+    partialMonths: number;
   };
   contributionsGrid: Array<{
     month: number;

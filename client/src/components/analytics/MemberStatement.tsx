@@ -117,6 +117,13 @@ export default function MemberStatement({ members, availableYears }: MemberState
                 <p className="mt-1.5 text-xs text-white/60">
                   {memberReport.performance.paidMonths} من {memberReport.performance.expectedMonths} أشهر مدفوعة لسنة {memberReport.year}
                 </p>
+                {/* النسبة بالريال لا بعدد الأشهر — من دفع بعض المتوقع لا يُعد شهره مكتملاً */}
+                {memberReport.performance.arrears > 0 && (
+                  <p className="mt-1 text-xs font-bold text-white/90">
+                    متأخر عليه {formatCurrency(memberReport.performance.arrears)} من أصل{" "}
+                    {formatCurrency(memberReport.performance.expectedTotal)}
+                  </p>
+                )}
               </div>
             </div>
 

@@ -18,7 +18,9 @@ CREATE TABLE IF NOT EXISTS "attachments" (
 	"file_name" text NOT NULL,
 	"mime_type" text NOT NULL,
 	"size_bytes" integer NOT NULL,
-	"content" text NOT NULL,
+	"storage_key" text,
+	"storage_url" text,
+	"content" text,
 	"created_at" timestamp DEFAULT now(),
 	"created_by" varchar
 );

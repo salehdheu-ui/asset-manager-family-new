@@ -44,3 +44,19 @@ export function addColumnStatement(table: string, column: string, definition: st
   if (/\bNOT NULL\b/i.test(clean) && !/\bDEFAULT\b/i.test(clean)) return null;
   return `ALTER TABLE "${table}" ADD COLUMN IF NOT EXISTS "${column}" ${clean}`;
 }
+
+/**
+ * تخفيف الإلزام عن عمود صار اختيارياً في المخطط.
+ *
+ * هذا التغيير الوحيد غير الإنشائي المسموح به هنا، لأنه **توسيع لا تضييق**:
+ * يقبل العمود بعده كل ما كان يقبله وزيادة، فلا يسقط صف ولا تضيع قيمة. أما
+ * العكس — فرض الإلزام على عمود فيه فراغات — فيبقى خارج المزامنة التلقائية.
+ */
+export function dropNotNullStatement(table: string, column: string): string {
+  return `ALTER TABLE "${table}" ALTER COLUMN "${column}" DROP NOT NULL`;
+}
+
+/** هل يصف المخطط هذا العمود اختيارياً؟ */
+export function isOptional(definition: string): boolean {
+  return !/\bNOT NULL\b/i.test(definition) && !/\bPRIMARY KEY\b/i.test(definition);
+}
