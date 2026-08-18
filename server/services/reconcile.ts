@@ -255,6 +255,34 @@ async function findAnomalies(rebuilt: Awaited<ReturnType<typeof rebuildBalance>>
     }
   }
 
+  // ————— سلفة معتمدة بجدولة ولا أقساط لها —————
+  // تظهر حين تُكتب سلفة في القاعدة بلا المرور بمسار الاعتماد الذي يبني الجدول.
+  // نتيجتها سلفة لا موعد لأقساطها، فلا تذكير عليها ولا تأخر يُحسب لها أبداً.
+  {
+    const { rows } = await pool.query<{ title: string; amount: string; status: string }>(
+      `select l.title, l.amount::text, l.status
+       from loans l
+       where l.status = 'approved'
+         and coalesce(l.repayment_type, 'scheduled') = 'scheduled'
+         and not exists (select 1 from loan_repayments r where r.loan_id = l.id)`,
+    );
+
+    if (rows.length > 0) {
+      const total = rows.reduce((sum, row) => sum + Number(row.amount), 0);
+      findings.push({
+        id: "approved-loans-without-schedule",
+        severity: "warning",
+        title: "سلف معتمدة بلا جدول أقساط",
+        detail:
+          "خطة سدادها «مجدولة» ولا قسط واحد مكتوب لها. لا يُذكَّر صاحبها بموعد، " +
+          "ولا يظهر عليها تأخر مهما طال. إن كان السداد مفتوحاً بلا جدول فحوّل خطتها " +
+          "إلى «مفتوحة»، وإلا فأعد إنشاءها ليُبنى جدولها.",
+        amount: round(total),
+        samples: rows.map((row) => `${row.title} — ${Number(row.amount).toFixed(3)}`),
+      });
+    }
+  }
+
   // ————— مبالغ غير موجبة —————
   for (const entry of [
     { table: "contributions", label: "مساهمة" },

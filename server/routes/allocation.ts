@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { z } from "zod";
 import { isAuthenticated, isAdmin } from "../auth";
+import { storage } from "../storage";
 import { rebalanceYear, lockYearAllocation, checkLoanTransaction, checkExpenseTransaction, resetYearAllocation, getAllocationForYear } from "../capital-engine";
 import { zodErrorResponse } from "../validation";
 
@@ -35,6 +36,25 @@ export function registerAllocationRoutes(app: Express) {
     try {
       const year = yearSchema.parse(req.params.year);
       const allocation = await lockYearAllocation(year);
+
+      // القفل يثبّت صافي الأصول الذي تُبنى عليه الطبقات كل السنة — قرار يُوثَّق
+      await storage.createAuditLog({
+        action: "allocation_locked",
+        entityType: "capital_allocation",
+        entityId: String(year),
+        actorUserId: req.user?.id ?? null,
+        actorName: req.user?.username ?? req.user?.firstName ?? "مشرف",
+        description: `قُفل تخصيص رأس المال لسنة ${year} على صافي أصول ${allocation.netAssets.toLocaleString()} ر.ع`,
+        metadata: {
+          year,
+          netAssets: allocation.netAssets,
+          protected: allocation.protected.amount,
+          emergency: allocation.emergency.amount,
+          flexible: allocation.flexible.amount,
+          growth: allocation.growth.amount,
+        },
+      });
+
       res.json(allocation);
     } catch (error) {
       badRequest(res, error, "Failed to lock allocation");
@@ -48,6 +68,17 @@ export function registerAllocationRoutes(app: Express) {
         return res.status(401).json({ error: "غير مصرح" });
       }
       const allocation = await resetYearAllocation(year, req.user.id);
+
+      await storage.createAuditLog({
+        action: "allocation_reset",
+        entityType: "capital_allocation",
+        entityId: String(year),
+        actorUserId: req.user.id,
+        actorName: req.user.username ?? req.user.firstName ?? "مشرف",
+        description: `أُعيد تعيين تخصيص سنة ${year} — صافي الأصول الجديد ${allocation.netAssets.toLocaleString()} ر.ع`,
+        metadata: { year, netAssets: allocation.netAssets },
+      });
+
       res.json(allocation);
     } catch (error) {
       badRequest(res, error, "Failed to reset allocation");
