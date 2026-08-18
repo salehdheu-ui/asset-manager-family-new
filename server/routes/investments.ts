@@ -6,6 +6,7 @@ import { insertInvestmentSchema, insertInvestmentValuationSchema } from "@shared
 import { computeInvestmentReturn } from "@shared/finance";
 import { zodErrorResponse } from "../validation";
 import { rebalanceYear } from "../capital-engine";
+import { guardInvestment, type LayerOverdraft } from "../services/layer-guard";
 import { withTransaction } from "../db";
 
 const exitSchema = z.object({
@@ -57,23 +58,25 @@ export function registerInvestmentRoutes(app: Express) {
     }
   });
 
-  // استثمار جديد — لا يتجاوز المتاح في طبقة النمو
+  // استثمار جديد — يحذّر عند تجاوز طبقة النمو ويوثّق التجاوز، ولا يمنع
   app.post("/api/investments", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const data = insertInvestmentSchema.parse(req.body);
       const year = new Date().getFullYear();
-      const allocation = await rebalanceYear(year);
-      const available = allocation.growth.available;
-
-      if (Number(data.amount) > available) {
-        return res.status(400).json({
-          error: `المبلغ يتجاوز المتاح في طبقة النمو (${available.toLocaleString()} ر.ع)`,
-        });
-      }
+      let overdraft: LayerOverdraft | null = null;
 
       // الاستثمار وإعادة التوازن وسجل التدقيق وحدة واحدة
       const investment = await withTransaction(async () => {
         const created = await storage.createInvestment({ ...data, createdBy: req.user?.id ?? null });
+
+        overdraft = await guardInvestment(Number(created.amount), year, {
+          entityType: "investment",
+          entityId: created.id,
+          actorUserId: req.user?.id ?? null,
+          actorName: req.user?.username ?? "مشرف",
+          subject: `استثمار «${created.title}»`,
+        });
+
         await rebalanceYear(year);
 
         await storage.createAuditLog({
@@ -89,7 +92,7 @@ export function registerInvestmentRoutes(app: Express) {
         return created;
       });
 
-      res.status(201).json(investment);
+      res.status(201).json({ ...investment, overdraft });
     } catch (error) {
       if (error instanceof z.ZodError) return res.status(400).json(zodErrorResponse(error));
       console.error("Create investment error:", error);

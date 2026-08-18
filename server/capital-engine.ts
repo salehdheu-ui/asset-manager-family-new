@@ -83,8 +83,11 @@ async function computeUsedAmounts(year: number): Promise<LayerUsage> {
     ),
     generalExpenses: sum(yearExpenses.filter((e) => e.category !== "emergency"), (e) => e.amount),
     emergencyExpenses: sum(yearExpenses.filter((e) => e.category === "emergency"), (e) => e.amount),
+    // كل استثمار قائم، لا ما بدأ هذه السنة وحدها. المال المربوط في استثمار
+    // ٢٠٢٥ ما زال مربوطاً في ٢٠٢٦ — وحصر العدّ بسنة البدء كان يفرّغ طبقة
+    // النمو كل أول يناير، فيُستثمر المبلغ نفسه مرتين وثلاثاً بلا سقف يردّه.
     activeInvestments: sum(
-      allInvestments.filter((i) => i.status === "active" && isWithinYear(i.startedAt, year)),
+      allInvestments.filter((i) => i.status === "active"),
       (i) => i.amount,
     ),
   });
@@ -109,6 +112,14 @@ function buildResult(
   };
 }
 
+/**
+ * يعيد حساب صافي الأصول ويثبّت عليه مبالغ الطبقات.
+ *
+ * كان بجانبه `resetYearAllocation` يُصفّر المستهلَك ثم يستدعي هذه الدالة —
+ * التي تعيد حساب المستهلَك من الصفوف وتكتبه فوق الأصفار. فكان زرّ «إعادة ضبط
+ * التخصيص» يعد الوصي بشيء ويفعل ما يفعله زرّ القفل حرفياً، ثم يقول «تم بنجاح».
+ * المستهلَك مشتقّ من الصفوف لا عدّاد يُصفَّر، فلا معنى لتصفيره؛ حُذف الزر ومساره.
+ */
 export async function lockYearAllocation(year: number): Promise<AllocationResult> {
   const percents = await getPercentages();
   const netAssets = await computeTotalNetAssets();
@@ -202,20 +213,6 @@ export async function currentLayerCapacity(
     flexible: { amount: split.flexible, used: used.flexibleUsed },
     growth: { amount: split.growth, used: used.growthUsed },
   };
-}
-
-export async function resetYearAllocation(year: number, adminId: string): Promise<AllocationResult> {
-  await db.update(capitalAllocations)
-    .set({
-      flexibleUsed: "0",
-      growthUsed: "0",
-      emergencyUsed: "0",
-      resetAt: new Date(),
-      resetBy: adminId,
-    })
-    .where(eq(capitalAllocations.year, year));
-
-  return lockYearAllocation(year);
 }
 
 export async function getAllocationForYear(year: number): Promise<AllocationResult> {

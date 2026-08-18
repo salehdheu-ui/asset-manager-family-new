@@ -31,6 +31,13 @@ vi.mock("../capital-engine", () => ({
     flexible: { amount: 1000, percent: 20, used: 0, available: 1000 },
     growth: { amount: 1000, percent: 20, used: growthUsed, available: Math.max(0, 1000 - growthUsed) },
   })),
+  // حارس الطبقات يقيس على صافي اليوم لا على الصف المقفل
+  currentLayerCapacity: vi.fn(async () => ({
+    protected: { amount: 2250, used: 0 },
+    emergency: { amount: 750, used: 0 },
+    flexible: { amount: 1000, used: 0 },
+    growth: { amount: 1000, used: growthUsed },
+  })),
 }));
 
 // المعاملات تُختبر مقابل قاعدة حقيقية، لا هنا — هذا الاختبار يعنى بمنطق المسار
@@ -113,14 +120,33 @@ beforeEach(() => {
 });
 
 describe("سجل الاستثمارات", () => {
-  it("يرفض استثماراً يتجاوز المتاح في طبقة النمو", async () => {
+  // الحدّ إرشاد لا سدّ — كما في السلف والمصروفات. وكان الاستثمار وحده
+  // يُردّ بخطأ ٤٠٠، ويقيس على الصف المقفل فيمنع ما لا ينبغي منعه.
+  it("يمضي في استثمار يتجاوز طبقة النمو ويكتب التجاوز في السجل", async () => {
     const res = await request("/api/investments", {
       method: "POST",
       body: JSON.stringify({ title: "عقار كبير", type: "property", amount: "5000", startedAt: "2026-01-01" }),
     }, admin);
-    expect(res.status).toBe(400);
-    expect((await res.json()).error).toContain("طبقة النمو");
-    expect(state.investments).toHaveLength(0);
+
+    expect(res.status).toBe(201);
+    expect(state.investments).toHaveLength(1);
+
+    const body = await res.json();
+    expect(body.overdraft.layerName).toBe("رأس مال النمو");
+    expect(body.overdraft.available).toBe(1000);
+    expect(body.overdraft.excess).toBe(4000);
+    expect(state.audits.map((a) => a.action)).toContain("capital_layer_exceeded");
+  });
+
+  it("لا يكتب تجاوزاً لاستثمار داخل الحدّ", async () => {
+    const res = await request("/api/investments", {
+      method: "POST",
+      body: JSON.stringify({ title: "أسهم", type: "stocks", amount: "600", startedAt: "2026-01-01" }),
+    }, admin);
+
+    expect(res.status).toBe(201);
+    expect((await res.json()).overdraft).toBeNull();
+    expect(state.audits.map((a) => a.action)).not.toContain("capital_layer_exceeded");
   });
 
   it("يقبل استثماراً ضمن المتاح ويوثقه في سجل التدقيق", async () => {

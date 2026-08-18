@@ -5,14 +5,21 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
  * لذلك يقبل الفحص «دلتا» تعيد الصافي إلى ما كان قبل العملية — وبها وحدها
  * يتطابق ما تقوله نافذة التأكيد وما يكتبه السجل بعد التنفيذ.
  */
-const fund = { netAssets: 1000, flexiblePercent: 0.2, emergencyPercent: 0.15, used: 0 };
+const fund = {
+  netAssets: 1000,
+  flexiblePercent: 0.2,
+  emergencyPercent: 0.15,
+  growthPercent: 0.2,
+  used: 0,
+  growthUsed: 0,
+};
 
 vi.mock("../capital-engine", () => ({
   currentLayerCapacity: vi.fn(async (_year: number, netAssetsDelta = 0) => ({
     protected: { amount: 0, used: 0 },
     emergency: { amount: (fund.netAssets + netAssetsDelta) * fund.emergencyPercent, used: fund.used },
     flexible: { amount: (fund.netAssets + netAssetsDelta) * fund.flexiblePercent, used: fund.used },
-    growth: { amount: 0, used: 0 },
+    growth: { amount: (fund.netAssets + netAssetsDelta) * fund.growthPercent, used: fund.growthUsed },
   })),
 }));
 
@@ -27,7 +34,14 @@ vi.mock("../storage", () => ({
   },
 }));
 
-import { guardExpense, guardLoan, previewExpense, previewLoan } from "./layer-guard";
+import {
+  guardExpense,
+  guardInvestment,
+  guardLoan,
+  previewExpense,
+  previewInvestment,
+  previewLoan,
+} from "./layer-guard";
 
 const context = {
   entityType: "loan",
@@ -41,6 +55,7 @@ beforeEach(() => {
   audits.length = 0;
   fund.netAssets = 1000;
   fund.used = 0;
+  fund.growthUsed = 0;
 });
 
 /**
@@ -115,5 +130,46 @@ describe("اتفاق النافذة والسجل", () => {
     expect(preview!.available).toBe(afterWrite!.available);
     expect(preview!.excess).toBe(afterWrite!.excess);
     expect(preview!.excess).toBe(200);
+  });
+});
+
+/**
+ * الاستثمار ليس كالسلفة: المال ينتقل من نقد إلى أصل مستثمَر ولا يغادر
+ * الصندوق، فصافي الأصول لا يتحرك. ولو عومل معاملة المدفوعات لصغرت الطبقة
+ * بعد الكتابة وكبر التجاوز — فاختلف ما تقوله النافذة عمّا يكتبه السجل.
+ */
+describe("طبقة النمو — الاستثمار لا ينقص صافي الأصول", () => {
+  it("يصمت على استثمار داخل حدّ الطبقة", async () => {
+    // الصندوق ١٠٠٠ ⇒ النمو ٢٠٠، والمطلوب ١٥٠
+    expect(await previewInvestment(150, 2026)).toBeNull();
+    expect(audits).toHaveLength(0);
+  });
+
+  it("يرصد تجاوز طبقة النمو ويسمّيها", async () => {
+    const result = await previewInvestment(400, 2026);
+    expect(result!.layerName).toBe("رأس مال النمو");
+    expect(result!.available).toBe(200);
+    expect(result!.excess).toBe(200);
+  });
+
+  it("يوثّق التجاوز بعد الكتابة بالرقم الذي عرضته النافذة", async () => {
+    const preview = await previewInvestment(400, 2026);
+
+    // كُتب الاستثمار: المستهلَك ٤٠٠ — وصافي الأصول كما هو، لم يخرج المال
+    fund.growthUsed = 400;
+    const afterWrite = await guardInvestment(400, 2026, {
+      entityType: "investment",
+      entityId: "inv1",
+      actorUserId: "u1",
+      actorName: "الوصي",
+      subject: "استثمار «أرض»",
+    });
+
+    expect(afterWrite!.available).toBe(preview!.available);
+    expect(afterWrite!.excess).toBe(preview!.excess);
+    expect(afterWrite!.excess).toBe(200);
+    expect(audits).toHaveLength(1);
+    expect(audits[0].action).toBe("capital_layer_exceeded");
+    expect(audits[0].description).toContain("استثمار «أرض»");
   });
 });
