@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import MobileLayout from "@/components/layout/MobileLayout";
-import { getLoans, getMembers, createLoan, updateLoan, updateLoanStatus, deleteLoan, getLoanRepayments, markRepaymentPaid, getDashboardSummary, getLoanPayments, createLoanPayment, getCommitmentScores } from "@/lib/api";
+import { getLoans, getMembers, createLoan, updateLoan, updateLoanStatus, deleteLoan, getLoanRepayments, markRepaymentPaid, getDashboardSummary, getLoanPayments, createLoanPayment, getCommitmentScores, previewLoanLimit } from "@/lib/api";
+import { useOverdraftGate } from "@/hooks/use-overdraft-gate";
 import { overdraftToast } from "@/lib/overdraft";
 import { LOAN_VOTE_THRESHOLD } from "@shared/finance";
 import { extractErrorMessage } from "@/lib/errors";
@@ -35,6 +36,7 @@ import { useToast } from "@/hooks/use-toast";
 // صندوق تصويت العائلة على السلف الكبيرة
 export default function Loans() {
   const { toast } = useToast();
+  const gate = useOverdraftGate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const isGuardian = user?.role === 'admin';
@@ -446,7 +448,7 @@ export default function Loans() {
                       </div>
                       <button 
                         data-testid={`button-submit-loan-${loan.id}`}
-                        onClick={() => {
+                        onClick={async () => {
                           const memberId = isGuardian
                             ? (loanMembers[loan.id] ?? members[0]?.id ?? "")
                             : (userMemberId ?? loanMembers[loan.id] ?? "");
@@ -467,6 +469,11 @@ export default function Loans() {
                             return;
                           }
                           if (memberId) {
+                            // الوصي وحده يُنشئ سلفة معتمدة فوراً، فهو وحده من
+                            // يُسأل قبل التنفيذ. طلب العضو يمر بالاعتماد لاحقاً
+                            if (isGuardian && !(await gate.confirm(() => previewLoanLimit(Number(amount))))) {
+                              return;
+                            }
                             createMutation.mutate({
                               memberId,
                               type: loan.id,
@@ -604,7 +611,10 @@ export default function Loans() {
                         <div className="flex gap-2 pt-1 border-t border-border/70">
                           <button 
                             data-testid={`button-approve-${loan.id}`}
-                            onClick={() => statusMutation.mutate({ id: loan.id, status: "approved" })}
+                            onClick={async () => {
+                              if (!(await gate.confirm(() => previewLoanLimit(Number(loan.amount))))) return;
+                              statusMutation.mutate({ id: loan.id, status: "approved" });
+                            }}
                             disabled={statusMutation.isPending}
                             className="tap-target flex-1 bg-fund-in text-white py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform disabled:opacity-50"
                           >
@@ -936,6 +946,7 @@ export default function Loans() {
           </>
         )}
       </div>
+      {gate.dialog}
     </MobileLayout>
   );
 }

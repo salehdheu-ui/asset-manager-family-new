@@ -45,15 +45,8 @@ async function record(
   check: { allowed: boolean; layer: string; available: number; requested: number },
   context: OverrideContext,
 ): Promise<LayerOverdraft | null> {
-  if (check.allowed) return null;
-
-  const overdraft: LayerOverdraft = {
-    layer: check.layer,
-    layerName: LAYER_NAMES[check.layer] ?? check.layer,
-    available: round(check.available),
-    requested: round(check.requested),
-    excess: round(check.requested - check.available),
-  };
+  const overdraft = describe(check);
+  if (!overdraft) return null;
 
   await storage.createAuditLog({
     action: "capital_layer_exceeded",
@@ -71,15 +64,27 @@ async function record(
   return overdraft;
 }
 
-async function check(amount: number, layer: string, year: number) {
-  const capacity = await currentLayerCapacity(year);
+const layerOf = (category: string) => (category === "emergency" ? "emergency" : "flexible");
+
+/**
+ * المتاح في طبقة قبل عملية بعينها.
+ *
+ * `alreadyWritten` تميّز الحالتين: الفحص المسبق (الصف لم يُكتب بعد فالمستهلَك
+ * لا يعرفه) والفحص بعد الكتابة (مبلغه داخل المستهلَك فيُطرح منه). الحسبة
+ * واحدة في الحالتين حتى لا تقول نافذة التأكيد شيئاً ويقول السجل غيره.
+ */
+async function headroom(amount: number, layer: string, year: number, alreadyWritten: boolean) {
+  // السلفة والمصروف ينقصان صافي الأصول بمبلغهما، والطبقة نسبة منه. فلو قِيس
+  // بعد الكتابة على الصافي الجديد لصغرت الطبقة وكبر التجاوز — ولقالت نافذة
+  // التأكيد رقماً ويقول السجل غيره. الدلتا تعيد الصافي إلى ما كان.
+  const capacity = await currentLayerCapacity(year, alreadyWritten ? amount : 0);
   const entry = capacity[layer] ?? { amount: 0, used: 0 };
+  const usedBefore = alreadyWritten ? entry.used - amount : entry.used;
+  return entry.amount - usedBefore;
+}
 
-  // الصف كُتب قبل هذا الفحص، فمبلغه داخل المستهلَك. نطرحه لنقيس ما كان متاحاً
-  // قبله: هل كانت الطبقة تتسع له أصلاً؟
-  const usedBefore = entry.used - amount;
-  const availableBefore = entry.amount - usedBefore;
-
+async function check(amount: number, layer: string, year: number, alreadyWritten: boolean) {
+  const availableBefore = await headroom(amount, layer, year, alreadyWritten);
   return {
     allowed: amount <= availableBefore + 0.0005,
     layer,
@@ -88,13 +93,39 @@ async function check(amount: number, layer: string, year: number) {
   };
 }
 
+/** يبني بيان التجاوز بلا كتابة شيء — لنافذة التأكيد قبل التنفيذ */
+function describe(check: { allowed: boolean; layer: string; available: number; requested: number }): LayerOverdraft | null {
+  if (check.allowed) return null;
+  return {
+    layer: check.layer,
+    layerName: LAYER_NAMES[check.layer] ?? check.layer,
+    available: round(check.available),
+    requested: round(check.requested),
+    excess: round(check.requested - check.available),
+  };
+}
+
+/** فحص مسبق لسلفة — قبل كتابتها، بلا أثر في السجل */
+export async function previewLoan(amount: number, year: number): Promise<LayerOverdraft | null> {
+  return describe(await check(amount, "flexible", year, false));
+}
+
+/** فحص مسبق لمصروف — قبل كتابته، بلا أثر في السجل */
+export async function previewExpense(
+  amount: number,
+  category: string,
+  year: number,
+): Promise<LayerOverdraft | null> {
+  return describe(await check(amount, layerOf(category), year, false));
+}
+
 /** يفحص سلفة على الطبقة المرنة ويوثّق تجاوزها إن وقع */
 export async function guardLoan(
   amount: number,
   year: number,
   context: OverrideContext,
 ): Promise<LayerOverdraft | null> {
-  return record(await check(amount, "flexible", year), context);
+  return record(await check(amount, "flexible", year, true), context);
 }
 
 /** يفحص مصروفاً على طبقته (الطوارئ لمصروف الطوارئ، والمرن لما عداه) */
@@ -104,5 +135,5 @@ export async function guardExpense(
   year: number,
   context: OverrideContext,
 ): Promise<LayerOverdraft | null> {
-  return record(await check(amount, category === "emergency" ? "emergency" : "flexible", year), context);
+  return record(await check(amount, layerOf(category), year, true), context);
 }

@@ -29,14 +29,6 @@ export interface AllocationResult {
   growth: LayerView;
 }
 
-export interface TransactionCheck {
-  allowed: boolean;
-  reason?: string;
-  layer: string;
-  available: number;
-  requested: number;
-}
-
 async function getPercentages() {
   const [settings] = await db.select().from(familySettings).limit(1);
   return {
@@ -191,13 +183,17 @@ export async function rebalanceYear(year: number): Promise<AllocationResult> {
  * شبه فارغ. فلو قِيس التجاوز عليه لصار كل قرض عادي «تجاوزاً»، ولضاع التحذير
  * في ضجيجه. المقارنة هنا على ما يملكه الصندوق اليوم.
  */
-export async function currentLayerCapacity(year: number): Promise<Record<string, { amount: number; used: number }>> {
+export async function currentLayerCapacity(
+  year: number,
+  /** يُضاف لصافي الأصول قبل التقسيم — لقياس الحال قبل عملية كُتبت للتو */
+  netAssetsDelta = 0,
+): Promise<Record<string, { amount: number; used: number }>> {
   const [percents, netAssets, used] = await Promise.all([
     getPercentages(),
     computeTotalNetAssets(),
     computeUsedAmounts(year),
   ]);
-  const split = splitAllocation(netAssets, percents);
+  const split = splitAllocation(netAssets + netAssetsDelta, percents);
 
   // المستهلَك يُعاد خاماً بلا تصفير: من يقيس تجاوزاً يحتاج مقداره لا حدّه
   return {
@@ -205,40 +201,6 @@ export async function currentLayerCapacity(year: number): Promise<Record<string,
     emergency: { amount: split.emergency, used: used.emergencyUsed },
     flexible: { amount: split.flexible, used: used.flexibleUsed },
     growth: { amount: split.growth, used: used.growthUsed },
-  };
-}
-
-export async function checkLoanTransaction(amount: number, year: number): Promise<TransactionCheck> {
-  const allocation = await rebalanceYear(year);
-  const available = allocation.flexible.available;
-  const allowed = Number.isFinite(amount) && amount > 0 && amount <= available;
-
-  return {
-    allowed,
-    reason: allowed ? undefined : "المبلغ المطلوب يتجاوز الرصيد المرن المتاح",
-    layer: "flexible",
-    available,
-    requested: amount,
-  };
-}
-
-export async function checkExpenseTransaction(amount: number, category: string, year: number): Promise<TransactionCheck> {
-  const allocation = await rebalanceYear(year);
-  // مصروف الطوارئ يُخصم من طبقته، وما عداه من الطبقة المرنة
-  const layer = category === "emergency" ? "emergency" : "flexible";
-  const available = allocation[layer].available;
-  const allowed = Number.isFinite(amount) && amount > 0 && amount <= available;
-
-  return {
-    allowed,
-    reason: allowed
-      ? undefined
-      : layer === "emergency"
-        ? "المبلغ المطلوب يتجاوز رصيد الطوارئ المتاح"
-        : "المبلغ المطلوب يتجاوز الرصيد المرن المتاح",
-    layer,
-    available,
-    requested: amount,
   };
 }
 

@@ -2,7 +2,8 @@ import type { Express } from "express";
 import { z } from "zod";
 import { isAuthenticated, isAdmin } from "../auth";
 import { storage } from "../storage";
-import { rebalanceYear, lockYearAllocation, checkLoanTransaction, checkExpenseTransaction, resetYearAllocation, getAllocationForYear } from "../capital-engine";
+import { rebalanceYear, lockYearAllocation, resetYearAllocation, getAllocationForYear } from "../capital-engine";
+import { previewExpense, previewLoan } from "../services/layer-guard";
 import { zodErrorResponse } from "../validation";
 
 // كان هذا الملف وحده بلا تحقق من المدخلات: `Number(req.params.year)` تمرر NaN
@@ -85,11 +86,14 @@ export function registerAllocationRoutes(app: Express) {
     }
   });
 
+  // الفحص المسبق: تسأله الواجهة قبل التنفيذ لتعرض نافذة التأكيد. يمرّ على
+  // الحساب نفسه الذي يكتب التجاوز في السجل، فلا تقول النافذة شيئاً ويقول
+  // السجل غيره.
   app.post("/api/allocation/check-loan", isAuthenticated, async (req, res) => {
     try {
       const amount = amountSchema.parse(req.body?.amount);
-      const check = await checkLoanTransaction(amount, new Date().getFullYear());
-      res.json(check);
+      const overdraft = await previewLoan(amount, new Date().getFullYear());
+      res.json({ allowed: overdraft === null, overdraft });
     } catch (error) {
       badRequest(res, error, "Failed to check loan");
     }
@@ -98,8 +102,8 @@ export function registerAllocationRoutes(app: Express) {
   app.post("/api/allocation/check-expense", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const { amount, category } = expenseCheckSchema.parse(req.body);
-      const check = await checkExpenseTransaction(amount, category, new Date().getFullYear());
-      res.json(check);
+      const overdraft = await previewExpense(amount, category, new Date().getFullYear());
+      res.json({ allowed: overdraft === null, overdraft });
     } catch (error) {
       badRequest(res, error, "Failed to check expense");
     }
