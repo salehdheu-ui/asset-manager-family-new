@@ -9,6 +9,10 @@ export interface DashboardSummaryResult {
   totalDeposits: number;
   totalWithdrawals: number;
   netCapital: number;
+  /** الرصيد الحقيقي بلا تصفير — سالبٌ إن تجاوز الخارج الداخل */
+  actualNetCapital: number;
+  /** الصندوق في عجز: خرج منه أكثر مما دخله */
+  inDeficit: boolean;
   allocation: any;
   lockedNetAssets: number;
   layers: Array<{
@@ -45,6 +49,9 @@ export async function computeDashboardSummary(): Promise<DashboardSummaryResult>
   const totalRepayments = await storage.getRepaidTotalOnApprovedLoans();
 
   const netCapital = totalContributions + totalDeposits - totalWithdrawals - totalLoans + totalRepayments - totalExpenses;
+  // التصفير لازم لحساب الطبقات (نسبة من رقم سالب لا معنى لها)، لكنه كان يُخفي
+  // العجز عن الوصي في الشاشة التي يقرأها كل يوم — فيبقى الرقمان معاً: مصفَّر
+  // للحساب، وحقيقي للعرض
   const capital = Math.max(0, netCapital);
 
   const percents = settings || { protectedPercent: 45, emergencyPercent: 15, flexiblePercent: 20, growthPercent: 20 };
@@ -58,6 +65,8 @@ export async function computeDashboardSummary(): Promise<DashboardSummaryResult>
     totalDeposits,
     totalWithdrawals,
     netCapital: capital,
+    actualNetCapital: Number(netCapital.toFixed(3)),
+    inDeficit: netCapital < 0,
     allocation,
     lockedNetAssets: allocation.netAssets,
     layers: [

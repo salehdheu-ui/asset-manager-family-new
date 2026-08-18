@@ -49,6 +49,11 @@ export default function Dashboard() {
   }
 
   const totalCapital = summary?.netCapital || 0;
+  // العجز يُعرض كما هو: تصفيره في الشاشة يطمئن الوصي في اللحظة التي يجب أن يقلق فيها
+  const inDeficit = summary?.inDeficit === true;
+  // العنوان يحمل الإشارة («عجز في الصندوق»)، فيُعرض المقدار مجرداً — إشارة سالبة
+  // داخل نص عربي تُقرأ في غير موضعها
+  const displayedCapital = inDeficit ? Math.abs(summary?.actualNetCapital ?? 0) : totalCapital;
   const totalContributions = (summary?.totalContributions || 0) + (summary?.totalDeposits || 0);
   const totalExpenses = (summary?.totalExpenses || 0) + (summary?.totalLoans || 0) - (summary?.totalRepayments || 0) + (summary?.totalWithdrawals || 0);
 
@@ -77,15 +82,30 @@ export default function Dashboard() {
           className="text-center space-y-2 py-8 bg-card border border-border/70 rounded-xl shadow-sm relative overflow-hidden"
         >
           <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
-          <p className="text-sm text-muted-foreground font-medium">صافي الأصول المعتمدة</p>
-          <h2 className="text-5xl font-bold font-mono text-primary tracking-tighter">
-            {totalCapital.toLocaleString()} <span className="text-xl text-muted-foreground font-sans">ر.ع</span>
+          <p className="text-sm text-muted-foreground font-medium">
+            {inDeficit ? "عجز في الصندوق" : "صافي الأصول المعتمدة"}
+          </p>
+          <h2 className={cn(
+            "text-5xl font-bold font-mono tracking-tighter",
+            inDeficit ? "text-destructive" : "text-primary",
+          )}>
+            {displayedCapital.toLocaleString()} <span className="text-xl text-muted-foreground font-sans">ر.ع</span>
           </h2>
           <div className="flex items-center justify-center gap-3 mt-4">
-            <div className="px-4 py-1.5 rounded-full bg-fund-in-bright/20 text-fund-in text-xs font-bold flex items-center gap-1.5 border border-fund-in-bright/40 shadow-sm">
-              <ShieldCheck className="w-4 h-4" />
-              <span>الاعتمادات نشطة</span>
-            </div>
+            {inDeficit ? (
+              <Link
+                href="/reconcile"
+                className="px-4 py-1.5 rounded-full bg-destructive/15 text-destructive text-xs font-bold flex items-center gap-1.5 border border-destructive/40 shadow-sm"
+              >
+                <AlertTriangle className="w-4 h-4" />
+                <span>الخارج أكثر من الداخل — راجع التدقيق</span>
+              </Link>
+            ) : (
+              <div className="px-4 py-1.5 rounded-full bg-fund-in-bright/20 text-fund-in text-xs font-bold flex items-center gap-1.5 border border-fund-in-bright/40 shadow-sm">
+                <ShieldCheck className="w-4 h-4" />
+                <span>الاعتمادات نشطة</span>
+              </div>
+            )}
           </div>
         </motion.div>
 

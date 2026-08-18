@@ -189,6 +189,9 @@ export interface DashboardSummary {
   totalDeposits: number;
   totalWithdrawals: number;
   netCapital: number;
+  /** الرصيد الحقيقي بلا تصفير — سالبٌ عند العجز */
+  actualNetCapital?: number;
+  inDeficit?: boolean;
   lockedNetAssets?: number;
   allocation?: {
     year: number;
