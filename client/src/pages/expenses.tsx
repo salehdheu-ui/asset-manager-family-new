@@ -2,8 +2,9 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import MobileLayout from "@/components/layout/MobileLayout";
 import AttachmentBox from "@/components/AttachmentBox";
-import { getExpenses, createExpense, deleteExpense, getDashboardSummary } from "@/lib/api";
+import { getExpenses, createExpense, deleteExpense, getDashboardSummary , previewExpenseLimit} from "@/lib/api";
 import { overdraftToast } from "@/lib/overdraft";
+import { useOverdraftGate } from "@/hooks/use-overdraft-gate";
 import { useAuth } from "@/hooks/use-auth";
 import { Wallet, Heart, Scale, ArrowUpRight, TrendingDown, History, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
@@ -37,6 +38,7 @@ export default function Expenses() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
   const { toast } = useToast();
+  const gate = useOverdraftGate();
   const queryClient = useQueryClient();
   const [openDialog, setOpenDialog] = useState<string | null>(null);
 
@@ -226,10 +228,13 @@ export default function Expenses() {
                   </div>
                 </div>
                 <button 
-                  onClick={() => {
+                  onClick={async () => {
                     const amount = (document.getElementById(`expense-amount-${section.id}`) as HTMLInputElement).value;
                     const description = (document.getElementById(`expense-desc-${section.id}`) as HTMLTextAreaElement).value;
                     if (amount) {
+                      if (!(await gate.confirm(() => previewExpenseLimit(Number(amount), section.category)))) {
+                        return;
+                      }
                       createMutation.mutate({
                         title: section.title,
                         amount,
@@ -323,6 +328,7 @@ export default function Expenses() {
           </p>
         </div>
       </div>
+      {gate.dialog}
     </MobileLayout>
   );
 }

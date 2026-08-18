@@ -8,8 +8,11 @@ import {
   createLoan,
   createExpense,
   getDashboardSummary,
+  previewLoanLimit,
+  previewExpenseLimit,
 } from "@/lib/api";
 import { overdraftToast } from "@/lib/overdraft";
+import { useOverdraftGate } from "@/hooks/use-overdraft-gate";
 import {
   Wallet,
   HandCoins,
@@ -33,6 +36,7 @@ import {
 
 export default function FundOps() {
   const { toast } = useToast();
+  const gate = useOverdraftGate();
   const queryClient = useQueryClient();
 
   const [loanDialogOpen, setLoanDialogOpen] = useState(false);
@@ -206,9 +210,10 @@ export default function FundOps() {
               <DialogTitle className="font-heading text-xl">إضافة سلفة مباشرة</DialogTitle>
               <DialogDescription>تُسجل في قائمة السلف وتُعتمد فورًا بعد التحقق من الرصيد.</DialogDescription>
             </DialogHeader>
-            <form className="py-4 space-y-4" onSubmit={(e) => {
+            <form className="py-4 space-y-4" onSubmit={async (e) => {
               e.preventDefault();
               if (adminLoanMemberId && adminLoanAmount && Number(adminLoanAmount) > 0) {
+                if (!(await gate.confirm(() => previewLoanLimit(Number(adminLoanAmount))))) return;
                 createAdminLoanMutation.mutate({
                   memberId: adminLoanMemberId,
                   type: adminLoanType,
@@ -289,9 +294,10 @@ export default function FundOps() {
               <DialogTitle className="font-heading text-xl">إضافة مصروف</DialogTitle>
               <DialogDescription>يُسجل مباشرة في قائمة المصروفات مع التحقق من الرصيد.</DialogDescription>
             </DialogHeader>
-            <form className="py-4 space-y-4" onSubmit={(e) => {
+            <form className="py-4 space-y-4" onSubmit={async (e) => {
               e.preventDefault();
               if (expenseAmount && Number(expenseAmount) > 0) {
+                if (!(await gate.confirm(() => previewExpenseLimit(Number(expenseAmount), expenseCategory)))) return;
                 createAdminExpenseMutation.mutate({ title: expenseTitle, amount: expenseAmount, category: expenseCategory, description: expenseDescription || undefined });
               }
             }}>
@@ -411,6 +417,7 @@ export default function FundOps() {
           </div>
         )}
       </div>
+      {gate.dialog}
     </MobileLayout>
   );
 }

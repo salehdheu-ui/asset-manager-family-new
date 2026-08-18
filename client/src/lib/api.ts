@@ -100,6 +100,25 @@ export interface LayerOverdraft {
 /** الرد قد يحمل معه بيان تجاوز */
 export type WithOverdraft<T> = T & { overdraft?: LayerOverdraft | null };
 
+/** فحص مسبق: هل يتجاوز هذا المبلغ حدّ طبقته؟ لا يكتب شيئاً */
+export async function previewLoanLimit(amount: number): Promise<LayerOverdraft | null> {
+  const result = await send<{ allowed: boolean; overdraft: LayerOverdraft | null }>(
+    "POST",
+    "/api/allocation/check-loan",
+    { amount },
+  );
+  return result.overdraft;
+}
+
+export async function previewExpenseLimit(amount: number, category: string): Promise<LayerOverdraft | null> {
+  const result = await send<{ allowed: boolean; overdraft: LayerOverdraft | null }>(
+    "POST",
+    "/api/allocation/check-expense",
+    { amount, category },
+  );
+  return result.overdraft;
+}
+
 export async function createLoan(data: { memberId: string; type: string; title: string; amount: string; description?: string; repaymentType?: string; repaymentMonths?: number | null; status?: string }): Promise<WithOverdraft<Loan>> {
   return send<WithOverdraft<Loan>>("POST", "/api/loans", data);
 }
