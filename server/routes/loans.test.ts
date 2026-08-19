@@ -32,6 +32,9 @@ const state = {
   rebalanced: [] as number[],
   // متى تفشل إعادة التوازن — لمحاكاة انقطاع في منتصف العملية
   rebalanceFails: false,
+  votes: [] as any[],
+  // خريطة الحساب إلى عضويته — الفرز على الأعضاء لا على الحسابات
+  memberships: new Map<string, string | null>(),
 };
 
 function snapshot() {
@@ -128,9 +131,26 @@ vi.mock("../storage", () => ({
       state.audits.push(log);
       return log;
     }),
-    getLoanVotes: vi.fn(async () => []),
-    countEligibleVoters: vi.fn(async () => 3),
-    castLoanVote: vi.fn(async () => ({})),
+    getLoanVotes: vi.fn(async (loanId: string) => state.votes.filter((v) => v.loanId === loanId)),
+    countEligibleVoters: vi.fn(async (excludeMemberId?: string | null) => {
+      const owners = new Set(
+        Array.from(state.memberships.values()).filter((m): m is string => !!m && m !== excludeMemberId),
+      );
+      return owners.size;
+    }),
+    getVoterMemberships: vi.fn(async () => state.memberships),
+    castLoanVote: vi.fn(async (data: any) => {
+      const now = new Date(Date.now() + state.votes.length * 1000);
+      const existing = state.votes.find((v) => v.loanId === data.loanId && v.userId === data.userId);
+      if (existing) {
+        existing.vote = data.vote;
+        existing.createdAt = now;
+        return existing;
+      }
+      const row = { ...data, createdAt: now };
+      state.votes.push(row);
+      return row;
+    }),
     updateLoan: vi.fn(async (id: string, data: any) => {
       const row = state.loans.find((l) => l.id === id);
       Object.assign(row, data);
@@ -171,6 +191,11 @@ beforeEach(() => {
   state.audits = [];
   state.rebalanced = [];
   state.rebalanceFails = false;
+  state.votes = [];
+  // أربعة أعضاء لكل واحد حسابه — النصاب ثلاثة
+  state.memberships = new Map<string, string | null>([
+    ["u2", "m1"], ["u3", "m2"], ["u4", "m3"], ["u5", "m4"],
+  ]);
 });
 
 const scheduledLoan = {
@@ -381,5 +406,82 @@ describe("صلاحيات السلف", () => {
       body: JSON.stringify({ status: "approved" }),
     });
     expect(res.status).toBe(403);
+  });
+});
+
+/**
+ * السلفة فوق حدّ التصويت تحتاج موافقة العائلة — وهذا الحدّ هو ما يحرس أكبر
+ * المبالغ. النصاب محسوب بعدد **الأعضاء**، والأصوات كانت تُعدّ بعدد
+ * **الحسابات**، ولا قيد تفرّد على عضوية الحساب. فعضو له حسابان يبلغ بصوته
+ * وحده ثلثَي النصاب.
+ */
+describe("تصويت العائلة على السلف الكبيرة", () => {
+  const bigLoan = {
+    memberId: "m1",
+    title: "سلفة كبيرة",
+    amount: "5000",
+    type: "standard",
+    repaymentType: "scheduled",
+    repaymentMonths: 12,
+    status: "pending",
+  };
+
+  const voter = (id: string, memberId: string) =>
+    JSON.stringify({ id, role: "user", memberId, username: id });
+
+  async function createBigLoan() {
+    await request("/api/loans", { method: "POST", body: JSON.stringify(bigLoan), user: admin });
+    return state.loans[0].id;
+  }
+
+  it("العضو ذو الحسابين صوته واحد فلا يبلغ النصاب وحده", async () => {
+    const id = await createBigLoan();
+    // u6 حساب ثانٍ للعضو m2 — الأعضاء غير المقترضين ثلاثة، فالنصاب ثلاثة
+    state.memberships.set("u6", "m2");
+
+    await request(`/api/loans/${id}/vote`, { method: "POST", body: JSON.stringify({ vote: "approve" }), user: voter("u3", "m2") });
+    await request(`/api/loans/${id}/vote`, { method: "POST", body: JSON.stringify({ vote: "approve" }), user: voter("u6", "m2") });
+    const res = await request(`/api/loans/${id}/vote`, { method: "POST", body: JSON.stringify({ vote: "approve" }), user: voter("u4", "m3") });
+    const body = await res.json();
+
+    expect(state.votes).toHaveLength(3);   // ثلاثة حسابات صوّتت
+    expect(body.approve).toBe(2);          // وهم عضوان
+    expect(body.required).toBe(3);
+    expect(body.passed).toBe(false);
+  });
+
+  it("يمرّ حين يوافق ثلاثة أعضاء حقاً", async () => {
+    const id = await createBigLoan();
+    for (const [user, member] of [["u3", "m2"], ["u4", "m3"], ["u5", "m4"]]) {
+      await request(`/api/loans/${id}/vote`, { method: "POST", body: JSON.stringify({ vote: "approve" }), user: voter(user, member) });
+    }
+    const res = await request(`/api/loans/${id}/votes`, { user: admin });
+    const body = await res.json();
+
+    expect(body.approve).toBe(3);
+    expect(body.passed).toBe(true);
+  });
+
+  it("صاحب السلفة لا يصوّت على سلفته", async () => {
+    const id = await createBigLoan();
+    const res = await request(`/api/loans/${id}/vote`, { method: "POST", body: JSON.stringify({ vote: "approve" }), user: voter("u2", "m1") });
+
+    expect(res.status).toBe(403);
+    expect(state.votes).toHaveLength(0);
+  });
+
+  it("الرفض يمنع المرور ولو بلغ الموافقون النصاب", async () => {
+    const id = await createBigLoan();
+    for (const [user, member, vote] of [["u3", "m2", "approve"], ["u4", "m3", "approve"], ["u5", "m4", "approve"]]) {
+      await request(`/api/loans/${id}/vote`, { method: "POST", body: JSON.stringify({ vote }), user: voter(user, member) });
+    }
+    // عضو رابع يرفض — النصاب ثلاثة والموافقون ثلاثة، فالأغلبية باقية
+    state.memberships.set("u6", "m5");
+    const res = await request(`/api/loans/${id}/vote`, { method: "POST", body: JSON.stringify({ vote: "reject" }), user: voter("u6", "m5") });
+    const body = await res.json();
+
+    expect(body.approve).toBe(3);
+    expect(body.reject).toBe(1);
+    expect(body.passed).toBe(true);
   });
 });

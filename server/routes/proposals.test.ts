@@ -24,6 +24,8 @@ const state = {
   votes: [] as any[],
   audits: [] as any[],
   eligible: 5, // ⇒ النصاب 3
+  // كل مصوّت وعضويته — الفرز على الأعضاء لا على الحسابات
+  memberships: new Map<string, string | null>(),
 };
 
 vi.mock("../storage", () => ({
@@ -42,15 +44,20 @@ vi.mock("../storage", () => ({
     }),
     getProposalVotes: vi.fn(async (id: string) => state.votes.filter((v) => v.proposalId === id)),
     castProposalVote: vi.fn(async (data: any) => {
+      // الطابع الزمني يهمّ: صوتا حسابين لعضو واحد يُرجَّح بينهما بالأحدث
+      const now = new Date(Date.now() + state.votes.length * 1000);
       const existing = state.votes.find((v) => v.proposalId === data.proposalId && v.userId === data.userId);
       if (existing) {
         existing.vote = data.vote;
+        existing.createdAt = now;
         return existing;
       }
-      state.votes.push(data);
-      return data;
+      const row = { ...data, createdAt: now };
+      state.votes.push(row);
+      return row;
     }),
     countEligibleVoters: vi.fn(async () => state.eligible),
+    getVoterMemberships: vi.fn(async () => state.memberships),
     createAuditLog: vi.fn(async (log: any) => {
       state.audits.push(log);
       return log;
@@ -87,6 +94,11 @@ beforeEach(async () => {
   state.votes = [];
   state.audits = [];
   state.eligible = 5;
+  // لكل مصوّت عضويته الخاصة ما لم ينصّ اختبار على غير ذلك
+  state.memberships = new Map<string, string | null>([
+    ["u1", "m0"],
+    ["v1", "m1"], ["v2", "m2"], ["v3", "m3"], ["v4", "m4"], ["v5", "m5"],
+  ]);
   await request("/api/proposals", {
     method: "POST",
     body: JSON.stringify({ title: "تعديل نسبة النمو إلى 25٪", category: "allocation" }),
@@ -148,5 +160,45 @@ describe("قرارات العائلة", () => {
     expect(rows[0].myVote).toBe("reject");
     const other = await (await request("/api/proposals", {}, voter(2))).json();
     expect(other[0].myVote).toBeNull();
+  });
+
+  /**
+   * النصاب يُحسب بعدد الأعضاء، والأصوات كانت تُعدّ بعدد الحسابات. وعضو واحد
+   * قد يملك حسابين — لا قيد تفرّد على `users.member_id`، والوصي يربط الحسابات
+   * بالأعضاء بيده. فيصير عضو واحد صوتين، ويمرّ القرار برضا من هم أقلّ من النصاب.
+   */
+  it("العضو ذو الحسابين صوته واحد", async () => {
+    // v1 و v5 حسابان لعضو واحد
+    state.memberships.set("v5", "m1");
+
+    await request("/api/proposals/p1/vote", { method: "POST", body: JSON.stringify({ vote: "approve" }) }, voter(1));
+    await request("/api/proposals/p1/vote", { method: "POST", body: JSON.stringify({ vote: "approve" }) }, voter(5));
+    const res = await request("/api/proposals/p1/vote", { method: "POST", body: JSON.stringify({ vote: "approve" }) }, voter(2));
+    const body = await res.json();
+
+    // ثلاثة حسابات صوّتت، وهم عضوان اثنان
+    expect(state.votes).toHaveLength(3);
+    expect(body.approve).toBe(2);
+    expect(body.required).toBe(3);
+    expect(body.passed).toBe(false);
+  });
+
+  it("يمرّ القرار حين يبلغ الأعضاء النصاب حقاً", async () => {
+    for (const n of [1, 2, 3]) {
+      await request("/api/proposals/p1/vote", { method: "POST", body: JSON.stringify({ vote: "approve" }) }, voter(n));
+    }
+    const rows = await (await request("/api/proposals", {}, admin)).json();
+    expect(rows[0].approve).toBe(3);
+    expect(rows[0].status).toBe("approved");
+  });
+
+  it("العضو يغيّر رأيه من حسابه الآخر فيُؤخذ الأحدث", async () => {
+    state.memberships.set("v5", "m1");
+    await request("/api/proposals/p1/vote", { method: "POST", body: JSON.stringify({ vote: "approve" }) }, voter(1));
+    const res = await request("/api/proposals/p1/vote", { method: "POST", body: JSON.stringify({ vote: "reject" }) }, voter(5));
+    const body = await res.json();
+
+    expect(body.approve).toBe(0);
+    expect(body.reject).toBe(1);
   });
 });
