@@ -207,7 +207,13 @@ export function registerReportRoutes(app: Express) {
   app.get("/api/reports/member-statement/:id", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const memberId = req.params.id as string;
-      const filterYear = req.query.year ? Number(req.query.year) : null;
+      // ?year=abc كان يصير NaN فيسقط كل شيء من التصفية، ويردّ كشفاً فارغاً
+      // كأن العضو بلا حركة — خطأ صامت أسوأ من رسالة خطأ
+      const rawYear = req.query.year;
+      const filterYear = rawYear ? Number(rawYear) : null;
+      if (filterYear !== null && !Number.isInteger(filterYear)) {
+        return res.status(400).json({ error: "قيمة السنة غير صالحة" });
+      }
 
       const member = await storage.getMember(memberId);
       if (!member) {

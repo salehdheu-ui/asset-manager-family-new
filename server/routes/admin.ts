@@ -11,6 +11,13 @@ import { withTransaction } from "../db";
 import { computeDashboardSummary } from "../services/dashboard";
 import { zodErrorResponse } from "../validation";
 
+// كان المسار يأخذ الاسمين من الجسم بلا نوع ولا طول: كائن أو رقم أو نصّ بلا
+// نهاية يذهب إلى القاعدة كما هو
+const profileSchema = z.object({
+  firstName: z.string().trim().max(80).nullable().optional(),
+  lastName: z.string().trim().max(80).nullable().optional(),
+});
+
 export function registerAdminRoutes(app: Express) {
   // ============= User Profile =============
   app.get("/api/user/profile", isAuthenticated, async (req: Request, res: Response) => {
@@ -54,7 +61,10 @@ export function registerAdminRoutes(app: Express) {
       if (!userId) {
         return res.status(401).json({ message: "غير مصرح" });
       }
-      const { firstName, lastName } = req.body;
+      const parsed = profileSchema.safeParse(req.body);
+      if (!parsed.success) return res.status(400).json(zodErrorResponse(parsed.error));
+      const { firstName, lastName } = parsed.data;
+
       const [updated] = await db
         .update(users)
         .set({ firstName, lastName, updatedAt: new Date() })

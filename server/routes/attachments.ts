@@ -167,8 +167,24 @@ export function registerAttachmentRoutes(app: Express) {
           : null;
       if (!body) return res.status(404).json({ error: "محتوى المرفق غير متاح" });
 
+      /**
+       * ملفٌ رفعه مستخدم يُقدَّم من أصل الصندوق نفسه، فيُقيَّد بأضيق ما يمكن:
+       * لا تخمين للنوع، ولا نصّ برمجي، ولا شيء يُحمَّل معه. وPDF ينزل تنزيلاً
+       * لا يُفتح في الصفحة — قارئ PDF يشغّل ما فيه من نصوص برمجية.
+       *
+       * فحص البصمة عند الرفع يمنع ملفاً يدّعي نوعاً ليس له، لكن ملفاً مزدوج
+       * الرأس (بايتات PNG صحيحة ثم HTML) يمرّ منه — و`nosniff` هو ما يقطع
+       * على المتصفح أن يخمّنه صفحة.
+       */
       res.setHeader("Content-Type", attachment.mimeType);
-      res.setHeader("Content-Disposition", `inline; filename="${encodeURIComponent(attachment.fileName)}"`);
+      res.setHeader("X-Content-Type-Options", "nosniff");
+      res.setHeader("Content-Security-Policy", "default-src 'none'; sandbox");
+      res.setHeader("Cross-Origin-Resource-Policy", "same-origin");
+      const disposition = attachment.mimeType === "application/pdf" ? "attachment" : "inline";
+      res.setHeader(
+        "Content-Disposition",
+        `${disposition}; filename*=UTF-8''${encodeURIComponent(attachment.fileName)}`,
+      );
       res.send(body);
     } catch (error) {
       console.error("Download attachment error:", error);
