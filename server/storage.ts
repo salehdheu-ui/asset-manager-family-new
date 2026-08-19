@@ -23,8 +23,16 @@ import {
   type Notification, type InsertNotification, notifications
 } from "@shared/schema";
 import { users } from "@shared/models/auth";
+
+/** ما يرتبط بعضو من سجلات — صفرٌ يعني أن حذفه لا يُتلف شيئاً */
+export interface MemberFootprint {
+  contributions: number;
+  loans: number;
+  accounts: number;
+  total: number;
+}
 import { db } from "./db";
-import { eq, and, desc, gte, lte, lt, ne, or, isNull, inArray, sql } from "drizzle-orm";
+import { eq, and, desc, gte, lte, lt, ne, or, isNull, isNotNull, inArray, sql } from "drizzle-orm";
 
 export interface IStorage {
   // Members
@@ -33,6 +41,9 @@ export interface IStorage {
   createMember(member: InsertMember): Promise<Member>;
   updateMember(id: string, member: Partial<InsertMember>): Promise<Member | undefined>;
   deleteMember(id: string): Promise<void>;
+  /** ما يرتبط بالعضو من سجلات — يقرر أيُحذف أم يُؤرشَف */
+  memberFootprint(id: string): Promise<MemberFootprint>;
+  setMemberArchived(id: string, archived: boolean): Promise<Member | undefined>;
 
   // Contributions
   getContributions(): Promise<Contribution[]>;
@@ -185,17 +196,45 @@ export class DatabaseStorage implements IStorage {
     return updated;
   }
 
+  /**
+   * حذف العضو — ولا يمسّ سجلاً مالياً.
+   *
+   * كانت هذه الدالة تحذف سلف العضو وأقساطه وسداداته ومساهماته ثم تحذفه: أمرٌ
+   * يمحو تاريخ مال دخل الصندوق وخرج منه. ولهذا عُطِّل المسار كله من قبل، فلم
+   * يبقَ للوصي سبيل إلى إزالة عضو أُضيف خطأً. الآن يُفحص أثر العضو أولاً،
+   * فلا يُحذف إلا من لا أثر له — ومن له أثر يُؤرشَف.
+   */
   async deleteMember(id: string): Promise<void> {
     await db.transaction(async (tx: any) => {
-      const memberLoans = await tx.select({ id: loans.id }).from(loans).where(eq(loans.memberId, id));
-      for (const loan of memberLoans) {
-        await tx.delete(loanRepayments).where(eq(loanRepayments.loanId, loan.id));
-        await tx.delete(loanPayments).where(eq(loanPayments.loanId, loan.id));
+      const footprint = await this.memberFootprint(id);
+      if (footprint.total > 0) {
+        throw new Error("لا يُحذف عضو له سجل مالي — يُؤرشَف");
       }
-      await tx.delete(loans).where(eq(loans.memberId, id));
-      await tx.delete(contributions).where(eq(contributions.memberId, id));
       await tx.delete(members).where(eq(members.id, id));
     });
+  }
+
+  async memberFootprint(id: string): Promise<MemberFootprint> {
+    const [memberContributions, memberLoans, linkedUsers] = await Promise.all([
+      db.select({ id: contributions.id }).from(contributions).where(eq(contributions.memberId, id)),
+      db.select({ id: loans.id }).from(loans).where(eq(loans.memberId, id)),
+      db.select({ id: users.id }).from(users).where(eq(users.memberId, id)),
+    ]);
+
+    const counts = {
+      contributions: memberContributions.length,
+      loans: memberLoans.length,
+      accounts: linkedUsers.length,
+    };
+    return { ...counts, total: counts.contributions + counts.loans + counts.accounts };
+  }
+
+  async setMemberArchived(id: string, archived: boolean): Promise<Member | undefined> {
+    const [updated] = await db.update(members)
+      .set({ archivedAt: archived ? new Date() : null })
+      .where(eq(members.id, id))
+      .returning();
+    return updated;
   }
 
   // Contributions
@@ -333,8 +372,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   async countEligibleVoters(excludeMemberId?: string | null): Promise<number> {
-    const rows = await db.select({ memberId: users.memberId }).from(users);
-    const unique = new Set(rows.map(r => r.memberId).filter((m): m is string => !!m && m !== excludeMemberId));
+    const [rows, archived] = await Promise.all([
+      db.select({ memberId: users.memberId }).from(users),
+      // العضو المؤرشَف خرج من العائلة، فلا يُحسب في النصاب — وإلا صار نصاباً
+      // لا يمكن بلوغه لأن أحد أطرافه لم يعد يشارك
+      db.select({ id: members.id }).from(members).where(isNotNull(members.archivedAt)),
+    ]);
+    const archivedIds = new Set(archived.map((m) => m.id));
+    const unique = new Set(
+      rows
+        .map((r) => r.memberId)
+        .filter((m): m is string => !!m && m !== excludeMemberId && !archivedIds.has(m)),
+    );
     return unique.size;
   }
 

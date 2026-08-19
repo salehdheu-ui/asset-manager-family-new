@@ -1,3 +1,4 @@
+import { arabicCount } from "./arabic";
 import { pool } from "../db";
 
 /**
@@ -66,11 +67,6 @@ async function scalar(sql: string, params: unknown[] = []): Promise<number> {
 const round = (value: number) => Math.round(value * 1000) / 1000;
 
 /** العدد بالعربية يوافق معدوده: واحد ومثنى وجمع */
-function arabicCount(n: number, one: string, two: string, many: string): string {
-  if (n === 1) return one;
-  if (n === 2) return two;
-  return `${n} ${many}`;
-}
 
 /** مجاميع كل بند من بنود الصندوق */
 async function rebuildBalance() {

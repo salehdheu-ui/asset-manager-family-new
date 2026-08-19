@@ -115,6 +115,7 @@ export async function collectDueReminders(now = new Date()): Promise<Reminder[]>
     );
 
     for (const member of members) {
+      if (member.archivedAt) continue; // غادر القائمة فلا يُطالَب باشتراك
       if (paidThisMonth.has(member.id)) continue;
       const userId = userOf.get(member.id);
       if (!userId) continue;

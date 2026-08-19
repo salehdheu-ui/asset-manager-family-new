@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import MobileLayout from "@/components/layout/MobileLayout";
-import { getMembers, createMember, deleteMember, updateMember, getContributions, getLoans, setContributionRate, getContributionRates } from "@/lib/api";
+import { getMembersIncludingArchived, createMember, deleteMember, setMemberArchived, MemberHasHistory, updateMember, getContributions, getLoans, setContributionRate, getContributionRates } from "@/lib/api";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { UserPlus, Trash2, CreditCard, History, HandCoins, Pencil, Check, X } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -14,10 +15,13 @@ export default function Members() {
   const [editName, setEditName] = useState("");
   const [editExpected, setEditExpected] = useState("");
 
-  const { data: members = [], isLoading: membersLoading } = useQuery({
+  const { data: allMembers = [], isLoading: membersLoading } = useQuery({
     queryKey: ["members"],
-    queryFn: getMembers,
+    queryFn: getMembersIncludingArchived,
   });
+
+  const members = allMembers.filter((m: any) => !m.archivedAt);
+  const archivedMembers = allMembers.filter((m: any) => m.archivedAt);
 
   const { data: contributions = [] } = useQuery({
     queryKey: ["contributions"],
@@ -40,14 +44,35 @@ export default function Members() {
     },
   });
 
+  // العضو بلا سجل مالي يُحذف حقاً؛ ومن له سجل يُعرض على الوصي أن يؤرشفه بدل
+  // أن يُمحى تاريخه معه
+  const [archiveTarget, setArchiveTarget] = useState<{ id: string; name: string; reason: string } | null>(null);
+
   const removeMemberMutation = useMutation({
     mutationFn: deleteMember,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["members"] });
-      toast({ title: "تم حذف العضو" });
+      toast({ title: "حُذف العضو" });
+    },
+    onError: (error, id) => {
+      if (error instanceof MemberHasHistory) {
+        const member = members.find((m: any) => m.id === id);
+        setArchiveTarget({ id, name: member?.name ?? "العضو", reason: error.message });
+        return;
+      }
+      toast({ title: "حدث خطأ", description: (error as any)?.message || "تعذر حذف العضو", variant: "destructive" });
+    },
+  });
+
+  const archiveMutation = useMutation({
+    mutationFn: ({ id, archived }: { id: string; archived: boolean }) => setMemberArchived(id, archived),
+    onSuccess: (_data, { archived }) => {
+      queryClient.invalidateQueries({ queryKey: ["members"] });
+      setArchiveTarget(null);
+      toast({ title: archived ? "أُرشِف العضو — سجلّه محفوظ" : "أُعيد العضو إلى القائمة" });
     },
     onError: (error) => {
-      toast({ title: "حدث خطأ", description: (error as any)?.message || "تعذر حذف العضو", variant: "destructive" });
+      toast({ title: "حدث خطأ", description: (error as any)?.message || "تعذرت الأرشفة", variant: "destructive" });
     },
   });
 
@@ -238,6 +263,7 @@ export default function Members() {
                         <button 
                           onClick={() => removeMemberMutation.mutate(member.id)}
                           disabled={removeMemberMutation.isPending || members.length <= 1}
+                          title="إزالة العضو"
                           className="tap-target p-2 text-muted-foreground hover:text-destructive transition-colors bg-muted/30 rounded-lg disabled:opacity-50"
                           data-testid={`button-delete-member-${member.id}`}
                         >
@@ -289,7 +315,61 @@ export default function Members() {
             })
           )}
         </div>
+
+        {/* المؤرشفون: خارج القائمة وسجلّهم قائم، ولهم طريق رجوع */}
+        {archivedMembers.length > 0 && (
+          <div className="space-y-2 pt-2">
+            <h3 className="text-sm font-bold text-muted-foreground px-1">
+              خارج القائمة ({archivedMembers.length})
+            </h3>
+            <p className="text-xs text-muted-foreground px-1 pb-1">
+              سجلّهم المالي محفوظ ويظهر في التقارير القديمة، ولا يدخلون في النصاب ولا تصلهم تذكيرات.
+            </p>
+            {archivedMembers.map((member: any) => (
+              <div
+                key={member.id}
+                className="flex items-center justify-between bg-muted/30 rounded-xl p-3 border border-border/70"
+                data-testid={`archived-member-${member.id}`}
+              >
+                <span className="text-sm font-bold text-muted-foreground">{member.name}</span>
+                <button
+                  onClick={() => archiveMutation.mutate({ id: member.id, archived: false })}
+                  disabled={archiveMutation.isPending}
+                  className="tap-target text-xs font-bold text-primary px-3 py-2 rounded-lg bg-background disabled:opacity-50"
+                  data-testid={`button-restore-member-${member.id}`}
+                >
+                  إعادة إلى القائمة
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
+
+      <AlertDialog open={!!archiveTarget} onOpenChange={(open) => !open && setArchiveTarget(null)}>
+        <AlertDialogContent dir="rtl" className="max-w-sm rounded-xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{archiveTarget?.name} له سجل لا يُمحى</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2 text-right">
+              <span className="block">{archiveTarget?.reason}</span>
+              <span className="block text-xs">
+                الأرشفة تُخرجه من قائمة العائلة ومن النصاب ومن التذكيرات، ولا تمسّ مساهماته ولا سلفه —
+                تبقى في التقارير وسجل التدقيق كما هي.
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-row gap-2">
+            <AlertDialogCancel className="flex-1 mt-0">إبقاؤه</AlertDialogCancel>
+            <AlertDialogAction
+              className="flex-1"
+              onClick={() => archiveTarget && archiveMutation.mutate({ id: archiveTarget.id, archived: true })}
+              data-testid="button-confirm-archive"
+            >
+              أرشفته
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MobileLayout>
   );
 }

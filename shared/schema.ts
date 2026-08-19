@@ -15,6 +15,10 @@ export const members = pgTable("members", {
   // الاشتراك الشهري المتوقع من هذا العضو — فارغ يعني استخدام الافتراضي العائلي
   expectedMonthly: decimal("expected_monthly", { precision: 10, scale: 3 }),
   createdAt: timestamp("created_at").defaultNow(),
+  // العضو الذي غادر القائمة ولم يُمحَ: سجلّه المالي باقٍ كما هو، واسمه يبقى
+  // يُقرأ في التقارير القديمة، لكنه لا يظهر في قائمة العائلة ولا يُحسب في
+  // النصاب ولا يُذكَّر باشتراك
+  archivedAt: timestamp("archived_at"),
 });
 
 export const insertMemberSchema = createInsertSchema(members).omit({ id: true, createdAt: true }).extend({
