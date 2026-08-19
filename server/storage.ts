@@ -99,6 +99,8 @@ export interface IStorage {
   getLoanVotes(loanId: string): Promise<LoanVote[]>;
   castLoanVote(data: { loanId: string; userId: string; voterName: string; vote: string }): Promise<LoanVote>;
   countEligibleVoters(excludeMemberId?: string | null): Promise<number>;
+  /** خريطة الحساب إلى عضويته — لفرز الأصوات على الأعضاء لا على الحسابات */
+  getVoterMemberships(): Promise<Map<string, string | null>>;
 
   // Password Reset Requests
   createResetRequest(username: string, userId: string | null): Promise<PasswordResetRequest>;
@@ -334,6 +336,11 @@ export class DatabaseStorage implements IStorage {
     const rows = await db.select({ memberId: users.memberId }).from(users);
     const unique = new Set(rows.map(r => r.memberId).filter((m): m is string => !!m && m !== excludeMemberId));
     return unique.size;
+  }
+
+  async getVoterMemberships(): Promise<Map<string, string | null>> {
+    const rows = await db.select({ id: users.id, memberId: users.memberId }).from(users);
+    return new Map(rows.map((r) => [r.id, r.memberId]));
   }
 
   // Loan Repayments

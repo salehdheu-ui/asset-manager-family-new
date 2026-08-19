@@ -2,17 +2,23 @@ import type { Express } from "express";
 import { z } from "zod";
 import { storage } from "../storage";
 import { isAuthenticated, isAdmin } from "../auth";
-import { insertProposalSchema } from "@shared/schema";
+import { insertProposalSchema, type ProposalVote } from "@shared/schema";
+import { tallyByMember } from "../services/vote-tally";
 import { zodErrorResponse } from "../validation";
 
 const voteSchema = z.object({ vote: z.enum(["approve", "reject"]) });
 
 // نفس نصاب السلف: 3 موافقين أو كل المؤهلين إن كانوا أقل
-async function tallyOf(proposalId: string) {
-  const votes = await storage.getProposalVotes(proposalId);
-  const approve = votes.filter((v) => v.vote === "approve").length;
-  const reject = votes.filter((v) => v.vote === "reject").length;
-  const eligible = await storage.countEligibleVoters(null);
+async function tallyOf(proposalId: string, known?: { votes: ProposalVote[]; memberships: Map<string, string | null> }) {
+  const [votes, memberships, eligible] = await Promise.all([
+    known?.votes ?? storage.getProposalVotes(proposalId),
+    known?.memberships ?? storage.getVoterMemberships(),
+    storage.countEligibleVoters(null),
+  ]);
+
+  // على الأعضاء لا على الحسابات — كما في السلف
+  const { approve, reject } = tallyByMember(votes, (userId) => memberships.get(userId));
+
   const required = Math.max(1, Math.min(3, eligible));
   return { approve, reject, eligible, required, passed: approve >= required && approve > reject };
 }
@@ -22,9 +28,10 @@ export function registerProposalRoutes(app: Express) {
   app.get("/api/proposals", isAuthenticated, async (req, res) => {
     try {
       const list = await storage.getProposals();
+      const memberships = await storage.getVoterMemberships();
       const rows = await Promise.all(list.map(async (p) => {
         const votes = await storage.getProposalVotes(p.id);
-        const tally = await tallyOf(p.id);
+        const tally = await tallyOf(p.id, { votes, memberships });
         return {
           ...p,
           ...tally,

@@ -9,15 +9,26 @@ import { guardLoan, type LayerOverdraft } from "../services/layer-guard";
 import { buildRepaymentSchedule, LOAN_VOTE_THRESHOLD } from "@shared/finance";
 import { zodErrorResponse, RequestError } from "../validation";
 import { withTransaction } from "../db";
+import { tallyByMember } from "../services/vote-tally";
 
 type LoanRecord = Awaited<ReturnType<typeof storage.getLoans>>[number];
 
 // السلف فوق حد التصويت تتطلب موافقة العائلة: 3 موافقين على الأقل (أو كل المؤهلين إن كانوا أقل) وأغلبية الموافقين
 async function getVoteTally(loan: LoanRecord) {
-  const votes = await storage.getLoanVotes(loan.id);
-  const approve = votes.filter(v => v.vote === "approve").length;
-  const reject = votes.filter(v => v.vote === "reject").length;
-  const eligible = await storage.countEligibleVoters(loan.memberId);
+  const [votes, memberships, eligible] = await Promise.all([
+    storage.getLoanVotes(loan.id),
+    storage.getVoterMemberships(),
+    storage.countEligibleVoters(loan.memberId),
+  ]);
+
+  // العدّ على الأعضاء لا على الحسابات — النصاب محسوب بالأعضاء، فلو عُدّت
+  // الحسابات لمرّ الطلب بعضو له حسابان يصوّت مرتين
+  const { approve, reject } = tallyByMember(votes, (userId) => {
+    const memberId = memberships.get(userId);
+    // صاحب السلفة لا يُحتسب صوته وإن سُجّل — هو خارج المقام أيضاً
+    return memberId === loan.memberId ? null : memberId;
+  });
+
   const required = Math.max(1, Math.min(3, eligible));
   const passed = approve >= required && approve > reject;
   return { votes, approve, reject, eligible, required, passed };
