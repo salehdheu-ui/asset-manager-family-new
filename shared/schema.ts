@@ -138,7 +138,31 @@ export const familySettings = pgTable("family_settings", {
   backupLastRunAt: timestamp("backup_last_run_at"),
 });
 
-export const insertFamilySettingsSchema = createInsertSchema(familySettings).omit({ id: true });
+/**
+ * الأعداد هنا مقيَّدة عمداً.
+ *
+ * كان المسار يتحقق من مجموع النسب = ١٠٠ ولا شيء غير ذلك، فيمرّ توزيعٌ مثل
+ * (محمي ‎-50‎، طوارئ ‎150‎، مرن ٠، نمو ٠) لأن مجموعه مئة — فتصير طبقة المحمي
+ * سالبة وطبقة الطوارئ مرة ونصفاً من الصندوق كله، ويأذن حارس الطبقات بإنفاق
+ * أكثر مما فيه. والمجموع وحده يعطي طمأنينة كاذبة.
+ */
+const percent = z.number().int().min(0).max(100);
+// نصّ لا رقم: العمود decimal في القاعدة، وتمرير رقم يكسر نوعه
+const money = z
+  .string()
+  .refine((v) => Number.isFinite(Number(v)) && Number(v) >= 0, "المبلغ لا يكون سالباً");
+
+export const insertFamilySettingsSchema = createInsertSchema(familySettings).omit({ id: true }).extend({
+  protectedPercent: percent.optional(),
+  emergencyPercent: percent.optional(),
+  flexiblePercent: percent.optional(),
+  growthPercent: percent.optional(),
+  defaultMonthlyContribution: money.optional(),
+  zakatNisab: money.optional(),
+  backupKeepDays: z.number().int().min(1).max(3650).optional(),
+  backupKeepWeeksPerMonth: z.number().int().min(1).max(5).optional(),
+  backupKeepMonths: z.number().int().min(1).max(600).optional(),
+});
 export type InsertFamilySettings = z.infer<typeof insertFamilySettingsSchema>;
 export type FamilySettings = typeof familySettings.$inferSelect;
 
