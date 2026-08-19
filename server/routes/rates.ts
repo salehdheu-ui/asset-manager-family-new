@@ -34,7 +34,7 @@ export function registerRateRoutes(app: Express) {
         })),
         current: {
           family: rates.currentRate("", now),
-          members: members.map((m) => ({
+          members: members.filter((m) => !m.archivedAt).map((m) => ({
             memberId: m.id,
             name: m.name,
             now: rates.currentRate(m.id, now),

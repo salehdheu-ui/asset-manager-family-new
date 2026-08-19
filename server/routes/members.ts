@@ -4,6 +4,7 @@ import { insertMemberSchema } from "@shared/schema";
 import { z } from "zod";
 import { isAuthenticated, isAdmin } from "../auth";
 import { zodErrorResponse } from "../validation";
+import { arabicCount } from "../services/arabic";
 
 /**
  * ما يجوز تعديله في العضو.
@@ -37,6 +38,15 @@ function describeChange(before: Record<string, any>, after: Record<string, any>,
   return changes;
 }
 
+/** يصف ما يمنع الحذف بعبارة يفهمها الوصي، بصيغة عددٍ سليمة */
+function describeFootprint(f: { contributions: number; loans: number; accounts: number }) {
+  const parts: string[] = [];
+  if (f.contributions > 0) parts.push(arabicCount(f.contributions, "مساهمة واحدة", "مساهمتان", "مساهمات"));
+  if (f.loans > 0) parts.push(arabicCount(f.loans, "سلفة واحدة", "سلفتان", "سلف"));
+  if (f.accounts > 0) parts.push(arabicCount(f.accounts, "حساب دخول مرتبط", "حسابا دخول مرتبطان", "حسابات دخول مرتبطة"));
+  return parts.join(" و");
+}
+
 const FIELD_NAMES: Record<string, string> = {
   name: "الاسم",
   avatar: "الحرفان",
@@ -46,7 +56,12 @@ const FIELD_NAMES: Record<string, string> = {
 export function registerMemberRoutes(app: Express) {
   app.get("/api/members", isAuthenticated, async (req, res) => {
     try {
-      const members = await storage.getMembers();
+      const all = await storage.getMembers();
+      // المؤرشفون خارج قائمة العائلة إلا أن تُطلب صراحةً — سجلّهم باقٍ، وهم
+      // ليسوا من الحاضرين
+      const members = req.query.includeArchived === "1" && req.user?.role === "admin"
+        ? all
+        : all.filter((m) => !m.archivedAt);
       if (req.user?.role !== 'admin') {
         const ownMemberId = req.user?.memberId;
         return res.json(ownMemberId ? members.filter(m => m.id === ownMemberId) : []);
@@ -182,7 +197,87 @@ export function registerMemberRoutes(app: Express) {
     }
   });
 
-  app.delete("/api/members/:id", isAuthenticated, isAdmin, async (_req, res) => {
-    return res.status(403).json({ error: "تم تعطيل الحذف النهائي حفاظاً على البيانات" });
+  /**
+   * إزالة عضو.
+   *
+   * كان المسار مغلقاً بالكامل حفاظاً على البيانات — لأن الحذف كان يجرّ معه
+   * مساهمات العضو وسلفه وأقساطه وسداداته. لكن الإغلاق سدّ الباب على من أضاف
+   * عضواً خطأً، ولا سجل له أصلاً يُخشى عليه.
+   *
+   * فالتفريق هنا: من لا أثر مالي له يُحذف حقاً، ومن له أثر لا يُحذف بحال —
+   * يُؤرشَف، فيخرج من القائمة ويبقى تاريخه كما هو.
+   */
+  app.delete("/api/members/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const memberId = req.params.id as string;
+      const member = await storage.getMember(memberId);
+      if (!member) return res.status(404).json({ error: "العضو غير موجود" });
+
+      if (req.user?.memberId === memberId) {
+        return res.status(409).json({ error: "لا تُزيل عضويتك أنت — اطلب ذلك من وصيٍّ آخر" });
+      }
+
+      const footprint = await storage.memberFootprint(memberId);
+      if (footprint.total > 0) {
+        return res.status(409).json({
+          error:
+            `له ${describeFootprint(footprint)} في الصندوق.`,
+          footprint,
+          canArchive: true,
+        });
+      }
+
+      await storage.deleteMember(memberId);
+
+      await storage.createAuditLog({
+        action: "member_deleted",
+        entityType: "member",
+        entityId: memberId,
+        actorUserId: req.user?.id ?? null,
+        actorName: req.user?.username ?? req.user?.firstName ?? "مشرف",
+        description: `حُذف العضو ${member.name} — لم يكن له سجل مالي`,
+        metadata: { name: member.name, role: member.role },
+      });
+
+      res.status(204).send();
+    } catch (error) {
+      console.error("Delete member error:", error);
+      res.status(500).json({ error: "تعذر حذف العضو" });
+    }
+  });
+
+  // الأرشفة: يخرج من القائمة والنصاب والتذكيرات، ولا يُمسّ له صف
+  app.post("/api/members/:id/archive", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const memberId = req.params.id as string;
+      const archived = z.object({ archived: z.boolean().default(true) }).parse(req.body ?? {}).archived;
+
+      const member = await storage.getMember(memberId);
+      if (!member) return res.status(404).json({ error: "العضو غير موجود" });
+
+      if (archived && req.user?.memberId === memberId) {
+        return res.status(409).json({ error: "لا تُؤرشف عضويتك أنت — اطلب ذلك من وصيٍّ آخر" });
+      }
+
+      const updated = await storage.setMemberArchived(memberId, archived);
+
+      await storage.createAuditLog({
+        action: archived ? "member_archived" : "member_restored",
+        entityType: "member",
+        entityId: memberId,
+        actorUserId: req.user?.id ?? null,
+        actorName: req.user?.username ?? req.user?.firstName ?? "مشرف",
+        description: archived
+          ? `أُرشِف العضو ${member.name} — خرج من قائمة العائلة وبقي سجلّه`
+          : `أُعيد العضو ${member.name} إلى قائمة العائلة`,
+        metadata: { name: member.name },
+      });
+
+      res.json(updated);
+    } catch (error) {
+      if (error instanceof z.ZodError) return res.status(400).json(zodErrorResponse(error));
+      console.error("Archive member error:", error);
+      res.status(500).json({ error: "تعذر تغيير حالة العضو" });
+    }
   });
 }

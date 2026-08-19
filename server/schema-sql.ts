@@ -185,7 +185,8 @@ CREATE TABLE IF NOT EXISTS "members" (
 	"role" text DEFAULT 'member' NOT NULL,
 	"avatar" text,
 	"expected_monthly" numeric(10, 3),
-	"created_at" timestamp DEFAULT now()
+	"created_at" timestamp DEFAULT now(),
+	"archived_at" timestamp
 );
 
 CREATE TABLE IF NOT EXISTS "notifications" (

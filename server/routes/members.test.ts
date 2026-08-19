@@ -22,6 +22,7 @@ vi.mock("../auth", () => ({
 const state = {
   members: [] as any[],
   audits: [] as any[],
+  footprints: {} as Record<string, { contributions: number; loans: number; accounts: number }>,
 };
 
 vi.mock("../storage", () => ({
@@ -31,6 +32,19 @@ vi.mock("../storage", () => ({
     createMember: vi.fn(async (data: any) => {
       const row = { id: `m${state.members.length + 1}`, role: "member", avatar: null, expectedMonthly: null, ...data };
       state.members.push(row);
+      return row;
+    }),
+    memberFootprint: vi.fn(async (id: string) => {
+      const f = state.footprints[id] ?? { contributions: 0, loans: 0, accounts: 0 };
+      return { ...f, total: f.contributions + f.loans + f.accounts };
+    }),
+    deleteMember: vi.fn(async (id: string) => {
+      state.members = state.members.filter((m) => m.id !== id);
+    }),
+    setMemberArchived: vi.fn(async (id: string, archived: boolean) => {
+      const row = state.members.find((m) => m.id === id);
+      if (!row) return undefined;
+      row.archivedAt = archived ? new Date() : null;
       return row;
     }),
     updateMember: vi.fn(async (id: string, data: any) => {
@@ -70,8 +84,12 @@ beforeAll(async () => {
 afterAll(() => new Promise<void>((resolve) => server.close(() => resolve())));
 
 beforeEach(() => {
-  state.members = [{ id: "m1", name: "سالم", role: "member", avatar: "سا", expectedMonthly: "20.000" }];
+  state.members = [
+    { id: "m1", name: "سالم", role: "member", avatar: "سا", expectedMonthly: "20.000", archivedAt: null },
+    { id: "m2", name: "خالد", role: "member", avatar: "خا", expectedMonthly: null, archivedAt: null },
+  ];
   state.audits = [];
+  state.footprints = {};
 });
 
 /**
@@ -143,5 +161,75 @@ describe("تعديل بيانات العضو", () => {
       body: JSON.stringify({ name: "أحد" }),
     });
     expect(res.status).toBe(404);
+  });
+});
+
+/**
+ * كان الحذف معطَّلاً بالكامل حفاظاً على البيانات، لأنه كان يجرّ معه مساهمات
+ * العضو وسلفه. لكن ذلك سدّ الباب على من أضاف عضواً خطأً ولا سجل له يُخشى عليه.
+ */
+describe("إزالة العضو", () => {
+  it("يحذف عضواً لا سجل مالي له", async () => {
+    const res = await request("/api/members/m2", { method: "DELETE" });
+
+    expect(res.status).toBe(204);
+    expect(state.members.map((m) => m.id)).toEqual(["m1"]);
+    expect(state.audits.map((a) => a.action)).toContain("member_deleted");
+  });
+
+  it("يرفض حذف عضو له سجل ويدلّ على الأرشفة", async () => {
+    state.footprints.m2 = { contributions: 6, loans: 1, accounts: 0 };
+
+    const res = await request("/api/members/m2", { method: "DELETE" });
+    const body = await res.json();
+
+    expect(res.status).toBe(409);
+    expect(body.canArchive).toBe(true);
+    expect(body.footprint.total).toBe(7);
+    expect(body.error).toContain("6 مساهمات");
+    expect(body.error).toContain("سلفة واحدة");
+    expect(state.members).toHaveLength(2); // لم يُمسّ
+  });
+
+  it("يمنع الوصي من إزالة عضويته هو", async () => {
+    const self = JSON.stringify({ id: "u1", role: "admin", username: "guardian", memberId: "m1" });
+    const res = await request("/api/members/m1", { method: "DELETE" }, self);
+
+    expect(res.status).toBe(409);
+    expect(state.members).toHaveLength(2);
+  });
+
+  it("يؤرشف العضو بدل حذفه ويوثّق ذلك", async () => {
+    const res = await request("/api/members/m2/archive", {
+      method: "POST",
+      body: JSON.stringify({ archived: true }),
+    });
+
+    expect(res.status).toBe(200);
+    expect(state.members.find((m) => m.id === "m2").archivedAt).toBeTruthy();
+    expect(state.audits.map((a) => a.action)).toContain("member_archived");
+  });
+
+  it("يعيد المؤرشَف إلى القائمة", async () => {
+    state.members[1].archivedAt = new Date();
+
+    const res = await request("/api/members/m2/archive", {
+      method: "POST",
+      body: JSON.stringify({ archived: false }),
+    });
+
+    expect(res.status).toBe(200);
+    expect(state.members[1].archivedAt).toBeNull();
+    expect(state.audits.map((a) => a.action)).toContain("member_restored");
+  });
+
+  it("القائمة تُخفي المؤرشفين ما لم يُطلبوا", async () => {
+    state.members[1].archivedAt = new Date();
+
+    const visible = await (await request("/api/members")).json();
+    expect(visible.map((m: any) => m.id)).toEqual(["m1"]);
+
+    const all = await (await request("/api/members?includeArchived=1")).json();
+    expect(all).toHaveLength(2);
   });
 });

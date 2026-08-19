@@ -47,8 +47,39 @@ export async function updateMember(id: string, data: Partial<{ name: string; rol
   return send<Member>("PATCH", `/api/members/${id}`, data);
 }
 
+export interface MemberFootprint {
+  contributions: number;
+  loans: number;
+  accounts: number;
+  total: number;
+}
+
+/** رُفض الحذف لأن للعضو سجلاً — تحمل معها ما يمنعه */
+export class MemberHasHistory extends Error {
+  constructor(message: string, readonly footprint?: MemberFootprint) {
+    super(message);
+    this.name = "MemberHasHistory";
+  }
+}
+
 export async function deleteMember(id: string): Promise<void> {
-  await apiRequest("DELETE", `/api/members/${id}`);
+  const res = await fetch(`/api/members/${id}`, { method: "DELETE", credentials: "include" });
+  if (res.status === 409) {
+    const body = await res.json().catch(() => ({}));
+    throw new MemberHasHistory(body.error ?? "لا يمكن حذف هذا العضو", body.footprint);
+  }
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error ?? "تعذر حذف العضو");
+  }
+}
+
+export async function setMemberArchived(id: string, archived: boolean): Promise<Member> {
+  return send<Member>("POST", `/api/members/${id}/archive`, { archived });
+}
+
+export async function getMembersIncludingArchived(): Promise<Member[]> {
+  return get<Member[]>("/api/members?includeArchived=1");
 }
 
 // Contributions
