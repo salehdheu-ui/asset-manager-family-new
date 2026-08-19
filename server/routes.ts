@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth, createDefaultAdmin } from "./auth";
 import { storage } from "./storage";
-import { createBackupSnapshot } from "./services/backup";
+import { applyRetentionPolicy, createBackupSnapshot } from "./services/backup";
 import {
   registerAdminRoutes,
   registerMemberRoutes,
@@ -51,7 +51,19 @@ export async function registerRoutes(
   registerNotificationRoutes(app);
   registerReconcileRoutes(app);
 
-  // Auto-backup scheduler: checks every hour, creates a snapshot if 24h have elapsed
+  /**
+   * النسخ التلقائي: فحص كل ساعة، ونسخة إن مضى يوم.
+   *
+   * وبعد كل نسخة تُطبَّق سياسة الاستبقاء. كانت السياسة لا تعمل إلا بضغطة زر
+   * في لوحة الإدارة، فينمو الأرشيف بلا حدّ — والنسخة الواحدة تُحفظ مرتين:
+   * ملفاً على القرص، وحمولةً كاملة داخل عمود في قاعدة البيانات نفسها. فنسخة
+   * يومية تعني نسخة من الصندوق كله كل يوم، داخل الصندوق وخارجه، إلى ما لا
+   * نهاية — حتى يمتلئ القرص أو تنتفخ القاعدة.
+   *
+   * والسياسة نفسها لا تُفرّط: تُبقي كل نسخ آخر `backupKeepDays` يوماً، وممثلاً
+   * أسبوعياً لكل أسبوع من الشهر، وممثلاً شهرياً لكل شهر — بحدودها المضبوطة في
+   * الإعدادات، وأدناها واحد مهما كُتب فيها. والحذف يُوثَّق في سجل التدقيق.
+   */
   setInterval(async () => {
     try {
       const settings = await storage.getFamilySettings();
@@ -62,6 +74,23 @@ export async function registerRoutes(
       const elapsed = lastRun ? now.getTime() - lastRun.getTime() : Infinity;
       if (elapsed >= 24 * 60 * 60 * 1000) {
         await createBackupSnapshot(null);
+
+        const pruned = await applyRetentionPolicy();
+        if (pruned.deletedBackups.length > 0) {
+          await storage.createAuditLog({
+            action: "backups_pruned",
+            entityType: "system_backup",
+            entityId: "retention",
+            actorUserId: null,
+            actorName: "استبقاء تلقائي",
+            description: `حُذفت ${pruned.deletedBackups.length} نسخة احتياطية قديمة بحسب سياسة الاستبقاء (بقي ${pruned.kept})`,
+            metadata: {
+              count: pruned.deletedBackups.length,
+              kept: pruned.kept,
+              files: pruned.deletedBackups.map((b) => b.fileName),
+            },
+          });
+        }
       }
     } catch (err) {
       console.error("[auto-backup] error:", err);

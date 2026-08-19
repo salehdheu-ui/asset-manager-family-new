@@ -8,6 +8,7 @@ import {
   upcomingInstallments,
 } from "@shared/finance";
 import { dispatchNotification, isPushConfigured } from "./push";
+import { loadRates } from "./rates";
 
 /**
  * التذكيرات التلقائية.
@@ -49,12 +50,13 @@ const money = (value: number | string) => `${Number(value).toLocaleString("en-US
 
 /** يبني قائمة التذكيرات المستحقة الآن دون إرسالها */
 export async function collectDueReminders(now = new Date()): Promise<Reminder[]> {
-  const [loans, members, contributions, paidByLoan, userOf] = await Promise.all([
+  const [loans, members, contributions, paidByLoan, userOf, rates] = await Promise.all([
     storage.getLoans(),
     storage.getMembers(),
     storage.getContributions(),
     storage.getPaidTotalsByLoan(),
     userIdByMember(),
+    loadRates(),
   ]);
 
   const approved = loans.filter((l) => l.status === "approved");
@@ -116,6 +118,12 @@ export async function collectDueReminders(now = new Date()): Promise<Reminder[]>
       if (paidThisMonth.has(member.id)) continue;
       const userId = userOf.get(member.id);
       if (!userId) continue;
+
+      // لا اشتراك سارياً على هذا العضو هذا الشهر ⇒ لا شيء عليه ⇒ لا تذكير.
+      // كان التذكير يمرّ على كل عضو بلا سؤال، فيقول لمن لا اشتراك عليه «لم
+      // تُسجَّل مساهمتك» — وحساب المتأخرات في الملف نفسه يعفيه صراحةً: «شهر لم
+      // يكن له سعر ساري لا يُحاسَب عليه». فيتناقض ما يُقال له مع ما يُحسب عليه.
+      if (rates.rateAt(member.id, year, month) <= 0) continue;
 
       reminders.push({
         userId,
