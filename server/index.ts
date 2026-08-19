@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { installProcessErrorHandlers, recordSystemError } from "./monitoring";
+import { apiRateLimiter, redactSecrets, securityHeaders } from "./security";
 import { createServer } from "http";
 
 installProcessErrorHandlers();
@@ -15,17 +16,25 @@ declare module "http" {
   }
 }
 
-app.use(
-  express.json({
-    // حد مرتفع ليسمح باستيراد ملفات النسخ الاحتياطية الكاملة
-    limit: "10mb",
-    verify: (req, _res, buf) => {
-      req.rawBody = buf;
-    },
-  }),
-);
+app.use(securityHeaders);
 
-app.use(express.urlencoded({ extended: false }));
+const keepRawBody = (req: Request, _res: Response, buf: Buffer) => {
+  req.rawBody = buf;
+};
+
+/**
+ * حدّ حجم الجسم بحسب المسار.
+ *
+ * كان ١٠ ميغابايت على **كل** مسار — ويُفكّ الترميز قبل أي تحقق من هوية أو
+ * حدّ معدّل، فأي طلب مجهول يُلزم الخادم بتحليل عشرة ميغابايت من JSON. الحدّ
+ * المرتفع لا يحتاجه إلا استيراد نسخة كاملة، والمرفق لا يتجاوز ميغابايت
+ * واحداً (يكبر نحو الثلث بترميز base64).
+ */
+app.use("/api/backups/import", express.json({ limit: "12mb", verify: keepRawBody }));
+app.use("/api/attachments", express.json({ limit: "2mb", verify: keepRawBody }));
+app.use(express.json({ limit: "256kb", verify: keepRawBody }));
+
+app.use(express.urlencoded({ extended: false, limit: "256kb" }));
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -53,8 +62,13 @@ app.use((req, res, next) => {
     const duration = Date.now() - start;
     if (path.startsWith("/api")) {
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse && !path.startsWith("/api/auth")) {
-        const jsonStr = JSON.stringify(capturedJsonResponse);
+
+      // جسم الردّ لا يُكتب في سجل الإنتاج إطلاقاً، وفي التطوير يُكتب محجوب
+      // الأسرار. كان يُكتب كما هو لكل مسار عدا /api/auth — ومسار إصدار كود
+      // الاستعادة تحت /api/admin، فكان الكود ينسخ نفسه في السجل صالحاً
+      // ثلاثين دقيقة، خلافاً لتعليق يقول إنه لا يُخزَّن نصاً في أي مكان.
+      if (capturedJsonResponse && process.env.NODE_ENV !== "production") {
+        const jsonStr = JSON.stringify(redactSecrets(capturedJsonResponse));
         logLine += ` :: ${jsonStr.length > 200 ? jsonStr.substring(0, 200) + '...' : jsonStr}`;
       }
 
@@ -98,6 +112,10 @@ app.get("/api/health", async (_req, res) => {
   } catch (error) {
     console.error("تعذّرت مزامنة المخطط — الخادم يكمل الإقلاع:", error);
   }
+
+  // الحدّ العام قبل تسجيل المسارات — والحدود الأضيق على الدخول والاستعادة
+  // وكتابات الوصي تبقى فوقه، فيقع الأشدّ منهما
+  app.use("/api", apiRateLimiter);
 
   await registerRoutes(httpServer, app);
 
