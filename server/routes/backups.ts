@@ -47,9 +47,26 @@ export function registerBackupRoutes(app: Express) {
     }
   });
 
-  app.post("/api/backups/apply-retention", isAuthenticated, isAdmin, async (_req, res) => {
+  // تطبيق سياسة الاستبقاء يحذف نسخاً احتياطية — وهو الفعل الوحيد المُتلِف
+  // هنا الذي كان يمضي بلا سطر في السجل، بينما الإنشاء والتصدير والاستعادة
+  // كلها موثّقة. النسخة المحذوفة لا تُستعاد، فأقلّ ما يُترك أثرٌ يقول ماذا ذهب.
+  app.post("/api/backups/apply-retention", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const result = await applyRetentionPolicy();
+      const removed = result.deletedBackups;
+
+      if (removed.length > 0) {
+        await storage.createAuditLog({
+          action: "backups_pruned",
+          entityType: "system_backup",
+          entityId: "retention",
+          actorUserId: req.user?.id ?? null,
+          actorName: actorName(req),
+          description: `طُبِّقت سياسة الاستبقاء فحُذفت ${removed.length} نسخة احتياطية`,
+          metadata: { count: removed.length, files: removed.map((b) => b.fileName ?? null) },
+        });
+      }
+
       res.json(result);
     } catch (error) {
       console.error("Apply backup retention error:", error);
