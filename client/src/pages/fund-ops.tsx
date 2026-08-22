@@ -5,6 +5,7 @@ import {
   getMembers,
   getFundAdjustments,
   createFundAdjustment,
+  reverseFundAdjustment,
   createLoan,
   createExpense,
   getDashboardSummary,
@@ -18,6 +19,7 @@ import {
   HandCoins,
   ReceiptText,
   ArrowDownCircle,
+  ArrowUpCircle,
   Plus,
   TrendingUp,
   TrendingDown,
@@ -68,13 +70,29 @@ export default function FundOps() {
   const availableFlexible = Number(flexibleLayer?.available ?? flexibleLayer?.amount ?? 0);
   const availableEmergency = Number(emergencyLayer?.available ?? emergencyLayer?.amount ?? 0);
   const selectedLoanAvailable = adminLoanType === "emergency" ? availableEmergency : availableFlexible;
-  const depositRecords = adjustments.filter((a: any) => a.type === "deposit");
+  // كان السجل يعرض الإيداعات وحدها، فالسحب المباشر — وهو الذي ينقص الصندوق —
+  // لا يظهر لأحد. ويُعلَّم المعكوس وعكسه ليُقرأ التصحيح لا كحركتين منفصلتين.
+  const reversedIds = new Set(adjustments.filter((a: any) => a.reversalOfId).map((a: any) => a.reversalOfId));
+  const adjustmentRecords = adjustments;
 
   const loanTypeLabels: Record<string, string> = {
     urgent: "سلفة عاجلة",
     standard: "سلفة غير عاجلة",
     emergency: "سلفة طارئة",
   };
+
+  const reverseAdjustmentMutation = useMutation({
+    mutationFn: (id: string) => reverseFundAdjustment(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["fund-adjustments"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["allocation"] });
+      toast({ title: "عُكس القيد — اعتدل الرصيد وبقي الأثر" });
+    },
+    onError: (error: any) => {
+      toast({ title: "تعذر عكس القيد", description: error?.message || "خطأ غير متوقع", variant: "destructive" });
+    },
+  });
 
   const createAdminLoanMutation = useMutation({
     mutationFn: createLoan,
@@ -390,30 +408,53 @@ export default function FundOps() {
         </Dialog>
 
         {/* Deposits log */}
-        {depositRecords.length > 0 && (
+        {adjustmentRecords.length > 0 && (
           <div className="space-y-3">
             <h3 className="font-bold text-lg text-fund-in font-heading px-1 flex items-center gap-2">
-              <Coins className="w-5 h-5" /> السجل العام للإيداعات
-              <span className="text-xs bg-muted px-2 py-0.5 rounded-full font-bold text-muted-foreground mr-auto">{depositRecords.length}</span>
+              <Coins className="w-5 h-5" /> السجل العام للقيود المباشرة
+              <span className="text-xs bg-muted px-2 py-0.5 rounded-full font-bold text-muted-foreground mr-auto">{adjustmentRecords.length}</span>
             </h3>
-            {depositRecords.map((adj: any, idx: number) => (
-              <motion.div key={adj.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.04 }}
-                className="bg-card border border-border/80 rounded-lg p-4 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-fund-in-bright/20 text-fund-in shrink-0">
-                  <ArrowDownCircle className="w-5 h-5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-fund-in-bright/20 text-fund-in">إيداع</span>
-                    <span className="font-bold text-sm font-mono">{Number(adj.amount).toFixed(3)} ر.ع</span>
+            {adjustmentRecords.map((adj: any, idx: number) => {
+              const isDeposit = adj.type === "deposit";
+              const isReversal = !!adj.reversalOfId;
+              const wasReversed = reversedIds.has(adj.id);
+              return (
+                <motion.div key={adj.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.04 }}
+                  className={cn("bg-card border border-border/80 rounded-lg p-4 flex items-center gap-3", wasReversed && "opacity-60")}>
+                  <div className={cn("w-10 h-10 rounded-full flex items-center justify-center shrink-0",
+                    isDeposit ? "bg-fund-in-bright/20 text-fund-in" : "bg-fund-out-bright/20 text-fund-out")}>
+                    {isDeposit ? <ArrowDownCircle className="w-5 h-5" /> : <ArrowUpCircle className="w-5 h-5" />}
                   </div>
-                  {adj.description && <p className="text-xs text-muted-foreground mt-1 truncate">{adj.description}</p>}
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {adj.createdAt ? new Date(adj.createdAt).toLocaleDateString("ar-OM", { year: "numeric", month: "short", day: "numeric" }) : ""}
-                  </p>
-                </div>
-              </motion.div>
-            ))}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className={cn("text-xs font-bold px-2 py-0.5 rounded-full",
+                        isDeposit ? "bg-fund-in-bright/20 text-fund-in" : "bg-fund-out-bright/20 text-fund-out")}>
+                        {isDeposit ? "إيداع" : "سحب"}
+                      </span>
+                      <span className={cn("font-bold text-sm font-mono", wasReversed && "line-through")}>
+                        {Number(adj.amount).toFixed(3)} ر.ع
+                      </span>
+                      {isReversal && <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-muted text-muted-foreground">قيد تصحيح</span>}
+                      {wasReversed && <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-muted text-muted-foreground">مُصحَّح</span>}
+                    </div>
+                    {adj.description && <p className="text-xs text-muted-foreground mt-1 truncate">{adj.description}</p>}
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {adj.createdAt ? new Date(adj.createdAt).toLocaleDateString("ar-OM", { year: "numeric", month: "short", day: "numeric" }) : ""}
+                    </p>
+                  </div>
+                  {!isReversal && !wasReversed && (
+                    <button
+                      onClick={() => reverseAdjustmentMutation.mutate(adj.id)}
+                      disabled={reverseAdjustmentMutation.isPending}
+                      className="tap-target shrink-0 text-xs font-bold text-muted-foreground hover:text-destructive px-3 py-2 rounded-lg bg-muted/40 disabled:opacity-50"
+                      data-testid={`button-reverse-adjustment-${adj.id}`}
+                    >
+                      عكس القيد
+                    </button>
+                  )}
+                </motion.div>
+              );
+            })}
           </div>
         )}
       </div>

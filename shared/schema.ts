@@ -113,6 +113,11 @@ export const expenses = pgTable("expenses", {
   category: text("category").notNull(), // 'zakat' | 'charity' | 'general' | 'emergency'
   description: text("description"),
   createdAt: timestamp("created_at").defaultNow(),
+  // المصروف الملغى: صفّه باقٍ ويُعرض، ولا يُحسب في مال الصندوق. الحذف كان
+  // معطَّلاً حفاظاً على البيانات فلم يبقَ للوصي سبيل إلى تصحيح مبلغ أخطأ فيه
+  voidedAt: timestamp("voided_at"),
+  voidedBy: varchar("voided_by"),
+  voidReason: text("void_reason"),
 });
 
 export const insertExpenseSchema = createInsertSchema(expenses).omit({ id: true, createdAt: true }).extend({
@@ -244,10 +249,19 @@ export const fundAdjustments = pgTable("fund_adjustments", {
   memberId: varchar("member_id").references(() => members.id),
   createdAt: timestamp("created_at").defaultNow(),
   createdBy: varchar("created_by"),
+  // القيد الذي جاء هذا القيد ليعكسه — التصحيح قيدٌ مضاد لا محو
+  reversalOfId: varchar("reversal_of_id"),
 });
 
 export const insertFundAdjustmentSchema = createInsertSchema(fundAdjustments).omit({ id: true, createdAt: true }).extend({
   type: z.enum(["deposit", "withdrawal"]),
+  // القيد المباشر أخطر ما في النظام: يزيد الرصيد أو ينقصه بلا مساهمة ولا
+  // سلفة. وكان مبلغه بلا حدّ، فيمرّ «إيداع» بمبلغ سالب — يستنزف الصندوق
+  // ويُقرأ في السجل إيداعاً
+  amount: z
+    .union([z.string(), z.number()])
+    .transform((v) => String(v))
+    .refine((v) => Number.isFinite(Number(v)) && Number(v) > 0, "المبلغ يجب أن يكون أكبر من صفر"),
 });
 export type InsertFundAdjustment = z.infer<typeof insertFundAdjustmentSchema>;
 export type FundAdjustment = typeof fundAdjustments.$inferSelect;

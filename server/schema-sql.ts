@@ -82,7 +82,10 @@ CREATE TABLE IF NOT EXISTS "expenses" (
 	"amount" numeric(10, 3) NOT NULL,
 	"category" text NOT NULL,
 	"description" text,
-	"created_at" timestamp DEFAULT now()
+	"created_at" timestamp DEFAULT now(),
+	"voided_at" timestamp,
+	"voided_by" varchar,
+	"void_reason" text
 );
 
 CREATE TABLE IF NOT EXISTS "family_settings" (
@@ -110,7 +113,8 @@ CREATE TABLE IF NOT EXISTS "fund_adjustments" (
 	"description" text,
 	"member_id" varchar,
 	"created_at" timestamp DEFAULT now(),
-	"created_by" varchar
+	"created_by" varchar,
+	"reversal_of_id" varchar
 );
 
 CREATE TABLE IF NOT EXISTS "investment_valuations" (
