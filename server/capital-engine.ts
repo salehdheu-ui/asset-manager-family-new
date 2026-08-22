@@ -9,7 +9,7 @@ import {
   type LayerUsage,
   type LayerView,
 } from "@shared/finance";
-import { eq } from "drizzle-orm";
+import { eq, isNull } from "drizzle-orm";
 
 /**
  * محرك رأس المال.
@@ -47,7 +47,8 @@ async function computeTotalNetAssets(): Promise<number> {
     .where(eq(contributions.status, "approved"));
   const allLoans: Loan[] = await db.select().from(loans)
     .where(eq(loans.status, "approved"));
-  const allExpenses: Expense[] = await db.select().from(expenses);
+  // المصروف الملغى ليس مالاً خرج — يُستبعد من كل مجموع
+  const allExpenses: Expense[] = await db.select().from(expenses).where(isNull(expenses.voidedAt));
   const allAdjustments: FundAdjustment[] = await db.select().from(fundAdjustments);
   const allRepayments: LoanPayment[] = await db.select().from(loanPayments);
 
@@ -68,7 +69,7 @@ async function computeUsedAmounts(year: number): Promise<LayerUsage> {
     .where(eq(loans.status, "approved"));
   const yearLoans = allLoans.filter((l) => isWithinYear(l.approvedAt || l.createdAt, year));
 
-  const allExpenses: Expense[] = await db.select().from(expenses);
+  const allExpenses: Expense[] = await db.select().from(expenses).where(isNull(expenses.voidedAt));
   const yearExpenses = allExpenses.filter((e) => isWithinYear(e.createdAt, year));
 
   const allInvestments: Investment[] = await db.select().from(investments);

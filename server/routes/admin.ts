@@ -171,8 +171,69 @@ export function registerAdminRoutes(app: Express) {
     }
   });
 
+  /**
+   * عكس قيد مباشر.
+   *
+   * الحذف كان معطَّلاً حفاظاً على البيانات — وهو صواب: القيد المباشر يحرّك
+   * رصيد الصندوق، ومحوه يمحو أثر حركة وقعت. لكن ذلك ترك الوصي بلا سبيل إلى
+   * تصحيح مبلغ أخطأ فيه، والرقم الخطأ يبقى في الرصيد إلى الأبد.
+   *
+   * فالتصحيح قيدٌ مضاد كما في الدفاتر: يُنشأ قيد معاكس بالمبلغ نفسه يشير إلى
+   * أصله، فيعتدل الرصيد ويبقى الاثنان ظاهرين — من أخطأ، ومتى صُحّح.
+   */
+  app.post("/api/fund-adjustments/:id/reverse", isAuthenticated, isAdmin, async (req: Request, res: Response) => {
+    try {
+      const original = await storage.getFundAdjustment(req.params.id as string);
+      if (!original) return res.status(404).json({ message: "القيد غير موجود" });
+      if (original.reversalOfId) {
+        return res.status(409).json({ message: "هذا القيد نفسه قيد عكسي — لا يُعكس العكس" });
+      }
+
+      const existing = await storage.getReversalOf(original.id);
+      if (existing) return res.status(409).json({ message: "هذا القيد مُصحَّح من قبل" });
+
+      const { reason } = z.object({ reason: z.string().trim().max(300).nullable().optional() }).parse(req.body ?? {});
+      const opposite = original.type === "deposit" ? "withdrawal" : "deposit";
+      const currentYear = new Date().getFullYear();
+
+      const reversal = await withTransaction(async () => {
+        const created = await storage.createFundAdjustment({
+          type: opposite,
+          amount: original.amount,
+          description: `عكس ${original.type === "deposit" ? "إيداع" : "سحب"}: ${original.description ?? "بلا وصف"}${reason ? ` — ${reason}` : ""}`,
+          memberId: original.memberId,
+          createdBy: req.user?.id ?? null,
+          reversalOfId: original.id,
+        } as any);
+
+        await storage.createAuditLog({
+          action: "fund_adjustment_reversed",
+          entityType: "fund_adjustment",
+          entityId: original.id,
+          actorUserId: req.user?.id ?? null,
+          actorName: req.user?.username ?? req.user?.firstName ?? "مشرف",
+          description:
+            `عُكس ${original.type === "deposit" ? "إيداع مباشر" : "سحب مباشر"} بمبلغ ` +
+            `${Number(original.amount).toLocaleString()} ر.ع${reason ? ` — ${reason}` : ""}`,
+          metadata: { originalId: original.id, reversalId: created.id, amount: original.amount, reason: reason ?? null },
+        });
+
+        await rebalanceYear(currentYear);
+        return created;
+      });
+
+      res.status(201).json(reversal);
+    } catch (error) {
+      if (error instanceof z.ZodError) return res.status(400).json(zodErrorResponse(error));
+      console.error("Reverse fund adjustment error:", error);
+      res.status(500).json({ message: "تعذر عكس القيد" });
+    }
+  });
+
   app.delete("/api/fund-adjustments/:id", isAuthenticated, isAdmin, async (_req: Request, res: Response) => {
-    return res.status(403).json({ message: "تم تعطيل الحذف النهائي حفاظاً على البيانات" });
+    return res.status(403).json({
+      message: "القيد المباشر لا يُمحى — اعكِسه بقيد مضاد ليعتدل الرصيد ويبقى الأثر",
+    });
   });
 
   // ============= System Reset (Admin Only) =============

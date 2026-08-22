@@ -196,8 +196,8 @@ export async function createExpense(data: { title: string; amount: string; categ
   return send<WithOverdraft<Expense>>("POST", "/api/expenses", data);
 }
 
-export async function deleteExpense(id: string): Promise<void> {
-  await apiRequest("DELETE", `/api/expenses/${id}`);
+export async function voidExpense(id: string, reason?: string): Promise<Expense> {
+  return send<Expense>("POST", `/api/expenses/${id}/void`, { reason: reason ?? null });
 }
 
 // Settings
@@ -536,8 +536,8 @@ export async function createFundAdjustment(data: { type: string; amount: string;
   return send<FundAdjustment>("POST", "/api/fund-adjustments", data);
 }
 
-export async function deleteFundAdjustment(id: string): Promise<void> {
-  await apiRequest("DELETE", `/api/fund-adjustments/${id}`);
+export async function reverseFundAdjustment(id: string, reason?: string): Promise<FundAdjustment> {
+  return send<FundAdjustment>("POST", `/api/fund-adjustments/${id}/reverse`, { reason: reason ?? null });
 }
 
 // Capital Allocation

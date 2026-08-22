@@ -2,11 +2,11 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import MobileLayout from "@/components/layout/MobileLayout";
 import AttachmentBox from "@/components/AttachmentBox";
-import { getExpenses, createExpense, deleteExpense, getDashboardSummary , previewExpenseLimit} from "@/lib/api";
+import { getExpenses, createExpense, voidExpense, getDashboardSummary , previewExpenseLimit} from "@/lib/api";
 import { overdraftToast } from "@/lib/overdraft";
 import { useOverdraftGate } from "@/hooks/use-overdraft-gate";
 import { useAuth } from "@/hooks/use-auth";
-import { Wallet, Heart, Scale, ArrowUpRight, TrendingDown, History, Trash2 } from "lucide-react";
+import { Wallet, Heart, Scale, ArrowUpRight, TrendingDown, History, Ban } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -73,17 +73,19 @@ export default function Expenses() {
     },
   });
 
+  // المصروف لا يُمحى — يُلغى، فيعود مبلغه إلى الصندوق ويبقى أثره في السجل
   const deleteMutation = useMutation({
-    mutationFn: deleteExpense,
+    mutationFn: (id: string) => voidExpense(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["expenses"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-summary"] });
-      toast({ title: "تم حذف السجل" });
+      queryClient.invalidateQueries({ queryKey: ["allocation"] });
+      toast({ title: "أُلغي المصروف وعاد مبلغه إلى الصندوق" });
     },
     onError: (error) => {
       toast({
         title: "حدث خطأ",
-        description: (error as any)?.message || "تعذر حذف السجل",
+        description: (error as any)?.message || "تعذر إلغاء المصروف",
         variant: "destructive",
       });
     },
@@ -300,7 +302,14 @@ export default function Expenses() {
                     </div>
                     <div className="text-right">
                       <div className="text-lg font-mono font-bold text-fund-out">
-                        -{Number(expense.amount).toLocaleString()} <span className="text-xs font-sans">ر.ع</span>
+                        {expense.voidedAt ? (
+                          <span className="line-through opacity-50">
+                            -{Number(expense.amount).toLocaleString()}
+                          </span>
+                        ) : (
+                          <>-{Number(expense.amount).toLocaleString()}</>
+                        )}{" "}
+                        <span className="text-xs font-sans">ر.ع</span>
                       </div>
                     </div>
                   </div>
@@ -308,14 +317,23 @@ export default function Expenses() {
                     <AttachmentBox entityType="expense" entityId={expense.id} canDelete label="الفاتورة أو الإيصال" />
                   </div>
 
-                  <button 
-                    onClick={() => deleteMutation.mutate(expense.id)}
-                    disabled={deleteMutation.isPending}
-                    className="tap-target w-full text-xs text-muted-foreground flex items-center justify-center gap-1 pt-3 mt-3 border-t border-border/70 hover:text-destructive transition-colors disabled:opacity-50"
-                    data-testid={`button-delete-expense-${expense.id}`}
-                  >
-                    <Trash2 className="w-3 h-3" /> حذف السجل
-                  </button>
+                  {expense.voidedAt ? (
+                    <div
+                      className="w-full text-xs text-muted-foreground flex items-center justify-center gap-1 pt-3 mt-3 border-t border-border/70"
+                      data-testid={`expense-voided-${expense.id}`}
+                    >
+                      <Ban className="w-3 h-3" /> ملغى — لا يُحسب في مال الصندوق
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => deleteMutation.mutate(expense.id)}
+                      disabled={deleteMutation.isPending}
+                      className="tap-target w-full text-xs text-muted-foreground flex items-center justify-center gap-1 pt-3 mt-3 border-t border-border/70 hover:text-destructive transition-colors disabled:opacity-50"
+                      data-testid={`button-delete-expense-${expense.id}`}
+                    >
+                      <Ban className="w-3 h-3" /> إلغاء المصروف
+                    </button>
+                  )}
                 </motion.div>
               ))}
             </div>

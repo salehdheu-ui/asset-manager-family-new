@@ -907,7 +907,7 @@ export function registerReportRoutes(app: Express) {
       const [contributions, loans, expenses, members] = await Promise.all([
         storage.getContributions(),
         storage.getLoans(),
-        storage.getExpenses(),
+        storage.getActiveExpenses(),
         storage.getMembers()
       ]);
       

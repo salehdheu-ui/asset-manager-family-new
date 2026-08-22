@@ -88,6 +88,9 @@ export interface IStorage {
 
   // Expenses
   getExpenses(): Promise<Expense[]>;
+  /** المصروفات غير الملغاة — هي وحدها ما يُحسب في مال الصندوق */
+  getActiveExpenses(): Promise<Expense[]>;
+  voidExpense(id: string, voidedBy: string | null, reason: string | null): Promise<Expense | undefined>;
   getExpense(id: string): Promise<Expense | undefined>;
   getExpensesByYear(year: number): Promise<Expense[]>;
   createExpense(expense: InsertExpense): Promise<Expense>;
@@ -95,6 +98,9 @@ export interface IStorage {
 
   // Fund Adjustments
   getFundAdjustments(): Promise<FundAdjustment[]>;
+  getFundAdjustment(id: string): Promise<FundAdjustment | undefined>;
+  /** القيد العكسي لقيد بعينه إن وُجد — يمنع تصحيحه مرتين */
+  getReversalOf(id: string): Promise<FundAdjustment | undefined>;
   createFundAdjustment(adjustment: InsertFundAdjustment): Promise<FundAdjustment>;
   deleteFundAdjustment(id: string): Promise<void>;
 
@@ -496,6 +502,19 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(expenses).orderBy(desc(expenses.createdAt));
   }
 
+  /** المصروفات التي تُحسب في مال الصندوق — الملغى ليس منها */
+  async getActiveExpenses(): Promise<Expense[]> {
+    return await db.select().from(expenses).where(isNull(expenses.voidedAt)).orderBy(desc(expenses.createdAt));
+  }
+
+  async voidExpense(id: string, voidedBy: string | null, reason: string | null): Promise<Expense | undefined> {
+    const [updated] = await db.update(expenses)
+      .set({ voidedAt: new Date(), voidedBy, voidReason: reason })
+      .where(and(eq(expenses.id, id), isNull(expenses.voidedAt)))
+      .returning();
+    return updated;
+  }
+
   async getExpense(id: string): Promise<Expense | undefined> {
     const [expense] = await db.select().from(expenses).where(eq(expenses.id, id));
     return expense;
@@ -506,8 +525,9 @@ export class DatabaseStorage implements IStorage {
     const endDate = new Date(year + 1, 0, 1);
     // نهاية المدى مفتوحة: lte تجعل مصروفاً وقع في أول لحظة من السنة التالية
     // يُحسب في السنتين معاً
+    // الملغى مستبعَد: التقارير تعرض مال الصندوق، والمصروف الملغى لم يخرج منه
     return await db.select().from(expenses).where(
-      and(gte(expenses.createdAt, startDate), lt(expenses.createdAt, endDate))
+      and(gte(expenses.createdAt, startDate), lt(expenses.createdAt, endDate), isNull(expenses.voidedAt))
     );
   }
 
@@ -523,6 +543,16 @@ export class DatabaseStorage implements IStorage {
   // Fund Adjustments
   async getFundAdjustments(): Promise<FundAdjustment[]> {
     return await db.select().from(fundAdjustments).orderBy(desc(fundAdjustments.createdAt));
+  }
+
+  async getFundAdjustment(id: string): Promise<FundAdjustment | undefined> {
+    const [row] = await db.select().from(fundAdjustments).where(eq(fundAdjustments.id, id));
+    return row;
+  }
+
+  async getReversalOf(id: string): Promise<FundAdjustment | undefined> {
+    const [row] = await db.select().from(fundAdjustments).where(eq(fundAdjustments.reversalOfId, id));
+    return row;
   }
 
   async createFundAdjustment(adjustment: InsertFundAdjustment): Promise<FundAdjustment> {

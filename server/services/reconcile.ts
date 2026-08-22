@@ -90,7 +90,7 @@ async function rebuildBalance() {
     scalar(`select coalesce(sum(p.amount), 0)::text as value
             from loan_payments p join loans l on l.id = p.loan_id
             where l.status = 'approved'`),
-    scalar("select coalesce(sum(amount), 0)::text as value from expenses"),
+    scalar("select coalesce(sum(amount), 0)::text as value from expenses where voided_at is null"),
     scalar("select coalesce(sum(amount), 0)::text as value from investments where status = 'active'"),
   ]);
 
@@ -408,7 +408,11 @@ export async function findAmount(value: number): Promise<AmountMatch[]> {
     },
     {
       source: "مصروف",
-      sql: `select id, amount::text as amount, created_at, title || ' (' || category || ')' as description
+      // الملغى يُعرض هنا وإن لم يُحسب في المال: هذه أداةُ بحثٍ عن مبلغٍ ضائع،
+      // وإخفاء الملغى يخفي أول ما ينبغي أن يُنظر فيه
+      sql: `select id, amount::text as amount, created_at,
+                   title || ' (' || category || ')' ||
+                   (case when voided_at is null then '' else ' — ملغى، لا يُحسب في مال الصندوق' end) as description
             from expenses where abs(amount - $1) <= $2`,
     },
     {
@@ -427,9 +431,12 @@ export async function findAmount(value: number): Promise<AmountMatch[]> {
     },
     {
       source: "عملية مباشرة",
-      sql: `select id, amount::text as amount, created_at,
-                   (case when type = 'deposit' then 'إيداع' else 'سحب' end) || ' — ' || coalesce(description, 'بلا وصف') as description
-            from fund_adjustments where abs(amount - $1) <= $2`,
+      sql: `select a.id, a.amount::text as amount, a.created_at,
+                   (case when a.type = 'deposit' then 'إيداع' else 'سحب' end) || ' — ' || coalesce(a.description, 'بلا وصف') ||
+                   (case when a.reversal_of_id is not null then ' (قيد تصحيح)'
+                         when exists (select 1 from fund_adjustments r where r.reversal_of_id = a.id) then ' (مُصحَّح بقيد مضاد)'
+                         else '' end) as description
+            from fund_adjustments a where abs(a.amount - $1) <= $2`,
     },
     {
       source: "قسط",

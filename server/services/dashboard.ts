@@ -31,7 +31,7 @@ export async function computeDashboardSummary(): Promise<DashboardSummaryResult>
   const [allContributions, allLoans, allExpenses, settings, allAdjustments] = await Promise.all([
     storage.getContributions(),
     storage.getLoans(),
-    storage.getExpenses(),
+    storage.getActiveExpenses(),
     storage.getFamilySettings(),
     storage.getFundAdjustments()
   ]);
