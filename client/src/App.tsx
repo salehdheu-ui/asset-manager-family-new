@@ -12,7 +12,6 @@ import PushInvite from "@/components/PushInvite";
 import UpdateBanner from "@/components/UpdateBanner";
 import { registerServiceWorker } from "@/lib/pwa";
 import Auth from "@/pages/auth";
-const SchoolPlatform = lazy(() => import("@/pages/school-platform"));
 
 // تحميل الصفحات عند الطلب لتسريع الفتح الأول على الجوال
 const NotFound = lazy(() => import("@/pages/not-found"));
@@ -70,7 +69,6 @@ function Router() {
         <Route path="/" component={Auth} />
         {/* بلا حماية: من يتعثّر في التثبيت قد لا يكون داخلاً أصلاً */}
         <Route path="/install" component={InstallHelp} />
-        <Route path="/school" component={SchoolPlatform} />
         <Route path="/dashboard">{() => <ProtectedRoute component={Dashboard} />}</Route>
         <Route path="/loans">{() => <ProtectedRoute component={Loans} />}</Route>
         <Route path="/governance">{() => <ProtectedRoute component={Governance} />}</Route>
@@ -118,9 +116,6 @@ function ServiceWorkerHost() {
 }
 
 function App() {
-  const [location] = useLocation();
-  const isSchoolPrototype = location.startsWith("/school");
-
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
@@ -130,9 +125,9 @@ function App() {
           <ErrorBoundary>
             <Router />
           </ErrorBoundary>
-          {!isSchoolPrototype && <InstallPrompt />}
+          <InstallPrompt />
           {/* بعد التثبيت تأتي دعوة الإشعارات — بطاقة واحدة في الشاشة لا اثنتان */}
-          {!isSchoolPrototype && <PushInvite />}
+          <PushInvite />
         </div>
       </TooltipProvider>
     </QueryClientProvider>
