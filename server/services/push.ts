@@ -165,7 +165,7 @@ async function resolveAudience(notification: Pick<Notification, "audience" | "ta
  * ألغى الإذن — يُحذف صفه فوراً حتى لا يُحاول الخادم مخاطبته إلى الأبد.
  */
 export async function sendToAudience(
-  notification: Pick<Notification, "audience" | "targetUserId" | "title" | "body" | "url">,
+  notification: Pick<Notification, "id" | "audience" | "targetUserId" | "title" | "body" | "url">,
 ): Promise<DeliveryResult> {
   if (!configured) return { delivered: 0, failed: 0 };
 
@@ -177,6 +177,9 @@ export async function sendToAudience(
     title: notification.title,
     body: notification.body,
     url: notification.url || "/",
+    // وسم لكل إشعار: بدونه يحمل الكل وسماً واحداً في عامل الخدمة، فيمحو
+    // التذكيرُ الثاني الأولَ بصمت (قسط متأخر + مساهمة الشهر في جولة واحدة)
+    tag: `notification-${notification.id}`,
   });
 
   let delivered = 0;

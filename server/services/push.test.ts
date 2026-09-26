@@ -85,6 +85,8 @@ describe("عامل الإشعارات المجدولة", () => {
 
     expect(processed).toBe(1);
     expect(mocks.sendNotification).toHaveBeenCalledTimes(2);
+    // كل إشعار بوسمه، وإلا استبدل الجهاز إشعاراً سابقاً لم يُقرأ بصمت
+    expect(JSON.parse(mocks.sendNotification.mock.calls[1][1]).tag).toBe("notification-notification-1");
     expect(mocks.updateNotification).toHaveBeenCalledWith(
       "notification-1",
       expect.objectContaining({ status: "sent", deliveredCount: 1, failedCount: 0 }),

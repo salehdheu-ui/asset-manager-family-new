@@ -119,7 +119,8 @@ self.addEventListener("push", (event) => {
     self.registration.showNotification(title, {
       body: payload.body || "",
       icon: "/icons/icon-192.png",
-      badge: "/icons/icon-192.png",
+      // الشارة في شريط الحالة تُرسم من الشفافية وحدها: رمز أبيض على شفافية، لا الأيقونة الملوّنة
+      badge: "/icons/badge-96.png",
       dir: "rtl",
       lang: "ar",
       // نفس الوسم يستبدل الإشعار السابق بدل تكديس نسخ منه
