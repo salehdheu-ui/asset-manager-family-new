@@ -678,7 +678,11 @@ export function registerReportRoutes(app: Express) {
       }).sort((a, b) => b.totalContributions - a.totalContributions);
 
       const total = allMemberStats.length;
-      const memberStats = allMemberStats.slice((page - 1) * limit, page * limit);
+      // العضو يرى صفّه وحده؛ المجاميع وعدد الأعضاء عامة للصندوق كله
+      const visibleStats = req.user?.role === 'admin'
+        ? allMemberStats
+        : allMemberStats.filter(m => m.memberId === req.user?.memberId);
+      const memberStats = visibleStats.slice((page - 1) * limit, page * limit);
 
       res.json({
         year,
@@ -766,6 +770,10 @@ export function registerReportRoutes(app: Express) {
   app.get("/api/reports/member/:id", isAuthenticated, async (req, res) => {
     try {
       const memberId = req.params.id as string;
+      // كشف العضو لصاحبه وللمدير فقط — كما في السلف والمساهمات
+      if (req.user?.role !== 'admin' && req.user?.memberId !== memberId) {
+        return res.status(403).json({ error: "غير مسموح بعرض كشف عضو آخر" });
+      }
       const year = Number(req.query.year) || new Date().getFullYear();
 
       const [member, allContributions, memberLoans, rateBook] = await Promise.all([

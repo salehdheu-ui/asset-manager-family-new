@@ -221,8 +221,10 @@ export default function Analytics() {
   const totalContributionsKPI = dashboardSummary?.totalContributions || 0;
   const netCapital = dashboardSummary?.netCapital || 0;
   const growthRate = 12.5;
+  // عدد أعضاء الصندوق كله من pagination — العضو العادي لا يصله إلا صفّه في members
+  const memberCount = membersPerformance?.pagination?.total ?? membersPerformance?.members.length ?? 0;
   const attendanceRate = membersPerformance?.totals.activeMembers
-    ? Math.round((membersPerformance.totals.activeMembers / (membersPerformance.members.length || 1)) * 100) : 0;
+    ? Math.round((membersPerformance.totals.activeMembers / (memberCount || 1)) * 100) : 0;
   const liquidityRatio = totalContributionsKPI > 0 ? Math.round((netCapital / totalContributionsKPI) * 100) : 0;
 
   const getMemberName = (memberId: string) => members.find((m) => m.id === memberId)?.name || "غير معروف";
@@ -443,7 +445,7 @@ export default function Analytics() {
             icon={<TrendingUp className="w-5 h-5 text-white" />}
             gradient="bg-gradient-to-br from-fund-in via-fund-in to-fund-in" iconBg="bg-white/20" delay={1} />
           <KPICard title="الأعضاء النشطين" value={`${attendanceRate}%`} change={5.1} trend="up"
-            subtitle={`من أصل ${membersPerformance?.members.length || 0} عضو`}
+            subtitle={`من أصل ${memberCount} عضو`}
             icon={<Users className="w-5 h-5 text-white" />}
             gradient="bg-gradient-to-br from-secondary via-secondary to-fund-loan" iconBg="bg-white/20" delay={2} />
           <KPICard title="نسبة السداد" value={`${loansAnalysis?.summary.repaymentRate || 0}%`}
