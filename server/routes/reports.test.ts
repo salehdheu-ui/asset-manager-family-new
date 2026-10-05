@@ -245,6 +245,30 @@ describe("حصص الأعضاء", () => {
   it("العضو العادي محجوب عن تقرير الحصص", async () => {
     expect((await request("/api/reports/member-shares", member)).status).toBe(403);
   });
+
+  it("العضو يرى صفّه وحده في أداء الأعضاء، والعدد للصندوق كله", async () => {
+    const other = JSON.stringify({ id: "u3", role: "user", memberId: "m9", username: "other" });
+    const own = await (await request("/api/reports/members-performance", member)).json();
+    expect(own.members.map((m: any) => m.memberId)).toEqual(["m1"]);
+    const body = await (await request("/api/reports/members-performance", other)).json();
+    expect(body.members).toEqual([]);
+    expect(body.pagination.total).toBe(1);
+  });
+});
+
+describe("كشف العضو", () => {
+  it("العضو يفتح كشفه", async () => {
+    expect((await request("/api/reports/member/m1", member)).status).toBe(200);
+  });
+
+  it("العضو لا يفتح كشف غيره", async () => {
+    const other = JSON.stringify({ id: "u3", role: "user", memberId: "m9", username: "other" });
+    expect((await request("/api/reports/member/m1", other)).status).toBe(403);
+  });
+
+  it("المدير يفتح أي كشف", async () => {
+    expect((await request("/api/reports/member/m1", admin)).status).toBe(200);
+  });
 });
 
 describe("مهلة يوم 26 في التقارير", () => {
